@@ -9,10 +9,13 @@
   ],
   "references": [
     {
-      "path": "../../llm/llm"
+      "path": "../../../vendor/cosmokit"
     },
     {
-      "path": "../subagent"
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../subprocess"
     },
     {
       "path": "../../support/invariants"
