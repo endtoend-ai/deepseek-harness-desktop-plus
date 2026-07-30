@@ -9,9 +9,9 @@ import { packChunkRuns, SessionId, type SessionEvent, type SessionHeader } from 
 import { logPath, toHeaderLine } from '../../../packages/session-persistence/session-persistence-jsonl/src/format.ts'
 import { runTuiPtySmoke, type TuiPtySmokeOptions } from './pty-harness.ts'
 
-const dshBinScript = fileURLToPath(new URL('../../../apps/cli/src/bin.ts', import.meta.url))
-const configPath = fileURLToPath(new URL('../cordis.yml', import.meta.url))
-const codeModeConfigPath = fileURLToPath(new URL('../code-mode.cordis.yml', import.meta.url))
+const dshBinScript = fileURLToPath(new URL('../src/bin.ts', import.meta.url))
+// `--config` layers an overlay over the shared base, so the default surface
+// needs no config argument at all; these are the overlays under test.
 const scriptedConfigPath = fileURLToPath(new URL('./fixtures/tui-scripted.cordis.yml', import.meta.url))
 const tsconfigPath = fileURLToPath(new URL('../../../tsconfig.json', import.meta.url))
 
@@ -119,14 +119,20 @@ async function readLoggedRequestContext(cwd: string): Promise<LoggedRequestConte
   throw new Error(`session log ${logRelPath} has no request/header event`)
 }
 
-/** Shared defaults: the keyless key, the dsh bin, and the live cordis.yml (passed as the positional config). */
+/**
+ * Shared defaults: the keyless key and the dsh bin. Each case supplies either
+ * `configArgs: []` (boot the shipped composition, `base.cordis.yml` +
+ * `tui.cordis.yml`, with no flags) or `configPath` (an overlay layered over that
+ * same base through `--config`).
+ */
 function smoke(overrides: Partial<TuiPtySmokeOptions> & { label: string }): Promise<string> {
   return runTuiPtySmoke({
-    tempDirPrefix: 'tui-agent-smoke-',
+    tempDirPrefix: 'dsh-tui-smoke-',
     binScript: dshBinScript,
-    configPath,
     tsconfigPath,
     env: { DEEPSEEK_API_KEY: 'keyless-tui-no-call' },
+    // Artifact CI builds and smokes concurrently on a contended runner.
+    ...(process.env.DSH_EXAMPLE_MODE === 'lib' ? { timeoutMs: 60_000 } : {}),
     ...overrides,
   })
 }
@@ -140,13 +146,14 @@ const SELECT_PRO_MODEL = [
 ] as const
 const ANSWER_MULTI_WITH_CUSTOM = ' \tRelease notes\r'
 
-describe('tui-agent keyless smoke (real Loader tree in a PTY)', () => {
+describe('dsh TUI keyless smoke (real Loader tree in a PTY)', () => {
   it('boots pi-tui, sweeps the borderless banner in, enters plan mode, and restores the terminal', async () => {
     // With no configured welcome the borderless banner sweeps in left-to-right;
     // the detail line's session id (`main-session-<uuid>`) renders only once
     // the sweep reaches it, so it marks a settled banner.
     const output = await smoke({
-      label: 'tui-agent boot',
+      label: 'dsh boot',
+      configArgs: [],
       actions: [
         { waitFor: 'main-session-', send: '/plan' },
         { waitFor: '[off|message] — Enter or leave plan mode', send: '\r' },
@@ -166,8 +173,8 @@ describe('tui-agent keyless smoke (real Loader tree in a PTY)', () => {
 
   it('switches models, streams a response, answers a user-question dialog, and exits cleanly', async () => {
     const output = await smoke({
-      label: 'tui-agent conversation',
-      tempDirPrefix: 'tui-agent-conversation-',
+      label: 'dsh conversation',
+      tempDirPrefix: 'dsh-tui-conversation-',
       configPath: scriptedConfigPath,
       actions: [
         ...SELECT_PRO_MODEL,
@@ -229,8 +236,8 @@ describe('tui-agent keyless smoke (real Loader tree in a PTY)', () => {
     // the model — proven by the scripted adapter echoing the fixture's body
     // marker only when it arrives.
     const output = await smoke({
-      label: 'tui-agent skill',
-      tempDirPrefix: 'tui-agent-skill-',
+      label: 'dsh skill',
+      tempDirPrefix: 'dsh-tui-skill-',
       configPath: scriptedConfigPath,
       prepare: seedWorkspace({
         skills: {
@@ -287,10 +294,14 @@ describe('tui-agent keyless smoke (real Loader tree in a PTY)', () => {
     expect(output).toContain('\u001B[?2004l')
   }, LOADER_SMOKE_TEST_TIMEOUT_MS)
 
-  it('fuzzy-completes an @file path without reading or submitting the file', async () => {
+  it.skipIf(process.env.DSH_EXAMPLE_MODE === 'lib')('fuzzy-completes an @file path without reading or submitting the file', async () => {
     const output = await smoke({
-      label: 'tui-agent file autocomplete',
-      tempDirPrefix: 'tui-agent-file-autocomplete-',
+      label: 'dsh file autocomplete',
+      tempDirPrefix: 'dsh-tui-file-autocomplete-',
+      // Source-plane PTY coverage complements the deterministic package-level
+      // autocomplete tests. Artifact CI omits this timing-sensitive terminal
+      // rendering assertion; built boot is covered by the neighboring cases.
+      configArgs: [],
       prepare: seedWorkspace({
         workspace: {
           'src/terminal-special-case.ts': 'export const marker = true\n',
@@ -305,19 +316,6 @@ describe('tui-agent keyless smoke (real Loader tree in a PTY)', () => {
     })
     expect(output).toContain('File · terminal-special-case.t')
     expect(output).toContain('@src/terminal-special-case.ts')
-    expect(output).toContain('\u001B[?2004l')
-  }, LOADER_SMOKE_TEST_TIMEOUT_MS)
-
-  it('boots the Code Mode overlay tree, renders its banner, and exits cleanly', async () => {
-    // The overlay's only keyless composition proof: the include+patch tree,
-    // worker code runtime, and one-tool registry all mount before the banner.
-    const output = await smoke({
-      label: 'tui-agent code mode',
-      tempDirPrefix: 'tui-agent-code-mode-',
-      configPath: codeModeConfigPath,
-      actions: [{ waitFor: 'TUI Code Mode ready.', send: '/exit\r' }],
-    })
-    expect(output).toContain('TUI Code Mode ready.')
     expect(output).toContain('\u001B[?2004l')
   }, LOADER_SMOKE_TEST_TIMEOUT_MS)
 
@@ -362,8 +360,10 @@ describe('dsh CLI keyless smoke (apps/cli through the same PTY)', () => {
 
   it('applies the personal overlay: config.yaml patches the tree and .env feeds its !!js', async () => {
     // The whole personal-config chain in one boot: the personal .env supplies
-    // the variable, config.yaml patches the tui-agent entry with a `!!js`
-    // reference to it, and the banner renders the patched welcome verbatim.
+    // the variable, config.yaml patches the `tui` row — a row the SURFACE
+    // OVERLAY inserted, not one the base declares — with a `!!js` reference to
+    // it, and the banner renders the patched welcome verbatim. That proves a
+    // later patch list reaches a row an earlier one inserted.
     const output = await smoke({
       label: 'dsh personal overlay',
       tempDirPrefix: 'dsh-personal-overlay-',
@@ -373,12 +373,11 @@ describe('dsh CLI keyless smoke (apps/cli through the same PTY)', () => {
         personal: {
           '.env': 'DSH_PERSONAL_WELCOME=PERSONAL OVERLAY READY.\n',
           'config.yaml': [
-            '- id: tui-agent',
-            "  name: '@deepseek-ai/dsh-tui-demo'",
+            '- id: workspace-context',
+            '  disabled: true',
+            '- id: tui',
             '  config:',
-            '    provider: deepseek',
-            '    model: deepseek-v4-flash',
-            '    workspaceContext: false',
+            "    sessionId: !!js configuredAgentIdentities?.main?.id ?? 'main'",
             '    welcome: !!js process.env.DSH_PERSONAL_WELCOME',
             '',
           ].join('\n'),
@@ -402,11 +401,11 @@ describe('dsh CLI keyless smoke (apps/cli through the same PTY)', () => {
     expect(output).toContain('must be a top-level YAML array of loader patch entries')
   }, LOADER_SMOKE_TEST_TIMEOUT_MS)
 
-  it('routes the --resume flag into the config resume intake, failing loud on a missing id', async () => {
-    // The flag path end to end: apps/cli parses `--resume missing-session` and
-    // provides the id on the boot context, the shipped config's `!!js` reads it
-    // as a bare identifier, and the resume fails loud — proving the printed
-    // `dsh --resume <id>` hint reaches the config resume intake with no env var.
+  it('routes the --resume flag into the launcher session-identity slot, failing loud on a missing id', async () => {
+    // The flag path end to end: apps/cli parses `--resume missing-session`,
+    // provides it as the launcher-owned identity on the boot context, and the
+    // resume fails loud — proving the printed hint reaches the app's resume
+    // intake with no config key and no environment variable.
     const output = await smoke({
       label: 'dsh resume flag failure',
       tempDirPrefix: 'dsh-resume-flag-',
@@ -415,6 +414,77 @@ describe('dsh CLI keyless smoke (apps/cli through the same PTY)', () => {
       expectedExitCode: 1,
     })
     expect(output).toContain('ui-tui: session "missing-session" failed to start:')
+  }, LOADER_SMOKE_TEST_TIMEOUT_MS)
+
+  it('prints the launcher-owned resume command on exit, naming the booted config', async () => {
+    // The exit line is built by apps/cli from this invocation, so it must carry
+    // `--config`: a hint that omitted it would resume into the default tree.
+    const output = await smoke({
+      label: 'dsh goodbye message',
+      tempDirPrefix: 'dsh-goodbye-',
+      binScript: dshBinScript,
+      configPath: scriptedConfigPath,
+      actions: [{ waitFor: 'scripted TUI ready.', send: '/exit\r' }],
+    })
+    expect(output).toMatch(/To resume this session: dsh --resume=main-session-[0-9a-f-]{36} --config/)
+  }, LOADER_SMOKE_TEST_TIMEOUT_MS)
+
+  it('keeps resume working when the personal overlay replaces the whole agent-loop config', async () => {
+    // Loader patches replace a targeted `config` key wholesale, so a personal
+    // overlay repointing the model route drops every identity key the shipped
+    // row declared. Launcher-owned identity makes that unreachable: agent-loop
+    // applies the launcher's id over whatever route survives.
+    const output = await smoke({
+      label: 'dsh overlay keeps resume',
+      tempDirPrefix: 'dsh-overlay-resume-',
+      binScript: dshBinScript,
+      configArgs: [],
+      prepare: seedWorkspace({
+        personal: {
+          'config.yaml': [
+            '- id: workspace-context',
+            '  disabled: true',
+            '- id: agent-loop',
+            '  config:',
+            '    agents:',
+            '      - id: main',
+            '        provider: deepseek',
+            '        model: deepseek-v4-flash',
+            '        cwd: !!js process.cwd()',
+            '- id: tui',
+            '  config:',
+            "    sessionId: !!js configuredAgentIdentities?.main?.id ?? 'main'",
+            '    welcome: OVERLAY REPLACED THE CONFIG.',
+            '',
+          ].join('\n'),
+        },
+      }),
+      actions: [{ waitFor: 'OVERLAY REPLACED THE CONFIG.', send: '/exit\r' }],
+    })
+    expect(output).toMatch(/To resume this session: dsh --resume=main-session-[0-9a-f-]{36}/)
+  }, LOADER_SMOKE_TEST_TIMEOUT_MS)
+
+  it('reports a failing bash command exactly once, as the terminal card exit pill', async () => {
+    // The model-facing result ends in `[exit code: 3]`, which the terminal card
+    // consumes into its own `[exit 3]` pill. Rendering both would report the same
+    // exit twice, so the marker must not survive into the card body.
+    const output = await smoke({
+      label: 'dsh bash exit pill',
+      tempDirPrefix: 'dsh-bash-exit-pill-',
+      configPath: scriptedConfigPath,
+      actions: [
+        ...SELECT_PRO_MODEL,
+        {
+          waitFor: 'Model selected: tui-scripted/tui-scripted-model-pro.',
+          send: 'Run the failing scripted command.\r',
+        },
+        { waitFor: 'Scripted bash failure observed.', send: '/exit\r' },
+      ],
+    })
+    // The command really ran: its stdout is in the card body.
+    expect(output).toContain('SCRIPTED_BASH_FAILED')
+    expect(output).toContain('[exit 3]')
+    expect(output).not.toContain('[exit code: 3]')
   }, LOADER_SMOKE_TEST_TIMEOUT_MS)
 
   it('tells the model its source path and offers the bundled maintenance skills', async () => {

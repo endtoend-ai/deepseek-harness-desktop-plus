@@ -20,6 +20,13 @@ const SKILL_BLOCK_OPEN = '<skill name="scripted-skill">'
 const SKILL_BODY_MARKER = 'SCRIPTED SKILL BODY MARKER'
 const SKILL_RECEIVED_TEXT = 'Scripted skill body received.'
 const TITLE_TEXT = 'scripted session title'
+// The failing-bash scenario proves the terminal card reports a non-zero exit
+// exactly once: the model-facing result carries the `[exit code: N]` marker, and
+// the card turns it into its own `[exit N]` pill instead of showing both.
+const BASH_FAILURE_PROBE = 'Run the failing scripted command.'
+const BASH_FAILURE_COMMAND = 'printf "SCRIPTED_BASH_FAILED\\n"; exit 3'
+const BASH_FAILURE_TEXT = 'Scripted bash failure observed.'
+const BASH_FAILURE_CALL_ID = CallId('call-bash-failure')
 
 function textChunks(text: string): StreamChunk[] {
   return [
@@ -108,15 +115,34 @@ class ScriptedTuiAdapter extends LlmAdapter {
       return
     }
 
-    const hasToolResult = lastMessage?.content.some(block => block.type === 'tool-result') ?? false
-    if (hasToolResult) {
-      const toolResultText = lastMessage?.content.flatMap(block => block.type === 'tool-result'
+    const blocks = lastMessage?.content ?? []
+    if (blocks.some(block => block.type === 'tool-result')) {
+      const answeredBash = blocks.some(block =>
+        block.type === 'tool-result' && block.toolCallId === BASH_FAILURE_CALL_ID)
+      if (answeredBash) {
+        for (const chunk of textChunks(BASH_FAILURE_TEXT)) yield chunk
+        return
+      }
+      const toolResultText = blocks.flatMap(block => block.type === 'tool-result'
         ? block.content.flatMap(content => content.type === 'text' ? [content.text] : [])
-        : []).join('\n') ?? ''
+        : []).join('\n')
       if (toolResultText !== '{"answers":[{"id":"mode","selected":["Safe"],"custom":"Release notes"}]}') {
         throw new Error(`the scripted TUI request received an unexpected question answer: ${toolResultText}`)
       }
       for (const chunk of textChunks(FINAL_TEXT)) yield chunk
+      return
+    }
+    if (lastText.includes(BASH_FAILURE_PROBE)) {
+      const bashArgs = JSON.stringify({ command: BASH_FAILURE_COMMAND, description: 'Run the failing scripted command' })
+      yield { type: 'block-start', index: 0, blockType: 'tool-call' }
+      yield { type: 'tool-call-delta', index: 0, id: BASH_FAILURE_CALL_ID, name: 'bash', argumentsDelta: bashArgs }
+      yield {
+        type: 'block-end',
+        index: 0,
+        block: { type: 'tool-call', id: BASH_FAILURE_CALL_ID, name: 'bash', arguments: bashArgs },
+      }
+      yield { type: 'usage', usage: { inputTokens: 20, outputTokens: 10 } }
+      yield { type: 'finish', reason: { kind: 'tool-calls' } }
       return
     }
 
