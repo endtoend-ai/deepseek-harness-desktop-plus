@@ -22,6 +22,11 @@ This README documents source access and development only. It does not provide a 
 - **Desktop appearance settings**: local background images and related display settings; the screenshot on this page shows the project interface.
 - **Complete development source**: desktop app, Web interface, CLI, capability packages, native helpers, Python SDK, examples, and build scripts are kept in the repository.
 
+## Chinese permissions and DeepSeek model controls
+
+- **Permission selection**: the composer uses the Chinese `只读`, `工作区写入`, and `完全访问` labels for the current session. General settings affect only new sessions, and enabling Full access requires an explicit risk confirmation.
+- **Model and thinking modes**: the model and API key remain managed in Settings. The composer shows the current DeepSeek model and offers `关闭思考`, `深度思考`, and `最大思考` without inventing a speed setting that DeepSeek does not expose.
+
 ## Quick start
 
 ### Get the source
@@ -103,9 +108,9 @@ deepseek-harness-app/
 4. `apps/web/`: the Web workspace loaded by the desktop window.
 5. `apps/cli/` and `packages/`: CLI composition and Harness capabilities.
 
-## Plugin center roadmap
+## Plugin center roadmap (in development)
 
-The plugin center is a future development direction and is not presented as a completed feature. Planned scope includes browsing popular plugins, selecting plugin combinations, and one-click installation and removal. Implementation will be added through later source iterations.
+The plugin center remains a placeholder rather than a completed feature. Planned scope includes browsing and searching popular plugins, assembling a custom selection, and one-click installation and removal. Real project screens and usage details will be added after implementation.
 
 ## Relationship to DeepSeek Harness
 
