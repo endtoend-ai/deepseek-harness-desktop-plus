@@ -24,7 +24,7 @@
 
 <p align="center">把 DeepSeek Harness 的本地 Web 工作区、Host 运行管理和桌面窗口整合为开箱即用的开发环境，让开发者可以获取源码、直接修改并在本地继续构建。</p>
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="#快速开始"><strong>获取源码并启动开发</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-desktop/releases/download/desktop-preview-v0.1.0-rc.5/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe"><strong>下载 Windows x64 开发预览版</strong></a></p>
 
 <p align="center">
   <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Desktop 大肥鱼拟人默认皮肤" width="100%">
@@ -53,7 +53,7 @@
 
 DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作区，并由桌面主进程启动和管理本地 `dsh web` 服务。这个仓库提供完整源码开发环境，使用者可以从 GitHub 克隆或下载代码，在本地安装依赖、编辑源码、启动桌面应用并继续开发。
 
-桌面安装包只通过本仓库的 GitHub Releases 发布，不使用第三方下载站。首个经过平台验收的版本发布前，用户仍需从源码启动开发环境。
+桌面安装包只通过本仓库的 GitHub Releases 发布，不使用第三方下载站。目前已经提供经过真实 Electron 验收的 macOS arm64 预览 ZIP 和 Windows x64 预览安装程序；需要继续开发时，仍可获取完整源码并在本地启动。
 
 ## 核心功能
 
@@ -109,9 +109,11 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 
 ## 下载桌面端
 
-> GitHub Releases 提供经过真实 Electron 验收的 macOS Apple Silicon 开发预览 ZIP，无需安装 Node.js 或 pnpm。当前预览包没有 Apple Developer 签名与公证，仅用于开发测试；正式版本仍将提供已签名的 macOS `.dmg` 和 Windows x64 `.exe`。
+> GitHub Releases 已提供经过真实 Electron 验收的 macOS Apple Silicon 预览 ZIP 和 Windows x64 预览安装程序，运行桌面端无需另行安装 Node.js 或 pnpm。当前均为开发预览资产；正式版本仍将提供完成平台签名的 macOS `.dmg` 和 Windows x64 `.exe`。
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>前往 GitHub Releases 下载中心</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>下载 macOS arm64 预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-desktop/releases/download/desktop-preview-v0.1.0-rc.5/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe"><strong>下载 Windows x64 安装程序</strong></a></p>
+
+### macOS arm64
 
 下载并解压预览 ZIP 后，建议先把 `DeepSeek Harness.app` 拖入“应用程序”目录。由于当前预览包尚未经过 Apple 公证，首次打开前需要在“终端”执行：
 
@@ -121,6 +123,10 @@ open "/Applications/DeepSeek Harness.app"
 ```
 
 如果应用没有放在“应用程序”目录，请把命令中的路径替换为实际路径。该命令只应用于从本仓库 GitHub Releases 下载并核验过 SHA-256 的预览包；不要用于来源不明的应用。首次成功打开后，可以像普通应用一样从 Finder 或程序坞启动。
+
+### Windows x64
+
+下载 `DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe` 后直接运行安装程序。对应的 `SHA256SUMS-windows-x64-preview.txt` 和 `WINDOWS_PREVIEW_VERIFICATION.txt` 位于同一 Release，可用于核对安装包完整性和平台验收结果。
 
 开发预览版使用独立 Pre-release 标签并附带 SHA-256 校验文件，不触发正式安装器发布。正式流程只接受与 Desktop 版本完全一致的 `desktop-v*` 标签；macOS 与 Windows 安装包分别完成平台签名验证后，GitHub 才会同时公开安装文件和 `SHA256SUMS`。
 
