@@ -85,6 +85,16 @@ describe('desktop packaging configuration', () => {
     expect(desktopPackage.scripts.package).not.toContain('release-preflight.ts')
   })
 
+  it('routes desktop development through the fingerprinted launcher without weakening release builds', () => {
+    expect(desktopPackage.scripts.dev).toBe('node --import tsx scripts/dev-desktop.ts')
+    expect(desktopPackage.scripts['dev:rebuild'])
+      .toBe('node --import tsx scripts/dev-desktop.ts --rebuild')
+    expect(rootPackage.scripts['dev:desktop'])
+      .toBe('pnpm --filter @deepseek-ai/dsh-desktop run dev')
+    expect(rootPackage.scripts['dev:desktop:rebuild'])
+      .toBe('pnpm --filter @deepseek-ai/dsh-desktop run dev:rebuild')
+  })
+
   it('makes the macOS DMG and ZIP update path signed, hardened, and notarized', () => {
     const command = desktopPackage.scripts['dist:mac']
 

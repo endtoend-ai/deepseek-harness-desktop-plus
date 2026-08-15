@@ -8,7 +8,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && tsdown",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json",
-    "dev": "pnpm --workspace-root run build && electron .",
+    "dev": "node --import tsx scripts/dev-desktop.ts",
+    "dev:rebuild": "node --import tsx scripts/dev-desktop.ts --rebuild",
     "package": "pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && electron-builder --dir",
     "dist": "pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && electron-builder",
     "dist:mac": "node --import tsx scripts/release-mac.ts",

@@ -137,6 +137,7 @@
     "release:publish": "tsx scripts/release/publish.ts",
     "dsh": "node --import tsx/esm apps/cli/src/bin.ts",
     "dev:desktop": "pnpm --filter @deepseek-ai/dsh-desktop run dev",
+    "dev:desktop:rebuild": "pnpm --filter @deepseek-ai/dsh-desktop run dev:rebuild",
     "package:desktop": "pnpm --filter @deepseek-ai/dsh-desktop run package",
     "dist:desktop": "pnpm --filter @deepseek-ai/dsh-desktop run dist",
     "dist:mac:desktop": "pnpm --filter @deepseek-ai/dsh-desktop run dist:mac",

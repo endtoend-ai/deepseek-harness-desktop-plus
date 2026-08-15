@@ -6,10 +6,16 @@ The desktop app supervises the existing loopback Web Host and keeps it alive fro
 
 ## Development
 
-Install dependencies, then use the single desktop development command. It builds the Host and client packages, Web frontend, and Electron main process before launching the application:
+Install dependencies, then use the desktop development command. On the first run, after a relevant input changes, or when a required output is missing, it builds the Host and client packages, Web frontend, and Electron main process before launching the application. When those inputs and outputs are unchanged, it launches Electron directly from the verified build:
 
 ```sh
 pnpm run dev:desktop
+```
+
+The launcher records a content fingerprint under the ignored `apps/desktop/lib/` output directory. Source, manifest, build-configuration, Node runtime, or build-environment changes invalidate that record; documentation-only edits do not. A failed build never leaves a reusable record. Force a complete rebuild when diagnosing generated output or toolchain state:
+
+```sh
+pnpm run dev:desktop:rebuild
 ```
 
 Closing the window hides it. Use the tray menu to restore the window or quit the application. Explicit quit waits for the Host process to stop and escalates termination after the bounded Host grace period.
