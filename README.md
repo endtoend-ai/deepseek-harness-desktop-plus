@@ -1,8 +1,26 @@
-# DeepSeek Harness Desktop
+<p align="center">
+  <a href="https://www.beyondata.com/">
+    <img src="apps/web/public/dsh-desktop/beyondata-logo.png" alt="赋范空间 Logo" width="92" height="92">
+  </a>
+</p>
 
-中文 | [English](README.en.md)
+<h1 align="center">DeepSeek Harness Desktop</h1>
 
-基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 源码持续开发的桌面端项目，面向需要下载源码、修改功能并在本地运行的开发者。
+<p align="center">
+  <a href="https://github.com/fufankeji/deepseek-harness-app/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-app?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
+  <img src="https://img.shields.io/badge/Desktop-App-2563EB" alt="Desktop App">
+  <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-app?color=22C55E" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
+</p>
+
+<p align="center"><strong>中文</strong> · <a href="README.en.md">English</a></p>
+
+<p align="center"><strong>赋范空间出品 · 为 DeepSeek Harness 生态打造的现代化桌面开发体验</strong></p>
+
+<p align="center">把 DeepSeek Harness 的本地 Web 工作区、Host 运行管理和桌面窗口整合为开箱即用的开发环境，让开发者可以获取源码、直接修改并在本地继续构建。</p>
+
+<p align="center"><a href="#快速开始"><strong>获取源码并启动开发</strong></a></p>
 
 <p align="center">
   <img src="assets/deepseek-harness-desktop-cn.png" alt="DeepSeek Harness Desktop 项目界面" width="100%">

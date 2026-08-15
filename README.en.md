@@ -1,8 +1,26 @@
-# DeepSeek Harness Desktop
+<p align="center">
+  <a href="https://www.beyondata.com/">
+    <img src="apps/web/public/dsh-desktop/beyondata-logo.png" alt="Beyondata logo" width="92" height="92">
+  </a>
+</p>
 
-[中文](README.md) | English
+<h1 align="center">DeepSeek Harness Desktop</h1>
 
-A desktop project developed from the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) source code for developers who want to download, modify, run, and extend the application locally.
+<p align="center">
+  <a href="https://github.com/fufankeji/deepseek-harness-app/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-app?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
+  <img src="https://img.shields.io/badge/Desktop-App-2563EB" alt="Desktop App">
+  <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-app?color=22C55E" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
+</p>
+
+<p align="center"><a href="README.md">中文</a> · <strong>English</strong></p>
+
+<p align="center"><strong>Built by Beyondata · A modern desktop development experience for the DeepSeek Harness ecosystem</strong></p>
+
+<p align="center">DeepSeek Harness Desktop combines the local Web workspace, Host lifecycle management, and a native desktop window into a development environment that developers can download as source, modify directly, and continue building locally.</p>
+
+<p align="center"><a href="#quick-start"><strong>Get the source and start developing</strong></a></p>
 
 <p align="center">
   <img src="assets/deepseek-harness-desktop-cn.png" alt="DeepSeek Harness Desktop project interface" width="100%">
