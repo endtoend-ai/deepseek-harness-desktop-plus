@@ -4,15 +4,15 @@
   </a>
 </p>
 
-<h1 align="center">DeepSeek Harness Desktop</h1>
+<h1 align="center">DeepSeek Harness Studio</h1>
 
 <p align="center">
-  <a href="https://github.com/fufankeji/deepseek-harness-desktop/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-desktop?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
+  <a href="https://github.com/fufankeji/deepseek-harness-studio/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-studio?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
   <img src="https://img.shields.io/badge/Desktop-App-2563EB" alt="Desktop App">
   <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
   <img src="https://img.shields.io/badge/Plugin%20Center-online-22C55E" alt="公开插件中心已上线">
   <img src="https://img.shields.io/badge/Vision-Qwen3.8-7C3AED" alt="Qwen3.8 视觉增强">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-desktop?color=22C55E" alt="MIT License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-studio?color=22C55E" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
 </p>
 
@@ -22,12 +22,12 @@
 
 <p align="center"><strong>从公开生态搜索、校验、一键安装与移除 DSH 插件 · 让 DeepSeek 看懂图片</strong></p>
 
-<p align="center">把 DeepSeek Harness 的本地 Web 工作区、Host 运行管理和桌面窗口整合为开箱即用的开发环境，让开发者可以获取源码、直接修改并在本地继续构建。</p>
+<p align="center">DeepSeek Harness Studio 把本地 Web 工作区、Host 运行管理和桌面窗口整合为开箱即用的开发环境，让开发者可以获取源码、直接修改并在本地继续构建。</p>
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-desktop/releases/download/desktop-preview-v0.1.0-rc.5/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe"><strong>下载 Windows x64 开发预览版</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.5/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe"><strong>下载 Windows x64 开发预览版</strong></a></p>
 
 <p align="center">
-  <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Desktop 大肥鱼拟人默认皮肤" width="100%">
+  <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Studio 大肥鱼拟人默认皮肤" width="100%">
 </p>
 
 ## 先看功能：当前能力与近期路线图
@@ -51,7 +51,7 @@
 
 ## 项目简介
 
-DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作区，并由桌面主进程启动和管理本地 `dsh web` 服务。这个仓库提供完整源码开发环境，使用者可以从 GitHub 克隆或下载代码，在本地安装依赖、编辑源码、启动桌面应用并继续开发。
+DeepSeek Harness Studio 使用 Electron 承载 DeepSeek Harness 的 Web 工作区，并由桌面主进程启动和管理本地 `dsh web` 服务。这个仓库提供完整源码开发环境，使用者可以从 GitHub 克隆或下载代码，在本地安装依赖、编辑源码、启动桌面应用并继续开发。
 
 桌面安装包只通过本仓库的 GitHub Releases 发布，不使用第三方下载站。目前已经提供经过真实 Electron 验收的 macOS arm64 预览 ZIP 和 Windows x64 预览安装程序；需要继续开发时，仍可获取完整源码并在本地启动。
 
@@ -83,7 +83,7 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 ## 公开插件中心：在线发现、安装与移除
 
 <p align="center">
-  <img src="assets/plugin-center-desktop.png" alt="DeepSeek Harness Desktop 公开插件中心真实界面" width="100%">
+  <img src="assets/plugin-center-desktop.png" alt="DeepSeek Harness Studio 公开插件中心真实界面" width="100%">
   <br><sub>真实 Desktop 界面：公开目录、已安装区域、“安装”按钮与三点管理入口。</sub>
 </p>
 
@@ -111,7 +111,7 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 
 > GitHub Releases 已提供经过真实 Electron 验收的 macOS Apple Silicon 预览 ZIP 和 Windows x64 预览安装程序，运行桌面端无需另行安装 Node.js 或 pnpm。当前均为开发预览资产；正式版本仍将提供完成平台签名的 macOS `.dmg` 和 Windows x64 `.exe`。
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>下载 macOS arm64 预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-desktop/releases/download/desktop-preview-v0.1.0-rc.5/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe"><strong>下载 Windows x64 安装程序</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases"><strong>下载 macOS arm64 预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.5/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe"><strong>下载 Windows x64 安装程序</strong></a></p>
 
 ### macOS arm64
 
@@ -137,8 +137,8 @@ open "/Applications/DeepSeek Harness.app"
 使用 Git 克隆仓库：
 
 ```sh
-git clone https://github.com/fufankeji/deepseek-harness-desktop.git
-cd deepseek-harness-desktop
+git clone https://github.com/fufankeji/deepseek-harness-studio.git
+cd deepseek-harness-studio
 ```
 
 也可以在 GitHub 仓库页面选择 **Code → Download ZIP**，下载并解压源码后进入项目目录。
@@ -177,7 +177,7 @@ pnpm run dev:desktop:rebuild
 ## 目录结构
 
 ```text
-deepseek-harness-desktop/
+deepseek-harness-studio/
 ├── apps/
 │   ├── desktop/       # Electron 主进程、preload、Host 生命周期与桌面构建脚本
 │   ├── web/           # DeepSeek Harness Web 界面入口与桌面端组合

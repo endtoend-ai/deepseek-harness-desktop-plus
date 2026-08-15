@@ -1,4 +1,4 @@
-# DeepSeek Harness 桌面端
+# DeepSeek Harness Studio · 桌面应用
 
 [English](README.md) | 中文
 

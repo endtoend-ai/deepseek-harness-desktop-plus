@@ -4,15 +4,15 @@
   </a>
 </p>
 
-<h1 align="center">DeepSeek Harness Desktop</h1>
+<h1 align="center">DeepSeek Harness Studio</h1>
 
 <p align="center">
-  <a href="https://github.com/fufankeji/deepseek-harness-desktop/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-desktop?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
+  <a href="https://github.com/fufankeji/deepseek-harness-studio/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-studio?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
   <img src="https://img.shields.io/badge/Desktop-App-2563EB" alt="Desktop App">
   <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
   <img src="https://img.shields.io/badge/Plugin%20Center-online-22C55E" alt="Public Plugin Center is online">
   <img src="https://img.shields.io/badge/Vision-Qwen3.8-7C3AED" alt="Qwen3.8 vision enhancement">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-desktop?color=22C55E" alt="MIT License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-studio?color=22C55E" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
 </p>
 
@@ -22,12 +22,12 @@
 
 <p align="center"><strong>Search, verify, install, and remove DSH plugins from the public ecosystem · Let DeepSeek understand images</strong></p>
 
-<p align="center">DeepSeek Harness Desktop combines the local Web workspace, Host lifecycle management, and a native desktop window into a development environment that developers can download as source, modify directly, and continue building locally.</p>
+<p align="center">DeepSeek Harness Studio combines the local Web workspace, Host lifecycle management, and a native desktop window into a development environment that developers can download as source, modify directly, and continue building locally.</p>
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>Download the macOS arm64 development preview</strong></a> · <a href="#quick-start"><strong>Get the source and start developing</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases"><strong>Download the macOS arm64 development preview</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.5/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe"><strong>Download the Windows x64 development preview</strong></a></p>
 
 <p align="center">
-  <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Desktop whale-maid default skin" width="100%">
+  <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Studio whale-maid default skin" width="100%">
 </p>
 
 ## At a glance: available features and near-term roadmap
@@ -51,9 +51,9 @@
 
 ## Project overview
 
-DeepSeek Harness Desktop uses Electron to host the DeepSeek Harness Web workspace. The desktop main process starts and manages a local `dsh web` service. This repository provides the complete development source so users can clone or download it, install dependencies, edit the code, launch the desktop app, and continue development.
+DeepSeek Harness Studio uses Electron to host the DeepSeek Harness Web workspace. The desktop main process starts and manages a local `dsh web` service. This repository provides the complete development source so users can clone or download it, install dependencies, edit the code, launch the desktop app, and continue development.
 
-Desktop installers are published only through this repository's GitHub Releases page, never through a third-party download site. Until the first platform-accepted build is published, users must launch the development environment from source.
+Desktop installers are published only through this repository's GitHub Releases page, never through a third-party download site. Electron-validated macOS arm64 and Windows x64 development previews are available now, while the complete source remains available for local development.
 
 ## Core features
 
@@ -83,7 +83,7 @@ Open **Settings → Background** to switch built-in skins. For a custom image, t
 ## Public Plugin Center: discover, install, and remove online
 
 <p align="center">
-  <img src="assets/plugin-center-desktop.png" alt="Real DeepSeek Harness Desktop public Plugin Center interface" width="100%">
+  <img src="assets/plugin-center-desktop.png" alt="Real DeepSeek Harness Studio public Plugin Center interface" width="100%">
   <br><sub>Real Desktop interface: public catalog, Installed area, Install buttons, and three-dot management actions.</sub>
 </p>
 
@@ -109,9 +109,9 @@ The text-based DeepSeek model used by the desktop workflow cannot interpret imag
 
 ## Download the desktop app
 
-> GitHub Releases provides a macOS Apple Silicon development-preview ZIP that has passed real Electron acceptance and requires no Node.js or pnpm installation. The current preview is not signed or notarized with an Apple Developer identity and is intended for development testing only. The formal release will still provide a signed macOS `.dmg` and Windows x64 `.exe`.
+> GitHub Releases provides Electron-validated macOS Apple Silicon and Windows x64 development previews. Running either desktop build requires no separate Node.js or pnpm installation. These remain development-preview assets; formal releases will provide platform-signed macOS `.dmg` and Windows x64 `.exe` installers.
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>Open the GitHub Releases download center</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases"><strong>Download the macOS arm64 preview</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.5/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe"><strong>Download the Windows x64 installer</strong></a></p>
 
 Development previews use a separate pre-release tag and include a SHA-256 checksum file without triggering the formal installer workflow. The formal workflow accepts only a `desktop-v*` tag that exactly matches the Desktop version, and publishes the macOS and Windows installers with `SHA256SUMS` only after both platform signatures pass verification.
 
@@ -122,8 +122,8 @@ Development previews use a separate pre-release tag and include a SHA-256 checks
 Clone the repository with Git:
 
 ```sh
-git clone https://github.com/fufankeji/deepseek-harness-desktop.git
-cd deepseek-harness-desktop
+git clone https://github.com/fufankeji/deepseek-harness-studio.git
+cd deepseek-harness-studio
 ```
 
 You can also choose **Code → Download ZIP** on the GitHub repository page, extract the archive, and open the project directory.
@@ -162,7 +162,7 @@ pnpm run dev:desktop:rebuild
 ## Repository layout
 
 ```text
-deepseek-harness-desktop/
+deepseek-harness-studio/
 ├── apps/
 │   ├── desktop/       # Electron main process, preload, Host lifecycle, and desktop build scripts
 │   ├── web/           # DeepSeek Harness Web entry and desktop composition

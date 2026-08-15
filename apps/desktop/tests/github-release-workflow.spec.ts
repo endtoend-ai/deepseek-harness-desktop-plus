@@ -29,12 +29,13 @@ describe('desktop GitHub Release workflow', () => {
     expect(workflow).toContain('gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false')
   })
 
-  it('keeps the bilingual public download entry honest before the first release', () => {
+  it('keeps the bilingual public download entry on the Studio repository', () => {
     for (const readme of [chineseReadme, englishReadme]) {
-      expect(readme).toContain('https://github.com/fufankeji/deepseek-harness-desktop/releases')
+      expect(readme).toContain('https://github.com/fufankeji/deepseek-harness-studio/releases')
       expect(readme).toContain('SHA256SUMS')
+      expect(readme).not.toContain('https://github.com/fufankeji/deepseek-harness-desktop')
     }
-    expect(chineseReadme).toContain('暂无公开安装包')
-    expect(englishReadme).toContain('does not yet contain a public installer')
+    expect(chineseReadme).toContain('下载 Windows x64')
+    expect(englishReadme).toContain('Download the Windows x64')
   })
 })

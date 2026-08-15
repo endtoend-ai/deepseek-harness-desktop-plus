@@ -272,7 +272,7 @@ jobs:
             exit 1
           fi
           cat > release-notes.md <<EOF
-          DeepSeek Harness Desktop ${RELEASE_VERSION}
+          DeepSeek Harness Studio ${RELEASE_VERSION}
 
           - macOS Apple Silicon: signed and notarized DMG
           - Windows x64: Authenticode-signed NSIS installer
@@ -285,7 +285,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY"
             --verify-tag
             --draft
-            --title "DeepSeek Harness Desktop ${RELEASE_VERSION}"
+            --title "DeepSeek Harness Studio ${RELEASE_VERSION}"
             --notes-file release-notes.md
           )
           if [[ "$RELEASE_PRERELEASE" == true ]]; then arguments+=(--prerelease); fi
