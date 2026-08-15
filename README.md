@@ -10,6 +10,7 @@
   <a href="https://github.com/fufankeji/deepseek-harness-desktop/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-desktop?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
   <img src="https://img.shields.io/badge/Desktop-App-2563EB" alt="Desktop App">
   <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
+  <img src="https://img.shields.io/badge/Plugin%20Center-online-22C55E" alt="公开插件中心已上线">
   <img src="https://img.shields.io/badge/Vision-Qwen3.8-7C3AED" alt="Qwen3.8 视觉增强">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-desktop?color=22C55E" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
@@ -19,11 +20,11 @@
 
 <p align="center"><strong>赋范空间出品 · 为 DeepSeek Harness 生态打造的现代化桌面开发体验</strong></p>
 
-<p align="center"><strong>让文本型 DeepSeek 看懂截图、照片、图表和图片文字</strong></p>
+<p align="center"><strong>从公开生态搜索、校验、一键安装与移除 DSH 插件 · 让 DeepSeek 看懂图片</strong></p>
 
 <p align="center">把 DeepSeek Harness 的本地 Web 工作区、Host 运行管理和桌面窗口整合为开箱即用的开发环境，让开发者可以获取源码、直接修改并在本地继续构建。</p>
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>桌面端下载（安装包开发中）</strong></a> · <a href="#快速开始"><strong>获取源码并启动开发</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="#快速开始"><strong>获取源码并启动开发</strong></a></p>
 
 <p align="center">
   <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Desktop 大肥鱼拟人默认皮肤" width="100%">
@@ -31,7 +32,7 @@
 
 ## 先看功能：当前能力与近期路线图
 
-> 桌面开发工作区和中文 DeepSeek 控制已经可用；标为“开发中”或“规划中”的能力尚未上线，会在真实功能可运行后更新状态。
+> 桌面开发工作区、公开插件中心和中文 DeepSeek 控制已经可用；标为“开发中”或“规划中”的能力尚未上线，会在真实功能可运行后更新状态。
 
 | 能力 | 状态 | 可以做什么 |
 | --- | --- | --- |
@@ -39,8 +40,8 @@
 | **视觉增强** | ✅ 已支持 | 为 DeepSeek 文本工作流补齐图像理解：读取对话附件和工作区图片，再把可追溯的识别结果交给 Agent。 |
 | **中文 DeepSeek 控制** | ✅ 已支持 | 使用中文权限选项和适配 DeepSeek 的思考模式，在输入区直接完成会话级选择。 |
 | **内置皮肤与自由换肤** | ✅ 已支持 | 默认使用“大肥鱼拟人”皮肤，可切换“云端猫咪”，也可选择本地图片并自动适配界面配色。 |
-| **插件中心** | 🚧 开发中 · **预计 1 天内上线** | 首个可用版本集中提供插件发现、搜索、分类、详情、安装入口和结果反馈；自由组装、卸载、更新与兼容性检查按后续版本开放。 |
-| **MCP、Skills 与工具扩展** | 🗓️ 规划中 | 在桌面端发现、连接和管理 MCP Server、Skills 与工具，按项目自由组合 Agent 能力。 |
+| **公开插件中心** | ✅ 已支持 | 从 npm 公共生态实时发现带 `dsh-plugin` 标签的插件与 Bundle 封装 Skill Pack，查看详情与风险，一键在线安装，并管理启用、停用和卸载。 |
+| **独立 MCP、Skills 与工具管理** | 🗓️ 规划中 | 后续提供不依赖 Bundle 包装的 MCP Server、Skills 与工具发现和连接管理，按项目自由组合 Agent 能力。 |
 | **Agent 预设与多 Agent 协作** | 🗓️ 规划中 | 自定义 Agent 与子 Agent，把编码、测试、调研和审查任务交给不同角色协同完成。 |
 | **任务规划、后台运行与会话恢复** | 🗓️ 规划中 | 管理计划和待办，让长任务在后台继续运行，并随时查看进度或接续历史会话。 |
 | **项目规则、Hooks 与长期记忆** | 🗓️ 规划中 | 集中管理项目指令、自动化 Hooks 和可持续复用的上下文，让 Agent 按仓库规则稳定工作。 |
@@ -59,6 +60,7 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 - **Electron 桌面端**：提供应用窗口、系统托盘、单实例运行、外部链接处理和安全的 preload 通信接口。
 - **本地 Harness Host**：桌面主进程启动 `dsh web`，等待本地服务就绪，并在应用退出时关闭 Host 进程。
 - **Web 工作区**：保留 DeepSeek Harness 的会话、工作区、模型、工具、Skills 和插件运行能力。
+- **公开插件中心**：在线搜索 npm 公共 `dsh-plugin` 生态，在安装前校验确定版本、产物完整性、Bundle 声明和本机兼容性，并在已安装区域管理启用、停用与卸载。
 - **对话区视觉增强**：一键启用百炼 Qwen3.8 图像理解，支持截图、照片、图表、OCR 和工作区图片，不替换当前 DeepSeek 主模型。
 - **桌面外观设置**：内置“大肥鱼拟人”和“云端猫咪”两套皮肤，也支持本地背景图片、主体焦点和界面玻璃层调节。
 - **完整开发源码**：仓库同时包含桌面应用、Web 界面、CLI、功能包、原生辅助模块、Python SDK、示例和构建脚本。
@@ -93,11 +95,11 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 
 ## 下载桌面端
 
-> 项目仍在开发，GitHub Releases 暂无公开安装包。首个经过平台验收的版本完成后，下载页将提供 macOS Apple Silicon `.dmg` 和 Windows x64 `.exe`，无需安装 Node.js 或 pnpm。
+> GitHub Releases 提供经过真实 Electron 验收的 macOS Apple Silicon 开发预览 ZIP，无需安装 Node.js 或 pnpm。当前预览包没有 Apple Developer 签名与公证，仅用于开发测试；正式版本仍将提供已签名的 macOS `.dmg` 和 Windows x64 `.exe`。
 
 <p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>前往 GitHub Releases 下载中心</strong></a></p>
 
-发布流程只接受与 Desktop 版本完全一致的 `desktop-v*` 标签。macOS 与 Windows 安装包分别完成平台签名验证后，GitHub 才会同时公开安装文件和 `SHA256SUMS`；构建或验证失败不会产生公开的半成品 Release。
+开发预览版使用独立 Pre-release 标签并附带 SHA-256 校验文件，不触发正式安装器发布。正式流程只接受与 Desktop 版本完全一致的 `desktop-v*` 标签；macOS 与 Windows 安装包分别完成平台签名验证后，GitHub 才会同时公开安装文件和 `SHA256SUMS`。
 
 ## 快速开始
 
@@ -180,9 +182,18 @@ deepseek-harness-desktop/
 4. `apps/web/`：桌面窗口加载的 Web 工作区。
 5. `apps/cli/` 与 `packages/`：CLI 组合以及各项 Harness 能力实现。
 
-## 插件中心（开发中，预计 1 天内上线）
+## 公开插件中心：在线发现、安装与移除
 
-插件中心的首个可用版本将把插件发现、搜索、分类、详情、安装入口和结果反馈集中到桌面端，预计 1 天内上线。自由组装、卸载、更新与兼容性检查会按后续可运行版本逐项开放；功能实际可用后，本页会同步补充真实界面和使用说明。
+从左侧进入 **插件中心**，即可搜索 npm 公共 Registry 中使用 `dsh-plugin` 标签、并符合 DeepSeek Harness Bundle 规范的插件与 Skill Pack。缺少 `dsh.bundle.patch`、确定版本或可信 npm 完整性信息的包不会进入可安装流程。
+
+- **发现与详情**：在“插件 / 技能”之间切换，搜索公开条目并查看版本、能力、权限、兼容性和风险说明；网络不可用时可以读取本机最近一次已校验缓存，并明确显示数据新鲜度。
+- **一键在线安装**：点击“安装”后，Desktop 下载 npm 上的确定版本，核对包身份、完整性、Bundle Patch、运行证据和本机环境；用户确认后写入当前 Profile、重启 Harness Host，只有 Host、客户端或 Skill 证据真实出现才显示完成。
+- **已安装管理**：已安装区域区分系统、公开目录和本地来源，同时显示 Bundle 是否启用及当前运行状态；公开目录插件可执行启用、停用和卸载。
+- **安全移除**：卸载会移除插件包和当前 Bundle 组合，默认保留配置与插件数据；如需清理数据，Desktop 会在卸载成功后单独列出插件声明的自有目录，由用户再次确认选择。
+
+最短操作路径：**插件中心 → 搜索 → 打开详情 → 安装并确认 → 等待 Host 重启与运行验证**。需要移除时，在已安装条目或其操作菜单中选择“卸载”，再决定是否保留插件数据。
+
+> 当前公开目录来自 npm 的 `dsh-plugin` 生态；GitHub Topic 只用于项目发现，不会直接取得安装权限。社区包通过确定产物和 Bundle 结构校验不等于经过 DeepSeek 官方安全审计，安装前请阅读界面中的权限与风险说明。
 
 ## 与 DeepSeek Harness 的关系
 

@@ -36,6 +36,8 @@ function fakeWindow(options: { destroyed?: boolean; visible?: boolean } = {}): F
   }
 }
 
+const loadHost = (): Promise<void> => Promise.resolve()
+
 describe('desktop window lifecycle', () => {
   it('hides an ordinary close without disposing the Host', () => {
     const window = fakeWindow()
@@ -44,6 +46,7 @@ describe('desktop window lifecycle', () => {
     const lifecycle = createDesktopLifecycle({
       getWindow: () => window,
       createWindow: () => Promise.resolve(window),
+      loadHost,
       disposeHost,
       quit: vi.fn(),
     })
@@ -62,6 +65,7 @@ describe('desktop window lifecycle', () => {
     const lifecycle = createDesktopLifecycle({
       getWindow: () => window,
       createWindow,
+      loadHost,
       disposeHost: () => Promise.resolve(),
       quit: vi.fn(),
     })
@@ -80,6 +84,7 @@ describe('desktop window lifecycle', () => {
     const lifecycle = createDesktopLifecycle({
       getWindow: () => undefined,
       createWindow,
+      loadHost,
       disposeHost: () => Promise.resolve(),
       quit: vi.fn(),
     })
@@ -102,6 +107,7 @@ describe('desktop window lifecycle', () => {
     const lifecycle = createDesktopLifecycle({
       getWindow: () => window,
       createWindow: () => Promise.resolve(window),
+      loadHost,
       disposeHost,
       quit,
     })
@@ -134,6 +140,7 @@ describe('desktop window lifecycle', () => {
     const lifecycle = createDesktopLifecycle({
       getWindow: () => undefined,
       createWindow: () => Promise.resolve(fakeWindow()),
+      loadHost,
       disposeHost: () => Promise.reject(failure),
       reportError,
       quit,
@@ -143,5 +150,43 @@ describe('desktop window lifecycle', () => {
     expect(reportError).toHaveBeenCalledOnce()
     expect(reportError).toHaveBeenCalledWith(failure)
     expect(quit).toHaveBeenCalledOnce()
+  })
+
+  it('reloads the existing window for the current host generation without changing visibility', async () => {
+    const window = fakeWindow({ visible: false })
+    const loadCurrentHost = vi.fn<(_window: DesktopWindow, origin: string) => Promise<void>>()
+      .mockResolvedValue(undefined)
+    const lifecycle = createDesktopLifecycle({
+      getWindow: () => window,
+      createWindow: () => Promise.resolve(window),
+      loadHost: loadCurrentHost,
+      disposeHost: () => Promise.resolve(),
+      quit: vi.fn(),
+    })
+
+    await lifecycle.reloadHost('http://127.0.0.1:5123')
+
+    expect(loadCurrentHost).toHaveBeenCalledWith(window, 'http://127.0.0.1:5123')
+    expect(window.show).not.toHaveBeenCalled()
+    expect(window.focus).not.toHaveBeenCalled()
+  })
+
+  it('does not reload a destroyed window or a window after explicit quit begins', async () => {
+    const window = fakeWindow({ destroyed: true })
+    const loadCurrentHost = vi.fn<(_window: DesktopWindow, origin: string) => Promise<void>>()
+      .mockResolvedValue(undefined)
+    const lifecycle = createDesktopLifecycle({
+      getWindow: () => window,
+      createWindow: () => Promise.resolve(window),
+      loadHost: loadCurrentHost,
+      disposeHost: () => Promise.resolve(),
+      quit: vi.fn(),
+    })
+
+    await lifecycle.reloadHost('http://127.0.0.1:5123')
+    void lifecycle.requestQuit()
+    await lifecycle.reloadHost('http://127.0.0.1:5124')
+
+    expect(loadCurrentHost).not.toHaveBeenCalled()
   })
 })

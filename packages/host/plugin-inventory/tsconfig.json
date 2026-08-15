@@ -15,6 +15,9 @@
       "path": "../../../vendor/loader"
     },
     {
+      "path": "../../client/modules"
+    },
+    {
       "path": "../../util/brand"
     },
     {
@@ -22,6 +25,9 @@
     },
     {
       "path": "../../runtime-diagnostics/invariants"
+    },
+    {
+      "path": "../../skill/skill"
     }
   ]
 }

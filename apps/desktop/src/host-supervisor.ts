@@ -108,14 +108,34 @@ export interface HostSupervisorOptions {
   /** Receives bounded Host output for desktop diagnostics. */
   readonly log?: (line: string) => void
   /** Called when a ready Host exits outside an application-owned shutdown. */
-  readonly onUnexpectedExit?: (detail: { code: number | null; signal: NodeJS.Signals | null }) => void
+  readonly onUnexpectedExit?: (detail: HostUnexpectedExit) => void
 }
 
-/** Handle for the desktop-owned Host process. */
+/** Public identity of one ready Host generation. */
+export interface HostGeneration {
+  /** Monotonically increasing identity assigned when the child is spawned. */
+  readonly id: number
+  /** Loopback origin emitted by this generation's readiness line. */
+  readonly origin: string
+}
+
+/** Detail reported when the currently owned ready generation exits by itself. */
+export interface HostUnexpectedExit extends HostGeneration {
+  /** Child exit code, when the operating system supplied one. */
+  readonly code: number | null
+  /** Child termination signal, when the operating system supplied one. */
+  readonly signal: NodeJS.Signals | null
+}
+
+/** Handle for the desktop-owned Host generations. */
 export interface HostSupervisor {
-  /** Start once, or join the in-flight start. */
+  /** The ready generation currently owned by the desktop, if any. */
+  readonly current: HostGeneration | undefined
+  /** Start one generation, or join the in-flight/current start. */
   start(): Promise<string>
-  /** Gracefully stop once, escalating after the configured timeout. */
+  /** Stop the current generation, run an optional owned change, then start its replacement. */
+  restart(reason: string, beforeStart?: () => Promise<void>): Promise<HostGeneration>
+  /** Permanently close the supervisor and stop its final generation. */
   shutdown(): Promise<void>
 }
 
@@ -135,116 +155,204 @@ function deferred<T>(): Deferred<T> {
   return { promise, resolve, reject }
 }
 
+type StopOwner = { readonly kind: 'restart'; readonly reason: string } | { readonly kind: 'shutdown' }
+
+interface HostGenerationState {
+  readonly id: number
+  readonly child: HostChild
+  readonly readiness: Deferred<string>
+  readonly exited: Deferred<void>
+  readonly parser: ReadinessParser
+  readonly startupCleanups: Array<() => void>
+  origin?: string
+  output: string
+  readinessSettled: boolean
+  exitedSettled: boolean
+  stopOwner?: StopOwner
+  stopPromise?: Promise<void>
+  readinessTimer?: ReturnType<typeof setTimeout>
+}
+
 /**
- * Create a single-owner Host supervisor.
+ * Create a single-owner, multi-generation Host supervisor.
  * @param options - Child-process operations and bounded lifecycle timings.
- * @returns A supervisor that coalesces concurrent start and shutdown calls.
+ * @returns A supervisor that coalesces starts and shutdowns while serializing restarts.
  */
 export function createHostSupervisor(options: HostSupervisorOptions): HostSupervisor {
   const readinessTimeoutMs = options.readinessTimeoutMs ?? DEFAULT_READINESS_TIMEOUT_MS
   const shutdownTimeoutMs = options.shutdownTimeoutMs ?? DEFAULT_SHUTDOWN_TIMEOUT_MS
-  let child: HostChild | undefined
-  let startPromise: Promise<string> | undefined
+  let active: HostGenerationState | undefined
+  let nextGenerationId = 0
+  let permanentlyClosed = false
+  let restartQueue: Promise<void> = Promise.resolve()
   let shutdownPromise: Promise<void> | undefined
-  let exited: Promise<void> | undefined
-  let exitResult: Deferred<void> | undefined
-  let ready = false
-  let shuttingDown = false
-  let output = ''
 
-  const appendOutput = (chunk: string): void => {
-    output = `${output}${chunk}`.slice(-MAX_STARTUP_OUTPUT_CHARS)
+  const cleanupStartup = (state: HostGenerationState): void => {
+    if (state.readinessTimer !== undefined) clearTimeout(state.readinessTimer)
+    delete state.readinessTimer
+    for (const dispose of state.startupCleanups.splice(0)) dispose()
+  }
+
+  const appendOutput = (state: HostGenerationState, chunk: string): void => {
+    state.output = `${state.output}${chunk}`.slice(-MAX_STARTUP_OUTPUT_CHARS)
     options.log?.(chunk)
   }
 
-  const start = (): Promise<string> => {
-    if (startPromise !== undefined) return startPromise
-    if (shutdownPromise !== undefined) return Promise.reject(new Error('desktop Host cannot start after shutdown'))
-
-    startPromise = new Promise<string>((resolve, reject) => {
-      const parser = createReadinessParser()
-      const spawned = options.spawnHost()
-      child = spawned
-      exitResult = deferred<void>()
-      exited = exitResult.promise
-      let settled = false
-      const startupCleanups: Array<() => void> = []
-
-      const cleanupStartup = (): void => {
-        clearTimeout(timer)
-        for (const dispose of startupCleanups.splice(0)) dispose()
-      }
-      const fail = (error: unknown): void => {
-        if (settled) return
-        settled = true
-        cleanupStartup()
-        const diagnostic = output === '' ? '' : `\nHost output:\n${output}`
-        reject(new Error(`${error instanceof Error ? error.message : String(error)}${diagnostic}`))
-      }
-      const acceptChunk = (chunk: string): void => {
-        appendOutput(chunk)
-        try {
-          const url = parser.push(chunk)
-          if (url === undefined || settled) return
-          settled = true
-          ready = true
-          cleanupStartup()
-          resolve(url)
-        } catch (error) {
-          fail(error)
-          spawned.kill('SIGTERM')
-        }
-      }
-
-      const timer = setTimeout(() => {
-        fail(new Error(`desktop Host readiness timed out after ${String(readinessTimeoutMs)}ms`))
-        spawned.kill('SIGTERM')
-      }, readinessTimeoutMs)
-      startupCleanups.push(spawned.stdout.onData(acceptChunk))
-      startupCleanups.push(spawned.stderr.onData(appendOutput))
-      spawned.onError((error) => {
-        fail(new Error(`desktop Host failed to spawn: ${error.message}`))
-        exitResult?.resolve()
-      })
-      spawned.onExit((code, signal) => {
-        exitResult?.resolve()
-        if (ready) {
-          if (!shuttingDown) options.onUnexpectedExit?.({ code, signal })
-          return
-        }
-        fail(new Error(`desktop Host exited before readiness (code ${String(code)}, signal ${String(signal)})`))
-      })
-    })
-    return startPromise
+  const failReadiness = (state: HostGenerationState, error: unknown): void => {
+    if (state.readinessSettled) return
+    state.readinessSettled = true
+    cleanupStartup(state)
+    const diagnostic = state.output === '' ? '' : `\nHost output:\n${state.output}`
+    state.readiness.reject(new Error(`${error instanceof Error ? error.message : String(error)}${diagnostic}`))
   }
 
-  const shutdown = (): Promise<void> => {
-    if (shutdownPromise !== undefined) return shutdownPromise
-    shutdownPromise = (async () => {
-      const spawned = child
-      if (spawned === undefined) return
-      shuttingDown = true
-      spawned.kill('SIGTERM')
-      const closed = exited ?? Promise.resolve()
+  const settleExit = (
+    state: HostGenerationState,
+    code: number | null,
+    signal: NodeJS.Signals | null,
+  ): void => {
+    if (state.exitedSettled) return
+    state.exitedSettled = true
+    state.exited.resolve(undefined)
+    if (!state.readinessSettled) {
+      failReadiness(
+        state,
+        new Error(`desktop Host exited before readiness (code ${String(code)}, signal ${String(signal)})`),
+      )
+    }
+    if (active !== state) return
+    active = undefined
+    if (state.origin !== undefined && state.stopOwner === undefined) {
+      options.onUnexpectedExit?.({ id: state.id, origin: state.origin, code, signal })
+    }
+  }
+
+  const createGeneration = (): HostGenerationState => {
+    const child = options.spawnHost()
+    const state: HostGenerationState = {
+      id: ++nextGenerationId,
+      child,
+      readiness: deferred<string>(),
+      exited: deferred<void>(),
+      parser: createReadinessParser(),
+      startupCleanups: [],
+      output: '',
+      readinessSettled: false,
+      exitedSettled: false,
+    }
+    active = state
+
+    const acceptChunk = (chunk: string): void => {
+      appendOutput(state, chunk)
+      try {
+        const origin = state.parser.push(chunk)
+        if (origin === undefined || state.readinessSettled) return
+        state.readinessSettled = true
+        state.origin = origin
+        cleanupStartup(state)
+        state.readiness.resolve(origin)
+      } catch (error) {
+        failReadiness(state, error)
+        child.kill('SIGTERM')
+      }
+    }
+
+    state.readinessTimer = setTimeout(() => {
+      failReadiness(state, new Error(`desktop Host readiness timed out after ${String(readinessTimeoutMs)}ms`))
+      child.kill('SIGTERM')
+    }, readinessTimeoutMs)
+    state.startupCleanups.push(child.stdout.onData(acceptChunk))
+    state.startupCleanups.push(child.stderr.onData((chunk) => { appendOutput(state, chunk) }))
+    child.onError((error) => {
+      failReadiness(state, new Error(`desktop Host failed to spawn: ${error.message}`))
+      settleExit(state, null, null)
+    })
+    child.onExit((code, signal) => {
+      settleExit(state, code, signal)
+    })
+    return state
+  }
+
+  const stopGeneration = (state: HostGenerationState, owner: StopOwner): Promise<void> => {
+    if (state.stopPromise !== undefined) return state.stopPromise
+    state.stopOwner = owner
+    state.stopPromise = (async () => {
+      if (state.exitedSettled) return
+      state.child.kill('SIGTERM')
       let timer: ReturnType<typeof setTimeout> | undefined
       const outcome = await Promise.race([
-        closed.then(() => 'closed' as const),
+        state.exited.promise.then(() => 'closed' as const),
         new Promise<'timeout'>((resolve) => {
-          timer = setTimeout(() => {
-            resolve('timeout')
-          }, shutdownTimeoutMs)
+          timer = setTimeout(() => { resolve('timeout') }, shutdownTimeoutMs)
         }),
       ])
       if (timer !== undefined) clearTimeout(timer)
       if (outcome === 'timeout') {
-        spawned.kill('SIGKILL')
-        await closed
+        state.child.kill('SIGKILL')
+        await state.exited.promise
+      }
+    })()
+    return state.stopPromise
+  }
+
+  const start = (): Promise<string> => {
+    if (permanentlyClosed) return Promise.reject(new Error('desktop Host cannot start after shutdown'))
+    if (active !== undefined) return active.readiness.promise
+    try {
+      return createGeneration().readiness.promise
+    } catch (error) {
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)))
+    }
+  }
+
+  const assertRestartOpen = (): void => {
+    if (permanentlyClosed) throw new Error('desktop Host cannot restart after shutdown')
+  }
+
+  const restart = (reason: string, beforeStart?: () => Promise<void>): Promise<HostGeneration> => {
+    if (permanentlyClosed) return Promise.reject(new Error('desktop Host cannot restart after shutdown'))
+    const operation = restartQueue.then(async () => {
+      assertRestartOpen()
+      const previous = active
+      if (previous !== undefined) await stopGeneration(previous, { kind: 'restart', reason })
+      assertRestartOpen()
+      await beforeStart?.()
+      assertRestartOpen()
+      const next = createGeneration()
+      const origin = await next.readiness.promise
+      return { id: next.id, origin }
+    })
+    restartQueue = operation.then(() => undefined, () => undefined)
+    return operation
+  }
+
+  const shutdown = (): Promise<void> => {
+    if (shutdownPromise !== undefined) return shutdownPromise
+    permanentlyClosed = true
+    const generationAtShutdown = active
+    const initialStop = generationAtShutdown === undefined
+      ? Promise.resolve()
+      : stopGeneration(generationAtShutdown, { kind: 'shutdown' })
+    shutdownPromise = (async () => {
+      await initialStop
+      await restartQueue
+      const finalGeneration = active
+      if (finalGeneration !== undefined && finalGeneration !== generationAtShutdown) {
+        await stopGeneration(finalGeneration, { kind: 'shutdown' })
       }
     })()
     return shutdownPromise
   }
 
-  return { start, shutdown }
+  return {
+    get current() {
+      if (active?.origin === undefined) return undefined
+      return { id: active.id, origin: active.origin }
+    },
+    start,
+    restart,
+    shutdown,
+  }
 }
 
 /** Options for the real `dsh web` child. */

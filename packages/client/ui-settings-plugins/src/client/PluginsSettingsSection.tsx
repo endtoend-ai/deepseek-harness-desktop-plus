@@ -5,6 +5,7 @@ import type {
   HostObservable, InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime,
 } from '@deepseek-ai/dsh-client-ui-slots'
 import type { PluginsSettingsLocaleKey } from './locales.ts'
+import type { SettingsNavigationTarget } from '@deepseek-ai/dsh-client-ui-settings/client'
 import css from './PluginsSettingsSection.module.css'
 
 /** One tab projected from a `settings.plugins.tab` contribution. */
@@ -20,6 +21,8 @@ export interface PluginsSettingsSectionInjected {
     /** Ordered, locale-aware projection of the Plugins tab ledger. */
     tabs: HostObservable<readonly PluginsSettingsTabEntry[]>
   }
+  /** Receive existing-surface links targeting one of this section's tabs. */
+  readonly subscribeNavigation: (listener: (target: SettingsNavigationTarget) => void) => () => void
 }
 
 /** Props the renderer binds for the section. */
@@ -30,13 +33,22 @@ export type PluginsSettingsSectionProps =
   & InjectFace<PluginsSettingsSectionInjected>
 
 /** Render one Plugins page whose contents arrive from feature-owned tabs. */
-export function PluginsSettingsSection({ t, renderSlot, useTabs }: PluginsSettingsSectionProps) {
+export function PluginsSettingsSection({
+  t,
+  renderSlot,
+  useTabs,
+  subscribeNavigation = () => () => {},
+}: PluginsSettingsSectionProps) {
   const tabsId = useId()
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const rows = useTabs(value => value)
   const [activeId, setActiveId] = useState<string>()
   const [visitedIds, setVisitedIds] = useState<ReadonlySet<string>>(() => new Set())
   const active = rows.find(row => row.id === activeId)?.id ?? rows[0]?.id
+
+  useEffect(() => subscribeNavigation((target) => {
+    if (target.sectionId === 'plugins' && target.tabId !== undefined) setActiveId(target.tabId)
+  }), [subscribeNavigation])
 
   // A tab mounts only when first selected, then stays mounted while hidden so
   // local drafts, disclosure state, search, and the inventory snapshot survive

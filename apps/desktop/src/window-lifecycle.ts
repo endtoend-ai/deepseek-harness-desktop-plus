@@ -26,6 +26,8 @@ export interface DesktopLifecycleOptions {
   readonly getWindow: () => DesktopWindow | undefined
   /** Create and load a replacement native window. */
   readonly createWindow: () => Promise<DesktopWindow>
+  /** Load the current Host origin into an existing native window. */
+  readonly loadHost: (window: DesktopWindow, origin: string) => Promise<void>
   /** Stop the desktop-owned Host and reach process quiescence. */
   readonly disposeHost: () => Promise<void>
   /** Retry Electron's ordinary quit after asynchronous teardown completes. */
@@ -44,6 +46,8 @@ export interface DesktopLifecycle {
   onWindowClose(event: WindowCloseEvent): void
   /** Show the existing window or create a replacement. */
   showWindow(): Promise<void>
+  /** Reload the existing window against a replacement Host origin. */
+  reloadHost(origin: string): Promise<void>
   /** Dispose the Host once, then release Electron's quit sequence. */
   requestQuit(): Promise<void>
 }
@@ -80,6 +84,13 @@ export function createDesktopLifecycle(options: DesktopLifecycleOptions): Deskto
     return pendingQuit
   }
 
+  const reloadHost = async (origin: string): Promise<void> => {
+    if (quitting) return
+    const window = options.getWindow()
+    if (window === undefined || window.isDestroyed()) return
+    await options.loadHost(window, origin)
+  }
+
   return {
     get isQuitting() { return quitting },
     get pendingQuit() { return pendingQuit },
@@ -89,6 +100,7 @@ export function createDesktopLifecycle(options: DesktopLifecycleOptions): Deskto
       options.getWindow()?.hide()
     },
     showWindow,
+    reloadHost,
     requestQuit,
   }
 }

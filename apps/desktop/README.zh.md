@@ -24,6 +24,16 @@ pnpm run dev:desktop:rebuild
 
 原生窗口外观按宿主平台区分。macOS 使用无边框内嵌标题栏、交通灯和侧栏 vibrancy；收起侧栏宽 90px，其中的控件水平居中，最上方控件在交通灯下方与展开态 logo 行对齐。Windows 保留系统边框、阴影、缩放与 Snap 行为以及 Windows 11 圆角，同时用隐藏标题栏把原生窗口按钮放入 Session header 首行；Windows 侧栏不预留交通灯区域。该行的空白部分可拖动，控件仍可点击；没有 Session header 时，常驻拖拽带覆盖同一行。Windows acrylic 和 macOS vibrancy 只透过侧栏，会话区与详情区保持不透明。Linux 使用无边框窗口和不透明侧栏降级样式。
 
+### 插件中心可信生命周期
+
+Desktop 持有插件中心发现、兼容与包变更权威。公开发现会在 npm 搜索带 `dsh-plugin` 标签的包；DeepSeek Harness 文档把该标签定义为生态发现约定，但标签不代表官方背书。目录只保留声明 `dsh.bundle` 的确定版本；获得安装权威前，Desktop 会下载其不可变 npm tarball，并校验 registry 完整性、SHA-256、压缩包边界、包身份、Bundle patch 与激活身份。沙箱渲染器只能调用固定目录和操作方法，安装意图只包含插件 id、确定版本与幂等键。
+
+同一个串行事务持有安装、启用、停用、确定更新和卸载。它在变更前快照 Profile，保留明确的活动或停用 Bundle 意图，在替换或删除包前停止 Host，并且只在目标 Profile 与已声明 Host、客户端和 Skill 证据一致后提交。卸载默认保留配置与插件自有数据；提交后的独立桥接只能删除插件存储根下的确定声明路径。普通 Host 启动前，Desktop 会停用与当前应用版本不兼容的已校验外部 Bundle，同时保留包和可解释原因。生产 preload 已通过带恢复能力的控制器开放这些操作。
+
+未提交日志在普通 Host 启动前进入恢复。变更副作用会持久记录前后边界，因此 Host 停止、Profile 或包变更、Host 启动和页面重连前后的中断都进入同一恢复路径。恢复控制器校验旧快照、重建旧包状态并核对旧 Host、客户端和 Skill 证据；失败时只打开受保护恢复页，允许同事务重试和脱敏诊断导出。损坏或未来版本日志不会被猜测执行。公开变更仍需等待 Windows x64 包体崩溃验收。
+
+确定的浏览器验收使用 `pnpm run dev:desktop:web` 并复用同一组客户端组件与进度合同。该开发桥接只模拟阶段和持久状态，不拥有 Electron、Profile、文件系统、包管理器、MCP 或 Host 重启权威。
+
 ## 打包
 
 本地打包命令会执行完整的仓库构建，为 Host 暂存封闭的生产依赖树，并为当前平台生成未封装应用。无需另行手动构建：
@@ -101,6 +111,8 @@ pnpm run dist:win:desktop
 ## 已知限制
 
 首个桌面装配使用回环 HTTP Host。renderer 和 Host 协议保持不变，因此后续可替换为 GUI 架构预留的 IPC carrier，而无需改动产品功能。
+
+浏览器进度与恢复提示仍只属于模拟证据；真实搜索、包变更、Host 重启与卸载必须在 Desktop 中执行。公开 npm 索引是社区分发渠道，不等于 DeepSeek 安全审计。第一版实时来源只接受预构建 npm DSH Bundle，并拒绝缺少 `dsh.bundle`、压缩包不安全、不可变证据不一致或带安装生命周期脚本的包；一键安装不会构建仅存在于 GitHub 源码中的插件。
 
 macOS 已有签名并公证的发布路径。Windows 已有 x64 NSIS 安装包路径，但生产级 Authenticode 签名仍属于发布工作。Linux 目前仍只生成未封装应用，尚无安装包格式与发行签名路径。
 

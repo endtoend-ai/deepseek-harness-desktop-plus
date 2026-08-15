@@ -78,11 +78,14 @@ External packages that a workspace package resolves at runtime. The tier covers 
 | [`node-addon-require-builtin`](https://www.npmjs.com/package/node-addon-require-builtin) | MIT |
 | [`node-pty`](https://github.com/microsoft/node-pty) | MIT |
 | [`picomatch`](https://github.com/micromatch/picomatch) | MIT |
+| [`pnpm`](https://github.com/pnpm/pnpm) | MIT |
 | [`react`](https://github.com/facebook/react) | MIT |
 | [`react-dom`](https://github.com/facebook/react) | MIT |
+| [`semver`](https://github.com/npm/node-semver) | ISC |
 | [`sharp`](https://github.com/lovell/sharp) | Apache-2.0 |
 | [`shiki`](https://github.com/shikijs/shiki) | MIT |
 | [`supports-color`](https://github.com/chalk/supports-color) | MIT |
+| [`tar`](https://github.com/isaacs/node-tar) | BlueOak-1.0.0 |
 | [`tsx`](https://github.com/privatenumber/tsx) | MIT |
 | [`turndown`](https://github.com/mixmark-io/turndown) | MIT |
 | [`typescript`](https://github.com/microsoft/TypeScript) | Apache-2.0 |

@@ -50,6 +50,7 @@ describe('ui-layout client apply', () => {
     // …and declared the three children in the ledger.
     expect(slots.spec('sidebar')).toEqual({ kind: 'single', scope: 'root' })
     expect(slots.spec('conversation')).toEqual({ kind: 'single', scope: 'session-maybe' })
+    expect(slots.spec('main.page')).toEqual({ kind: 'keyed', scope: 'root' })
     expect(slots.spec('details')).toEqual({ kind: 'single', scope: 'session' })
   })
 
@@ -59,6 +60,7 @@ describe('ui-layout client apply', () => {
     await fiber.await()
     const actions = {
       setSidebar: vi.fn(), setDetails: vi.fn(), toggleSidebar: vi.fn(), openDetails: vi.fn(), closeDetails: vi.fn(),
+      openPrimaryPage: vi.fn(), closePrimaryPage: vi.fn(),
     }
     const injected = (slots.entries('root')[0]!.inject as (actions: never) => object)(actions as never)
     expect(injected).toEqual({})

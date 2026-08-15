@@ -10,6 +10,7 @@
   <a href="https://github.com/fufankeji/deepseek-harness-desktop/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-desktop?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
   <img src="https://img.shields.io/badge/Desktop-App-2563EB" alt="Desktop App">
   <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
+  <img src="https://img.shields.io/badge/Plugin%20Center-online-22C55E" alt="Public Plugin Center is online">
   <img src="https://img.shields.io/badge/Vision-Qwen3.8-7C3AED" alt="Qwen3.8 vision enhancement">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-desktop?color=22C55E" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
@@ -19,11 +20,11 @@
 
 <p align="center"><strong>Built by Beyondata · A modern desktop development experience for the DeepSeek Harness ecosystem</strong></p>
 
-<p align="center"><strong>Let text-based DeepSeek understand screenshots, photos, charts, and text in images</strong></p>
+<p align="center"><strong>Search, verify, install, and remove DSH plugins from the public ecosystem · Let DeepSeek understand images</strong></p>
 
 <p align="center">DeepSeek Harness Desktop combines the local Web workspace, Host lifecycle management, and a native desktop window into a development environment that developers can download as source, modify directly, and continue building locally.</p>
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>Desktop downloads (installers in development)</strong></a> · <a href="#quick-start"><strong>Get the source and start developing</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>Download the macOS arm64 development preview</strong></a> · <a href="#quick-start"><strong>Get the source and start developing</strong></a></p>
 
 <p align="center">
   <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Desktop whale-maid default skin" width="100%">
@@ -31,7 +32,7 @@
 
 ## At a glance: available features and near-term roadmap
 
-> The desktop development workspace and Chinese DeepSeek controls are available today. Features marked "In development" or "Planned" are not yet available and will be updated only after the corresponding workflow is runnable.
+> The desktop development workspace, public Plugin Center, and Chinese DeepSeek controls are available today. Features marked "In development" or "Planned" are not yet available and will be updated only after the corresponding workflow is runnable.
 
 | Capability | Status | What it enables |
 | --- | --- | --- |
@@ -39,8 +40,8 @@
 | **Vision enhancement** | ✅ Available | Add image understanding to a text-based DeepSeek workflow by reading conversation attachments and workspace images, then providing traceable observations to the Agent. |
 | **Chinese DeepSeek controls** | ✅ Available | Choose Chinese permission levels and DeepSeek-specific thinking modes directly in the composer for the current session. |
 | **Built-in skins and custom backgrounds** | ✅ Available | Start with the whale-maid skin, switch to Cloud Cat, or choose a local image and let the app adapt its interface palette. |
-| **Plugin Center** | 🚧 In development · **expected within 1 day** | The first usable release brings plugin discovery, search, categories, details, an installation entry, and result feedback into one desktop view. Composition, removal, updates, and compatibility checks follow in later releases. |
-| **MCP, Skills, and tool extensions** | 🗓️ Planned | Discover, connect, and manage MCP servers, Skills, and tools in the desktop app, then compose Agent capabilities for each project. |
+| **Public Plugin Center** | ✅ Available | Discover plugins and Bundle-wrapped Skill Packs carrying the `dsh-plugin` keyword in the public npm ecosystem, inspect details and risk, install them online, and enable, disable, or uninstall them. |
+| **Standalone MCP, Skills, and tool management** | 🗓️ Planned | Add discovery and connection management for MCP servers, Skills, and tools that are not distributed as Bundles, then compose Agent capabilities per project. |
 | **Agent presets and multi-Agent collaboration** | 🗓️ Planned | Define Agents and subagents that collaborate across coding, testing, research, and review work. |
 | **Planning, background runs, and session recovery** | 🗓️ Planned | Manage plans and tasks, keep long-running work active in the background, inspect progress, and resume previous sessions. |
 | **Project rules, hooks, and durable memory** | 🗓️ Planned | Manage repository instructions, automation hooks, and reusable context so Agents work consistently with project rules. |
@@ -59,6 +60,7 @@ Desktop installers are published only through this repository's GitHub Releases 
 - **Electron desktop app**: application window, system tray, single-instance behavior, external-link handling, and a restricted preload bridge.
 - **Local Harness Host**: the desktop main process starts `dsh web`, waits for the local service to become ready, and stops the Host process when the app exits.
 - **Web workspace**: DeepSeek Harness sessions, workspaces, models, tools, Skills, and plugin runtime remain available.
+- **Public Plugin Center**: search the public npm `dsh-plugin` ecosystem, verify the exact version, artifact integrity, Bundle declaration, and local compatibility before installation, then enable, disable, or uninstall entries from the Installed view.
 - **Composer vision enhancement**: enable Bailian Qwen3.8 image understanding in one click for screenshots, photos, charts, OCR, and workspace images without replacing the current DeepSeek model.
 - **Desktop appearance settings**: built-in Whale Maid and Cloud Cat skins, plus local backgrounds, subject focus, and interface glass controls.
 - **Complete development source**: desktop app, Web interface, CLI, capability packages, native helpers, Python SDK, examples, and build scripts are kept in the repository.
@@ -93,11 +95,11 @@ The text-based DeepSeek model used by the desktop workflow cannot interpret imag
 
 ## Download the desktop app
 
-> The project remains in development and GitHub Releases does not yet contain a public installer. After the first platform-accepted build is ready, the download page will provide a macOS Apple Silicon `.dmg` and a Windows x64 `.exe` without requiring Node.js or pnpm.
+> GitHub Releases provides a macOS Apple Silicon development-preview ZIP that has passed real Electron acceptance and requires no Node.js or pnpm installation. The current preview is not signed or notarized with an Apple Developer identity and is intended for development testing only. The formal release will still provide a signed macOS `.dmg` and Windows x64 `.exe`.
 
 <p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>Open the GitHub Releases download center</strong></a></p>
 
-The release workflow accepts only a `desktop-v*` tag that exactly matches the Desktop version. GitHub publishes the installers and `SHA256SUMS` together only after both platform signatures pass verification; a failed build or verification never creates a public partial Release.
+Development previews use a separate pre-release tag and include a SHA-256 checksum file without triggering the formal installer workflow. The formal workflow accepts only a `desktop-v*` tag that exactly matches the Desktop version, and publishes the macOS and Windows installers with `SHA256SUMS` only after both platform signatures pass verification.
 
 ## Quick start
 
@@ -180,9 +182,18 @@ deepseek-harness-desktop/
 4. `apps/web/`: the Web workspace loaded by the desktop window.
 5. `apps/cli/` and `packages/`: CLI composition and Harness capabilities.
 
-## Plugin Center (in development, expected within 1 day)
+## Public Plugin Center: discover, install, and remove online
 
-The first usable Plugin Center release will bring plugin discovery, search, categories, details, an installation entry, and result feedback into the desktop app, and is expected within one day. Composition, removal, updates, and compatibility checks will become available through later runnable releases; this page will add real screens and usage instructions as each capability ships.
+Open **Plugin Center** from the sidebar to search plugins and Skill Packs in the public npm Registry that carry the `dsh-plugin` keyword and follow the DeepSeek Harness Bundle format. Packages without `dsh.bundle.patch`, an exact version, or trusted npm integrity metadata never enter the install path.
+
+- **Discovery and detail**: switch between Plugins and Skills, search public entries, and inspect version, capabilities, permissions, compatibility, and risk. When the network is unavailable, the app can use the most recent locally verified cache and shows its freshness explicitly.
+- **One-click online installation**: after you select Install, Desktop downloads the exact npm version and verifies package identity, integrity, the Bundle Patch, expected runtime evidence, and the local environment. Once confirmed, it updates the current Profile and restarts the Harness Host; completion appears only after the declared Host, client, or Skill evidence is active.
+- **Installed management**: the Installed view distinguishes system, public-catalog, and local sources, and shows both Bundle enablement and current runtime state. Public-catalog plugins can be enabled, disabled, or uninstalled.
+- **Safe removal**: uninstall removes the package and its active Bundle composition while retaining configuration and plugin data by default. After a successful uninstall, Desktop separately lists plugin-declared owned directories so the user can explicitly choose whether to remove them.
+
+The shortest path is **Plugin Center → Search → Open details → Install and confirm → Wait for Host restart and runtime verification**. To remove an item, choose Uninstall from the installed entry or its action menu, then decide whether to retain its data.
+
+> The current public catalog comes from npm's `dsh-plugin` ecosystem. GitHub Topics are used only for project discovery and never grant installation authority. Verifying an exact community artifact and its Bundle structure does not mean DeepSeek has security-audited it; review the permission and risk disclosure before installation.
 
 ## Relationship to DeepSeek Harness
 

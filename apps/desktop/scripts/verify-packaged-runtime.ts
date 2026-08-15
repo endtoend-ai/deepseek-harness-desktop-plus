@@ -1,8 +1,12 @@
 /** Reject a packaged desktop shell that omitted the staged Host entrypoints. */
 
-import { access, readdir } from 'node:fs/promises'
+import { access, readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { AfterPackContext } from 'electron-builder'
+import {
+  PACKAGE_MANAGER_ENTRY_SEGMENTS,
+  PINNED_PACKAGE_MANAGER_VERSION,
+} from '../src/plugin-center/package-manager.ts'
 
 const REQUIRED_HOST_FILES = [
   ['@deepseek-ai', 'dsh', 'lib', 'bin.js'],
@@ -31,8 +35,15 @@ export async function afterPack(context: AfterPackContext): Promise<void> {
   for (const segments of REQUIRED_HOST_FILES) {
     await access(join(resources, 'host', 'node_modules', ...segments))
   }
+  const modules = join(resources, 'host', 'node_modules')
+  await access(join(modules, ...PACKAGE_MANAGER_ENTRY_SEGMENTS))
+  const packageManager = JSON.parse(await readFile(join(modules, 'pnpm/package.json'), 'utf8')) as {
+    readonly version?: unknown
+  }
+  if (packageManager.version !== PINNED_PACKAGE_MANAGER_VERSION) {
+    throw new Error(`packaged pnpm version must be ${PINNED_PACKAGE_MANAGER_VERSION}`)
+  }
   if (context.electronPlatformName === 'win32') {
-    const modules = join(resources, 'host', 'node_modules')
     for (const segments of REQUIRED_WINDOWS_HOST_FILES) {
       await access(join(modules, ...segments))
     }

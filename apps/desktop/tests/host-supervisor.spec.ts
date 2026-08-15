@@ -125,6 +125,7 @@ describe('desktop Host supervisor', () => {
 
     child.stdout.emit('dsh web: http://127.0.0.1:4567\n')
     await expect(first).resolves.toBe('http://127.0.0.1:4567')
+    expect(supervisor.current).toEqual({ id: 1, origin: 'http://127.0.0.1:4567' })
     expect(child.signals).toEqual([])
   })
 
@@ -169,6 +170,7 @@ describe('desktop Host supervisor', () => {
 
     await expect(supervisor.shutdown()).resolves.toBeUndefined()
     await expect(supervisor.start()).rejects.toThrow('desktop Host cannot start after shutdown')
+    await expect(supervisor.restart('late request')).rejects.toThrow('desktop Host cannot restart after shutdown')
     expect(spawnHost).not.toHaveBeenCalled()
   })
 
@@ -218,7 +220,94 @@ describe('desktop Host supervisor', () => {
     child.emitExit(9, null)
 
     expect(onUnexpectedExit).toHaveBeenCalledOnce()
-    expect(onUnexpectedExit).toHaveBeenCalledWith({ code: 9, signal: null })
+    expect(onUnexpectedExit).toHaveBeenCalledWith({
+      id: 1,
+      origin: 'http://127.0.0.1:4567',
+      code: 9,
+      signal: null,
+    })
+    expect(supervisor.current).toBeUndefined()
+  })
+
+  it('restarts with a new generation and ignores a stale exit from the replaced child', async () => {
+    const firstChild = new FakeHostChild()
+    const secondChild = new FakeHostChild()
+    const children = [firstChild, secondChild]
+    const onUnexpectedExit = vi.fn()
+    const supervisor = createHostSupervisor({
+      spawnHost: () => children.shift()!,
+      onUnexpectedExit,
+    })
+    const starting = supervisor.start()
+    firstChild.stdout.emit('dsh web: http://127.0.0.1:4567\n')
+    await starting
+
+    const restarting = supervisor.restart('plugin installation committed')
+    await Promise.resolve()
+    expect(firstChild.signals).toEqual(['SIGTERM'])
+    firstChild.emitExit(0, 'SIGTERM')
+    await vi.waitFor(() => { expect(children).toHaveLength(0) })
+    secondChild.stdout.emit('dsh web: http://127.0.0.1:5678\n')
+
+    await expect(restarting).resolves.toEqual({ id: 2, origin: 'http://127.0.0.1:5678' })
+    expect(supervisor.current).toEqual({ id: 2, origin: 'http://127.0.0.1:5678' })
+    firstChild.emitExit(9)
+    expect(onUnexpectedExit).not.toHaveBeenCalled()
+  })
+
+  it('serializes queued restarts so each operation owns one stop and replacement', async () => {
+    const firstChild = new FakeHostChild()
+    const secondChild = new FakeHostChild()
+    const thirdChild = new FakeHostChild()
+    const children = [firstChild, secondChild, thirdChild]
+    const supervisor = createHostSupervisor({ spawnHost: () => children.shift()! })
+    const starting = supervisor.start()
+    firstChild.stdout.emit('dsh web: http://127.0.0.1:4001\n')
+    await starting
+
+    const firstRestart = supervisor.restart('first mutation')
+    const secondRestart = supervisor.restart('second mutation')
+    await Promise.resolve()
+    expect(firstChild.signals).toEqual(['SIGTERM'])
+    expect(secondChild.signals).toEqual([])
+
+    firstChild.emitExit(0, 'SIGTERM')
+    await vi.waitFor(() => { expect(children).toHaveLength(1) })
+    secondChild.stdout.emit('dsh web: http://127.0.0.1:4002\n')
+    await expect(firstRestart).resolves.toEqual({ id: 2, origin: 'http://127.0.0.1:4002' })
+    await vi.waitFor(() => { expect(secondChild.signals).toEqual(['SIGTERM']) })
+    expect(secondChild.signals).toEqual(['SIGTERM'])
+
+    secondChild.emitExit(0, 'SIGTERM')
+    await vi.waitFor(() => { expect(children).toHaveLength(0) })
+    thirdChild.stdout.emit('dsh web: http://127.0.0.1:4003\n')
+    await expect(secondRestart).resolves.toEqual({ id: 3, origin: 'http://127.0.0.1:4003' })
+    expect(supervisor.current).toEqual({ id: 3, origin: 'http://127.0.0.1:4003' })
+  })
+
+  it('runs the owned profile change after the old generation exits and before the replacement starts', async () => {
+    const firstChild = new FakeHostChild()
+    const secondChild = new FakeHostChild()
+    const children = [firstChild, secondChild]
+    const change = Promise.withResolvers<undefined>()
+    const changed = vi.fn<() => Promise<void>>(() => change.promise)
+    const supervisor = createHostSupervisor({ spawnHost: () => children.shift()! })
+    const starting = supervisor.start()
+    firstChild.stdout.emit('dsh web: http://127.0.0.1:4001\n')
+    await starting
+
+    const restarting = supervisor.restart('trusted plugin install', changed)
+    await Promise.resolve()
+    expect(changed).not.toHaveBeenCalled()
+    expect(children).toHaveLength(1)
+    firstChild.emitExit(0, 'SIGTERM')
+    await vi.waitFor(() => { expect(changed).toHaveBeenCalledOnce() })
+    expect(children).toHaveLength(1)
+    change.resolve(undefined)
+    await vi.waitFor(() => { expect(children).toHaveLength(0) })
+    secondChild.stdout.emit('dsh web: http://127.0.0.1:4002\n')
+
+    await expect(restarting).resolves.toEqual({ id: 2, origin: 'http://127.0.0.1:4002' })
   })
 
   it('coalesces shutdown and waits for the ready child to exit after SIGTERM', async () => {

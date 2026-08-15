@@ -14,8 +14,11 @@ import { afterEach, beforeEach, vi } from 'vitest'
 import type { WebBootEntry } from '@deepseek-ai/dsh-client-modules/client'
 import { AppWebEntry } from '@deepseek-ai/dsh-client-web'
 
+/** One assembled boot entry plus the workspace bundle it loads. */
+export type AssembledBootPlugin = WebBootEntry & { readonly bundlePath: string }
+
 /** Boot entries for the minimal assembled graph, each carrying the workspace bundle it loads. */
-const PLUGINS: readonly (WebBootEntry & { bundlePath: string })[] = [
+const PLUGINS: readonly AssembledBootPlugin[] = [
   { id: '@deepseek-ai/dsh-typert-registry', bundlePath: 'packages/typert/registry/lib/client.js', url: '/plugins/typert-registry.js', rev: 'fx', inject: [], immediately: true },
   { id: '@deepseek-ai/dsh-client-connection', bundlePath: 'packages/client/connection/lib/client.js', url: '/plugins/connection.js', rev: 'fx', inject: [], immediately: true },
   { id: '@deepseek-ai/dsh-api-gateway', bundlePath: 'packages/api/gateway/lib/client.js', url: '/plugins/api-gateway.js', rev: 'fx', inject: ['@deepseek-ai/dsh-typert-registry', '@deepseek-ai/dsh-client-connection'], immediately: true },
@@ -73,7 +76,10 @@ let unmount: (() => void) | undefined
  * observers and frame callbacks jsdom lacks, and a full reset of the document,
  * the boot globals, and the injected plugin styles afterwards.
  */
-export function installAssembledBootEnv(): void {
+export function installAssembledBootEnv(options: {
+  readonly setup?: () => void
+  readonly cleanup?: () => void
+} = {}): void {
   beforeEach(() => {
     localStorage.clear()
     // The locale service derives its provisional locale from the browser and
@@ -87,6 +93,7 @@ export function installAssembledBootEnv(): void {
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
       setTimeout(() => { callback(0) }, 0) as unknown as number)
     vi.stubGlobal('cancelAnimationFrame', (id: number) => { clearTimeout(id) })
+    options.setup?.()
   })
 
   afterEach(() => {
@@ -105,6 +112,7 @@ export function installAssembledBootEnv(): void {
     delete ownNavigator.languages
     delete ownNavigator.language
     vi.unstubAllGlobals()
+    options.cleanup?.()
   })
 }
 
@@ -112,16 +120,21 @@ export function installAssembledBootEnv(): void {
  * Mount the assembled application on the fixture transport; the teardown
  * registered by installAssembledBootEnv disposes it.
  */
-export function mountAssembledApp(): void {
+export function mountAssembledApp(extraPlugins: readonly AssembledBootPlugin[] = []): void {
   history.replaceState(null, '', '/?fixture')
   const root = document.createElement('div')
   root.id = 'root'
   document.body.appendChild(root)
-  win.__DSH_BOOT__ = { rev: 'fx', entries: PLUGINS.map(({ bundlePath: _bundlePath, ...plugin }) => plugin) }
+  const plugins = [...PLUGINS, ...extraPlugins]
+  const assembledBundles = new Map(bundles)
+  for (const plugin of extraPlugins) {
+    assembledBundles.set(plugin.url, readFileSync(join(process.cwd(), plugin.bundlePath), 'utf8'))
+  }
+  win.__DSH_BOOT__ = { rev: 'fx', entries: plugins.map(({ bundlePath: _bundlePath, ...plugin }) => plugin) }
   act(() => {
     const entry = new AppWebEntry(root, {
       loadBundle: async (url) => {
-        const code = bundles.get(url)
+        const code = assembledBundles.get(url)
         if (code === undefined) throw new Error(`missing built bundle ${url}`)
         ;(0, eval)(code)
       },

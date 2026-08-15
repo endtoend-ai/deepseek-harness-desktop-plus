@@ -48,7 +48,7 @@ export type { WebSearchCardFace, WebSearchCardState } from './web-search-card-co
 const NS = 'settings.plugins'
 
 /** Required services (cordis fiber inject). */
-export const inject = ['slots', 'locale', 'connection', 'remote', 'settingsScope']
+export const inject = ['slots', 'locale', 'connection', 'remote', 'settingsScope', 'settingsNavigation']
 
 /**
  * Mount the plugin configuration section and the cards this package ships.
@@ -104,6 +104,7 @@ export function apply(ctx: ClientContext): void {
         },
       },
     },
+    subscribeNavigation: listener => ctx.settingsNavigation.subscribe(listener),
   })
 
   // This package owns the one Plugins navigation entry and the tab chrome;

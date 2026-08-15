@@ -18,6 +18,7 @@ import {
   initProfile,
   PROFILE_TEMPLATES,
   readProfileManifest,
+  reconcileProfileBundles,
   resolveBundleDir,
   resolveProfileDir,
   writeProfileManifest,
@@ -58,36 +59,18 @@ function exportsPatch(packageName: string, profileDir: string): boolean {
  */
 function reconcilePlugins(before: ProfileManifest, profileDir: string): void {
   const after = readProfileManifest(NAME, profileDir)
-  const beforeDeps = new Set(Object.keys(before.dependencies ?? {}))
-  const dependencies = Object.keys(after.dependencies ?? {})
-  const plugins = after.dsh?.profile?.bundles ?? []
-  let changed = false
-  for (const packageName of dependencies) {
-    const isBundle = exportsPatch(packageName, profileDir)
-    if (isBundle && !plugins.includes(packageName)) {
-      plugins.push(packageName)
-      changed = true
-    } else if (!isBundle && !beforeDeps.has(packageName)) {
-      process.stderr.write(
-        `${NAME}: warning: ${packageName} declares no dsh.bundle — installed as a plain dependency, not a profile layer `
-        + '(a later update that gains one activates it automatically)\n',
-      )
-    }
+  const reconciliation = reconcileProfileBundles(
+    before,
+    after,
+    packageName => exportsPatch(packageName, profileDir),
+  )
+  for (const packageName of reconciliation.addedPlainDependencies) {
+    process.stderr.write(
+      `${NAME}: warning: ${packageName} declares no dsh.bundle — installed as a plain dependency, not a profile layer `
+      + '(a later update that gains one activates it automatically)\n',
+    )
   }
-  const dependencySet = new Set(dependencies)
-  for (const packageName of [...plugins]) {
-    // Only dependency-managed entries are subject to removal; template
-    // bundles (dsh-base and friends) are not dependencies.
-    const wasDependency = beforeDeps.has(packageName) || dependencySet.has(packageName)
-    const stillBundle = dependencySet.has(packageName) && exportsPatch(packageName, profileDir)
-    if (wasDependency && !stillBundle) {
-      plugins.splice(plugins.indexOf(packageName), 1)
-      changed = true
-    }
-  }
-  if (!changed) return
-  after.dsh = { ...after.dsh, profile: { ...after.dsh?.profile, bundles: plugins } }
-  writeProfileManifest(profileDir, after)
+  if (reconciliation.changed) writeProfileManifest(profileDir, reconciliation.manifest)
 }
 
 /**

@@ -32,15 +32,17 @@ async function bench() {
   const renameSession = vi.fn(async (title: string) => ({ ok: true, value: { title, seq: 1 } }))
   const binding = vi.fn(() => ({ session: { rename: renameSession } }))
   const fork = vi.fn(async () => 'forked' as never)
+  const closePrimaryPage = vi.fn()
   ctx.provide('workspaces', {
     create, startSession, rename, insertSessionBefore,
   } as never)
   ctx.provide('sessions', { open, clear, search, searchResultLimit: 20, binding, fork } as never)
+  ctx.provide('layout', { closePrimaryPage } as never)
   const locale = new LocaleRuntime(ctx)
   ctx.provide('locale', locale)
   return {
     ctx, slots: ctx.get('slots') as SlotRegistry, locale, create, startSession, rename,
-    insertSessionBefore, open, clear, search, renameSession, binding, fork,
+    insertSessionBefore, open, clear, search, renameSession, binding, fork, closePrimaryPage,
   }
 }
 
@@ -54,7 +56,7 @@ function declare(slots: SlotRegistry, ...names: HoleName[]): () => void {
 
 describe('ui-workspace apply', () => {
   it('declares the services it drives', () => {
-    expect(inject).toEqual(['slots', 'sessions', 'workspaces', 'locale'])
+    expect(inject).toEqual(['slots', 'sessions', 'workspaces', 'layout', 'locale'])
   })
 
   it('registers browser and pickers for declarations arriving before or after apply', async () => {
@@ -88,6 +90,7 @@ describe('ui-workspace apply', () => {
     expect(b.startSession).toHaveBeenLastCalledWith(undefined)
     browser.open('session' as never)
     expect(b.open).toHaveBeenCalledWith('session')
+    expect(b.closePrimaryPage).toHaveBeenCalledTimes(3)
     const signal = new AbortController().signal
     await expect(browser.searchSessions('match', signal)).resolves.toEqual({
       items: [{ sessionId: 'session', snippet: 'match' }],
@@ -103,6 +106,7 @@ describe('ui-workspace apply', () => {
       expect(b.open).toHaveBeenCalledWith('forked')
     })
     expect(b.fork).toHaveBeenCalledWith({ sessionId: 'session', increaseTitle: true })
+    expect(b.closePrimaryPage).toHaveBeenCalledTimes(4)
     await browser.renameWorkspace('ws' as never, 'renamed')
     expect(b.rename).toHaveBeenCalledWith('ws', 'renamed')
     await browser.insertSessionBefore('ws' as never, 's1' as never, 's2' as never)

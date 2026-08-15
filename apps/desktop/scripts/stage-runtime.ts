@@ -4,6 +4,10 @@ import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { cp, lstat, mkdir, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve, sep } from 'node:path'
+import {
+  PACKAGE_MANAGER_ENTRY_SEGMENTS,
+  PINNED_PACKAGE_MANAGER_VERSION,
+} from '../src/plugin-center/package-manager.ts'
 
 const desktopRoot = resolve(import.meta.dirname, '..')
 const repositoryRoot = resolve(desktopRoot, '../..')
@@ -12,6 +16,8 @@ const deployRoot = resolve(desktopRoot, 'runtime')
 const deployPackage = '@deepseek-ai/dsh-desktop-runtime'
 const entry = join(staging, 'node_modules/@deepseek-ai/dsh/lib/bin.js')
 const frontend = join(staging, 'node_modules/@deepseek-ai/dsh-web-frontend/dist/index.html')
+const packageManagerEntry = join(staging, 'node_modules', ...PACKAGE_MANAGER_ENTRY_SEGMENTS)
+const packageManagerManifest = join(staging, 'node_modules/pnpm/package.json')
 const workspaceState = join(repositoryRoot, 'node_modules/.pnpm-workspace-state-v1.json')
 const stagedTextSuffixes = ['.cjs', '.js', '.json', '.mjs', '.map'] as const
 const targetPlatform = process.env.DSH_DESKTOP_TARGET_PLATFORM ?? process.platform
@@ -131,6 +137,11 @@ async function main(): Promise<void> {
   await removeBuildMachinePaths(staging)
   if (!existsSync(entry)) throw new Error(`desktop Host entry missing after staging: ${entry}`)
   if (!existsSync(frontend)) throw new Error(`desktop Web frontend missing after staging: ${frontend}`)
+  if (!existsSync(packageManagerEntry)) throw new Error(`desktop package-manager entry missing after staging: ${packageManagerEntry}`)
+  const packageManager = await manifest(packageManagerManifest) as Manifest & { readonly version?: unknown }
+  if (packageManager.version !== PINNED_PACKAGE_MANAGER_VERSION) {
+    throw new Error(`desktop package-manager version must be ${PINNED_PACKAGE_MANAGER_VERSION}`)
+  }
   console.log(`desktop runtime staged for ${targetPlatform}-${targetArch} at ${staging}`)
 }
 

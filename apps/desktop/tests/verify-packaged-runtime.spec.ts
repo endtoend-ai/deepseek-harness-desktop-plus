@@ -22,16 +22,47 @@ describe('packaged desktop runtime verification', () => {
       const background = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'default-background.webp')
       const catBackground = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'cloud-cat-background.webp')
       const logo = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'beyondata-logo.png')
+      const packageManager = join(resources, 'pnpm', 'bin', 'pnpm.cjs')
+      const packageManagerManifest = join(resources, 'pnpm', 'package.json')
       await mkdir(join(cli, '..'), { recursive: true })
       await mkdir(join(web, '..'), { recursive: true })
       await mkdir(join(background, '..'), { recursive: true })
+      await mkdir(join(packageManager, '..'), { recursive: true })
       await writeFile(cli, '')
       await writeFile(web, '')
       await writeFile(background, '')
       await writeFile(catBackground, '')
       await writeFile(logo, '')
+      await writeFile(packageManager, '')
+      await writeFile(packageManagerManifest, JSON.stringify({ version: '11.7.0' }))
 
       await expect(afterPack(context(appOutDir))).resolves.toBeUndefined()
+    } finally {
+      await rm(appOutDir, { recursive: true, force: true })
+    }
+  })
+
+  it('rejects a packaged shell whose package manager is absent or not pinned', async () => {
+    const appOutDir = await mkdtemp(join(tmpdir(), 'dsh-packaged-runtime-pnpm-'))
+    try {
+      const modules = join(appOutDir, 'DeepSeek Harness.app', 'Contents', 'Resources', 'host', 'node_modules')
+      const required = [
+        ['@deepseek-ai', 'dsh', 'lib', 'bin.js'],
+        ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'index.html'],
+        ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'default-background.webp'],
+        ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'cloud-cat-background.webp'],
+        ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'beyondata-logo.png'],
+        ['pnpm', 'bin', 'pnpm.cjs'],
+      ]
+      for (const segments of required) {
+        const file = join(modules, ...segments)
+        await mkdir(join(file, '..'), { recursive: true })
+        await writeFile(file, '')
+      }
+      await mkdir(join(modules, 'pnpm'), { recursive: true })
+      await writeFile(join(modules, 'pnpm/package.json'), JSON.stringify({ version: '11.6.0' }))
+
+      await expect(afterPack(context(appOutDir))).rejects.toThrow('packaged pnpm version must be 11.7.0')
     } finally {
       await rm(appOutDir, { recursive: true, force: true })
     }
@@ -56,6 +87,7 @@ describe('packaged desktop runtime verification', () => {
         ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'default-background.webp'],
         ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'cloud-cat-background.webp'],
         ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'beyondata-logo.png'],
+        ['pnpm', 'bin', 'pnpm.cjs'],
         ['@koromix', 'koffi-win32-x64', 'win32_x64', 'koffi.node'],
         ['node-addon-require-builtin-win32-x64-msvc', 'prebuilt', 'win32-x64-msvc-napi-v9.node'],
         ['node-pty', 'prebuilds', 'win32-x64', 'pty.node'],
@@ -67,6 +99,7 @@ describe('packaged desktop runtime verification', () => {
         await mkdir(join(file, '..'), { recursive: true })
         await writeFile(file, '')
       }
+      await writeFile(join(modules, 'pnpm/package.json'), JSON.stringify({ version: '11.7.0' }))
 
       await expect(afterPack(context(appOutDir, 'win32'))).resolves.toBeUndefined()
       await rm(join(modules, 'node-pty', 'prebuilds', 'win32-x64', 'conpty.node'))

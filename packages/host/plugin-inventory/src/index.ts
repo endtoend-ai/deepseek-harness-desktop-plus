@@ -2,6 +2,8 @@
 
 import type { Context, FiberState } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
+import type {} from '@deepseek-ai/dsh-client-modules'
+import type {} from '@deepseek-ai/dsh-skill'
 import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
 // Typert-generated ./typert and ./remote artifacts import Zod at runtime.
 import type {} from 'zod'
@@ -41,7 +43,7 @@ const FIBER_PHASE = {
 
 /** Remote-only service exposing the Loader's current non-group entry state. */
 export class PluginInventoryGateway extends TypertRemoteService {
-  static inject = ['loader']
+  static inject = ['loader', 'clientModules', 'skills']
 
   constructor(ctx: Context) {
     super(ctx, 'pluginInventory')
@@ -54,7 +56,7 @@ export class PluginInventoryGateway extends TypertRemoteService {
    * @returns Current non-group Loader entries in Loader order.
    */
   @Remote('list')
-  list(): PluginInventorySnapshot {
+  async list(): Promise<PluginInventorySnapshot> {
     const entries: PluginInventoryEntry[] = []
     for (const entry of this.ctx.loader.entries()) {
       if (entry.options.group) continue
@@ -65,7 +67,11 @@ export class PluginInventoryGateway extends TypertRemoteService {
         fiberPhase: entry.fiber === undefined ? null : FIBER_PHASE[entry.fiber.state],
       })
     }
-    return { entries }
+    return {
+      entries,
+      clientModules: this.ctx.clientModules.graph().entries.map(entry => entry.id),
+      skillIds: (await this.ctx.skills.list()).map(skill => skill.name),
+    }
   }
 }
 

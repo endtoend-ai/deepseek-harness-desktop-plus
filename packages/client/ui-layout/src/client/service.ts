@@ -27,6 +27,10 @@ export interface ILayout {
   openDetails(): void
   /** Close the details panel. */
   closeDetails(): void
+  /** Replace the conversation surface with one registered first-level page. */
+  openPrimaryPage(pageId: string): void
+  /** Return the main column to the conversation surface. */
+  closePrimaryPage(pageId?: string): void
 }
 
 /** Cross-plugin panel-action face (ctx.layout). */
@@ -57,6 +61,16 @@ export class LayoutController implements ILayout {
   /** Close the details panel. */
   closeDetails(): void {
     this.#require().closeDetails()
+  }
+
+  /** Replace the conversation surface with one registered first-level page. */
+  openPrimaryPage(pageId: string): void {
+    this.#require().openPrimaryPage(pageId)
+  }
+
+  /** Return the main column to the conversation surface. */
+  closePrimaryPage(pageId?: string): void {
+    this.#require().closePrimaryPage(pageId)
   }
 
   #require(): PanelActions {

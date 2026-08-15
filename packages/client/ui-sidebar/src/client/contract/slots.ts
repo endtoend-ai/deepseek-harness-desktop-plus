@@ -2,8 +2,9 @@
  * Sidebar slot contract: the registrant-side props composition for the
  * layout-owned `sidebar` slot, plus the holes this shell declares. The shell
  * owns column geometry (fold state machine, brand row, New Session);
- * everything between the section header and the list bottom is the
- * `sidebar.workspaces` registrant's (ui-workspace), and the foot is the
+ * first-level navigation actions live in `sidebar.primary.action`, everything
+ * between the section header and the list bottom is the `sidebar.workspaces`
+ * registrant's (ui-workspace), and the foot is the
  * `sidebar.settings` registrant's (ui-settings), followed by optional footer
  * actions in `sidebar.footer.action`.
  */
@@ -22,6 +23,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      * registers the browser.
      */
     'sidebar.workspaces': { kind: 'single'; scope: 'root'; owner: SidebarSectionOwnerProps }
+    /** First-level application navigation between New Session and Projects. */
+    'sidebar.primary.action': { kind: 'list'; scope: 'root'; owner: SidebarPrimaryActionOwnerProps }
     /**
      * The settings seat at the sidebar foot. Declared by this package's
      * 'sidebar' entry; ui-settings registers its trigger row + modal panel.
@@ -45,6 +48,14 @@ export interface SidebarSectionOwnerProps {
   wide: boolean
   /** Rail icons request expansion; the browser rides the wide flip for focus. */
   expandSidebar: () => void
+}
+
+/** Owner share for one first-level application navigation action. */
+export interface SidebarPrimaryActionOwnerProps {
+  /** Whether the sidebar renders wide content (false = compact rail). */
+  wide: boolean
+  /** Selected first-level page key, or null while Conversation is visible. */
+  primaryPage: string | null
 }
 
 /**
@@ -85,5 +96,5 @@ export type SidebarRootInjected = {
  */
 export type SidebarRootComponentProps =
   PropsRuntime<'sidebar'>
-  & PropsRenderSlots<'sidebar.workspaces' | 'sidebar.settings' | 'sidebar.footer.action'>
+  & PropsRenderSlots<'sidebar.primary.action' | 'sidebar.workspaces' | 'sidebar.settings' | 'sidebar.footer.action'>
   & SidebarRootInjected & PropsLocale<'sidebar'>

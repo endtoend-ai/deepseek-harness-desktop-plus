@@ -10,5 +10,19 @@
   },
   "include": [
     "src"
+  ],
+  "references": [
+    {
+      "path": "../../packages/boot/app-boot"
+    },
+    {
+      "path": "../../packages/util/atomic-write"
+    },
+    {
+      "path": "../../packages/util/home-paths"
+    },
+    {
+      "path": "../../packages/plugin-center/contracts"
+    }
   ]
 }

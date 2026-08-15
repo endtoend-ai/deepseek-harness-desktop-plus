@@ -87,7 +87,7 @@ export function initProfile(dir, bundles) {
             name: `dsh-profile-${basename(dir)}`,
             private: true,
             dependencies: {},
-            dsh: { profile: { bundles: [...bundles] } },
+            dsh: { profile: { bundles: [...bundles], disabledBundles: [] } },
         };
         writeFileSync(manifestPath, JSON.stringify(manifest, undefined, 2) + '\n');
     }
@@ -219,6 +219,152 @@ export function readProfileManifest(binName, dir) {
 export function writeProfileManifest(dir, manifest) {
     writeFileSync(join(dir, 'package.json'), JSON.stringify(manifest, undefined, 2) + '\n');
 }
+/** Read the two Profile-owned Bundle lists and reject ambiguous composition state. */
+export function readProfileBundleState(manifest) {
+    const bundles = [...manifest.dsh?.profile?.bundles ?? []];
+    const disabledBundles = [...manifest.dsh?.profile?.disabledBundles ?? []];
+    for (const [label, values] of [['bundles', bundles], ['disabledBundles', disabledBundles]]) {
+        if (values.some(value => typeof value !== 'string' || value.length === 0)) {
+            throw new Error(`dsh: dsh.profile.${label} must contain non-empty package names`);
+        }
+        if (new Set(values).size !== values.length) {
+            throw new Error(`dsh: dsh.profile.${label} must not contain duplicates`);
+        }
+    }
+    const disabled = new Set(disabledBundles);
+    const overlap = bundles.find(packageName => disabled.has(packageName));
+    if (overlap !== undefined) {
+        throw new Error(`dsh: profile Bundle ${JSON.stringify(overlap)} cannot be both active and disabled`);
+    }
+    return { bundles, disabledBundles };
+}
+/** Atomically express the user's active/disabled intent without changing package installation. */
+export function setProfileBundleEnabled(manifest, packageName, enabled) {
+    if (!(packageName in (manifest.dependencies ?? {}))) {
+        throw new Error(`dsh: cannot change uninstalled Profile Bundle ${JSON.stringify(packageName)}`);
+    }
+    const state = readProfileBundleState(manifest);
+    if (!state.bundles.includes(packageName) && !state.disabledBundles.includes(packageName)) {
+        throw new Error(`dsh: cannot change dependency ${JSON.stringify(packageName)} because it is not a Profile Bundle`);
+    }
+    if (enabled === state.bundles.includes(packageName))
+        return manifest;
+    const bundles = state.bundles.filter(value => value !== packageName);
+    const disabledBundles = state.disabledBundles.filter(value => value !== packageName);
+    if (enabled)
+        bundles.push(packageName);
+    else
+        disabledBundles.push(packageName);
+    return {
+        ...manifest,
+        dsh: {
+            ...manifest.dsh,
+            profile: { ...manifest.dsh?.profile, bundles, disabledBundles },
+        },
+    };
+}
+/**
+ * Reconcile the ordered profile bundle list after a package-manager mutation.
+ *
+ * Only dependency-managed entries are added or removed. Shipped template and
+ * other user-managed bundles that were never dependencies remain untouched.
+ * Package inspection is supplied by the caller so CLI and Desktop mutations
+ * share the same deterministic state transition without sharing resolution or
+ * filesystem policy.
+ *
+ * @param before - Profile manifest captured before the package-manager mutation.
+ * @param after - Profile manifest written by the successful mutation.
+ * @param exportsBundle - Inspect one currently installed dependency for `dsh.bundle`.
+ * @returns The immutable reconciliation result and change details for caller diagnostics.
+ */
+export function reconcileProfileBundles(before, after, exportsBundle) {
+    const beforeDependencies = new Set(Object.keys(before.dependencies ?? {}));
+    const dependencies = Object.keys(after.dependencies ?? {});
+    const dependencySet = new Set(dependencies);
+    const bundleStatus = new Map(dependencies.map(packageName => [packageName, exportsBundle(packageName)]));
+    const beforeState = readProfileBundleState(before);
+    const afterState = readProfileBundleState(after);
+    const bundles = [...afterState.bundles];
+    const disabledBundles = [...afterState.disabledBundles];
+    const addedBundles = [];
+    const removedBundles = [];
+    const addedPlainDependencies = [];
+    const addedDisabledBundles = [];
+    const removedDisabledBundles = [];
+    // pnpm preserves the dsh section today, but the previous manifest is the
+    // user-intent authority if another package-manager version rewrites it.
+    for (const packageName of beforeState.disabledBundles) {
+        if (dependencySet.has(packageName) && bundleStatus.get(packageName) === true
+            && !disabledBundles.includes(packageName)) {
+            disabledBundles.push(packageName);
+            addedDisabledBundles.push(packageName);
+            const activeIndex = bundles.indexOf(packageName);
+            if (activeIndex !== -1)
+                bundles.splice(activeIndex, 1);
+        }
+    }
+    for (const packageName of dependencies) {
+        if (bundleStatus.get(packageName) === true) {
+            const newlyInstalled = !beforeDependencies.has(packageName);
+            const intentionallyDisabled = !newlyInstalled && disabledBundles.includes(packageName);
+            if (newlyInstalled && disabledBundles.includes(packageName)) {
+                disabledBundles.splice(disabledBundles.indexOf(packageName), 1);
+                removedDisabledBundles.push(packageName);
+            }
+            if (!intentionallyDisabled && !bundles.includes(packageName)) {
+                bundles.push(packageName);
+                addedBundles.push(packageName);
+            }
+        }
+        else if (!beforeDependencies.has(packageName)) {
+            addedPlainDependencies.push(packageName);
+        }
+    }
+    const reconciledBundles = bundles.filter((packageName) => {
+        const dependencyManaged = beforeDependencies.has(packageName) || dependencySet.has(packageName);
+        const remainsBundle = dependencySet.has(packageName) && bundleStatus.get(packageName) === true;
+        if (!dependencyManaged || remainsBundle)
+            return true;
+        removedBundles.push(packageName);
+        return false;
+    });
+    const reconciledDisabled = disabledBundles.filter((packageName) => {
+        const remainsBundle = dependencySet.has(packageName) && bundleStatus.get(packageName) === true;
+        if (remainsBundle)
+            return true;
+        removedDisabledBundles.push(packageName);
+        return false;
+    });
+    const active = new Set(reconciledBundles);
+    const overlapping = reconciledDisabled.find(packageName => active.has(packageName));
+    if (overlapping !== undefined) {
+        throw new Error(`dsh: profile Bundle ${JSON.stringify(overlapping)} cannot be both active and disabled`);
+    }
+    const changed = !sameBundles(afterState.bundles, reconciledBundles)
+        || !sameBundles(afterState.disabledBundles, reconciledDisabled);
+    const manifest = changed
+        ? {
+            ...after,
+            dsh: {
+                ...after.dsh,
+                profile: {
+                    ...after.dsh?.profile,
+                    bundles: reconciledBundles,
+                    disabledBundles: reconciledDisabled,
+                },
+            },
+        }
+        : after;
+    return {
+        manifest,
+        changed,
+        addedBundles,
+        removedBundles,
+        addedPlainDependencies,
+        addedDisabledBundles,
+        removedDisabledBundles,
+    };
+}
 /** Return whether two bundle lists have the same values in the same order. */
 function sameBundles(left, right) {
     return left.length === right.length && left.every((value, index) => value === right[index]);
@@ -308,7 +454,7 @@ export function loadProfile(binName, name, installAnchor, home = resolveDshHome(
     }
     const manifest = normalizeShippedProfile(name, dir, readProfileManifest(binName, dir));
     // A hand-written profile manifest may omit the dsh section entirely.
-    const bundles = manifest.dsh?.profile?.bundles ?? [];
+    const bundles = readProfileBundleState(manifest).bundles;
     const layers = bundles.map((packageName) => {
         const packageDir = resolveBundleDir(binName, packageName, installAnchor, dir);
         const bundleManifest = JSON.parse(readFileSync(join(packageDir, 'package.json'), 'utf8'));

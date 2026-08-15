@@ -207,6 +207,13 @@
     - id: ui-settings-plugin-inventory
       name: '@deepseek-ai/dsh-client-ui-settings-plugin-inventory'
 
+    # First-level reviewed Plugin and Skill Bundle discovery; Web only through the explicit dev marker.
+    - id: ui-plugin-center
+      name: '@deepseek-ai/dsh-client-ui-plugin-center'
+      disabled: !!js process.env.DSH_DESKTOP !== '1' && process.env.DSH_PLUGIN_CENTER_DEV !== '1'
+      config:
+        development: !!js process.env.DSH_PLUGIN_CENTER_DEV === '1'
+
     - id: ui-conversation
       name: '@deepseek-ai/dsh-client-ui-conversation'
 

@@ -24,6 +24,16 @@ The desktop app accepts only the readiness URL emitted by `dsh web` for `127.0.0
 
 Native chrome follows the host platform. macOS uses a frameless inset title bar, traffic lights, and sidebar vibrancy; its collapsed sidebar is 90px wide, with centered controls whose top edge aligns with the expanded logo row below the traffic lights. Windows retains its system frame, shadow, resize and Snap behavior, and Windows 11 rounded corners while a hidden title bar places the native caption buttons in the Session header's first row; the Windows sidebar has no traffic-light inset. The empty part of that row remains draggable, its controls remain clickable, and a resident drag band covers the same row when no Session header is visible. Windows acrylic and macOS vibrancy reach only the sidebar, while conversation and details stay opaque. Linux keeps a frameless window and an opaque sidebar fallback.
 
+### Plugin Center trusted lifecycle
+
+Desktop owns Plugin Center discovery, compatibility, and package-mutation authority. Public discovery searches npm for packages tagged `dsh-plugin`, the convention documented by DeepSeek Harness for ecosystem discovery, and retains only exact versions that declare `dsh.bundle`. The keyword is not an official endorsement. Before an item receives installation authority, Desktop downloads its immutable npm tarball and validates registry integrity, SHA-256, archive containment, package identity, Bundle patch, and activation identities. The sandboxed renderer can call only fixed catalog and operation methods and submits only plugin id, exact version, and an idempotency key.
+
+The same serialized transaction owns install, enable, disable, exact update, and uninstall. It snapshots before mutation, preserves explicit active or disabled Bundle intent, stops the Host before package replacement or removal, and commits only after the target Profile and declared Host, client, and Skill evidence agree. Uninstall preserves configuration and plugin-owned data by default; a separate post-commit bridge can delete only exact declared paths below the plugin storage root. Before a normal Host starts, Desktop deactivates validated external Bundles that are incompatible with the current application release while retaining their packages and reasons. The production preload exposes these operations through the recovery-backed controller.
+
+An uncommitted journal owns recovery before the normal Host starts. Mutation side effects durably record their before and after points, so the same recovery path covers interruption before or after Host stop, Profile or package mutation, Host start, and renderer reconnect. Recovery restores the hash-bound snapshot, rematerializes the old packages, and requires the prior Host, client, and Skill evidence before publishing `rolled-back`; failure opens the protected recovery page with same-operation retry and redacted diagnostic export.
+
+Use `pnpm run dev:desktop:web` for deterministic browser acceptance of the same client components and progress contract. That development bridge simulates phases and persistence but has no Electron, Profile, filesystem, package-manager, MCP, or Host-restart authority.
+
 ## Packaging
 
 The local packaging command performs the complete repository build, stages the Host's closed production dependency tree, and creates an unpacked application for the current platform. A separate manual build is not required:
@@ -101,6 +111,8 @@ Internal test installers remain unsigned until a Windows Authenticode certificat
 ## Known limitations
 
 The first desktop assembly uses a loopback HTTP Host. The renderer and Host protocol remain unchanged so the application can replace the transport with the IPC carrier reserved by the GUI architecture without changing product features.
+
+Browser progress remains simulation evidence only; real search, package mutation, Host restart, and uninstall require Desktop. The public npm index is a community distribution channel, not a DeepSeek security review. This first live source accepts prebuilt npm DSH Bundles and rejects packages without `dsh.bundle`, unsafe archives, mismatched immutable evidence, or install lifecycle scripts; GitHub-only source builds are not installed by the one-click path.
 
 macOS has a signed and notarized distribution path. Windows has an x64 NSIS installer path, but production Authenticode signing remains release work. Linux still creates an unpacked application and has no installer format or distribution-signing path yet.
 

@@ -40,6 +40,20 @@
   overflow: hidden;
 }
 
+.centerSurface {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+/* Keep Conversation mounted for state continuity, but remove it from layout
+   while a keyed first-level page owns the center column. */
+.centerSurface[hidden] {
+  display: none;
+}
+
 .detailsCol {
   grid-column: 3;
   grid-row: 1;

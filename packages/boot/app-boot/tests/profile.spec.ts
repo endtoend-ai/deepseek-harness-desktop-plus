@@ -15,9 +15,12 @@ import {
   loadProfile,
   PROFILE_PATCH_FILENAME,
   PROFILE_TEMPLATES,
+  readProfileBundleState,
   readProfileManifest,
+  reconcileProfileBundles,
   resolveBundleDir,
   resolveProfileDir,
+  setProfileBundleEnabled,
   writeProfileManifest,
 } from '../src/index.ts'
 
@@ -62,6 +65,7 @@ describe('initProfile', () => {
     initProfile(dir, ['@deepseek-ai/dsh-base'])
     const manifest = readProfileManifest('t', dir)
     expect(manifest.dsh?.profile?.bundles).toEqual(['@deepseek-ai/dsh-base'])
+    expect(manifest.dsh?.profile?.disabledBundles).toEqual([])
     expect(readFileSync(join(dir, PROFILE_PATCH_FILENAME), 'utf8')).toContain('[]')
     expect(readFileSync(join(dir, 'pnpm-workspace.yaml'), 'utf8')).toContain('nodeLinker: hoisted')
     // Re-init keeps user edits.
@@ -80,6 +84,153 @@ describe('manifest round-trip', () => {
     writeFileSync(join(dir, 'package.json'), '[]')
     expect(() => readProfileManifest('t', dir)).toThrow('must hold a JSON object')
     expect(() => readProfileManifest('t', join(dir, 'nope'))).toThrow('failed to read profile manifest')
+  })
+})
+
+describe('reconcile profile bundles', () => {
+  it('adds installed bundles in dependency order and reports newly added plain dependencies', () => {
+    const before = {
+      dependencies: { retained: '1.0.0' },
+      dsh: { profile: { bundles: ['template-bundle', 'retained'] } },
+    }
+    const after = {
+      dependencies: {
+        retained: '1.0.1',
+        'bundle-b': '1.0.0',
+        'plain-library': '1.0.0',
+        'bundle-a': '1.0.0',
+      },
+      dsh: { profile: { bundles: ['template-bundle', 'retained'] } },
+    }
+    const inspected: string[] = []
+
+    const result = reconcileProfileBundles(before, after, (packageName) => {
+      inspected.push(packageName)
+      return packageName !== 'plain-library'
+    })
+
+    expect(result).toMatchObject({
+      changed: true,
+      addedBundles: ['bundle-b', 'bundle-a'],
+      removedBundles: [],
+      addedPlainDependencies: ['plain-library'],
+    })
+    expect(result.manifest.dsh?.profile?.bundles).toEqual([
+      'template-bundle', 'retained', 'bundle-b', 'bundle-a',
+    ])
+    expect(inspected).toEqual(['retained', 'bundle-b', 'plain-library', 'bundle-a'])
+    expect(after.dsh.profile.bundles).toEqual(['template-bundle', 'retained'])
+  })
+
+  it('retains user-managed bundles and removes only dependency-managed entries that stopped being bundles', () => {
+    const before = {
+      dependencies: {
+        retained: '1.0.0',
+        removed: '1.0.0',
+        downgraded: '1.0.0',
+      },
+      dsh: { profile: { bundles: ['template-bundle', 'retained', 'removed', 'downgraded'] } },
+    }
+    const after = {
+      dependencies: { retained: '1.0.1', downgraded: '2.0.0' },
+      dsh: { profile: { bundles: ['template-bundle', 'retained', 'removed', 'downgraded'] } },
+    }
+
+    const result = reconcileProfileBundles(before, after, packageName => packageName === 'retained')
+
+    expect(result).toMatchObject({
+      changed: true,
+      addedBundles: [],
+      removedBundles: ['removed', 'downgraded'],
+      addedPlainDependencies: [],
+    })
+    expect(result.manifest.dsh?.profile?.bundles).toEqual(['template-bundle', 'retained'])
+    expect(after.dsh.profile.bundles).toEqual(['template-bundle', 'retained', 'removed', 'downgraded'])
+  })
+
+  it('returns the original manifest when no bundle transition is required', () => {
+    const manifest = {
+      dependencies: { retained: '1.0.0' },
+      dsh: { profile: { bundles: ['template-bundle', 'retained'] } },
+    }
+
+    const result = reconcileProfileBundles(manifest, manifest, () => true)
+
+    expect(result.changed).toBe(false)
+    expect(result.manifest).toBe(manifest)
+    expect(result.addedBundles).toEqual([])
+    expect(result.removedBundles).toEqual([])
+    expect(result.addedPlainDependencies).toEqual([])
+  })
+
+  it('preserves disabled profile bundles through unrelated upgrades and removes them on uninstall', () => {
+    const before = {
+      dependencies: { active: '1.0.0', disabled: '1.0.0' },
+      dsh: { profile: { bundles: ['base', 'active'], disabledBundles: ['disabled'] } },
+    }
+    const upgraded = {
+      dependencies: { active: '1.1.0', disabled: '1.1.0', added: '1.0.0' },
+      // Simulate a package-manager rewrite that retained only the active list.
+      dsh: { profile: { bundles: ['base', 'active', 'disabled'] } },
+    }
+    const result = reconcileProfileBundles(before, upgraded, () => true)
+    expect(result.manifest.dsh?.profile).toEqual({
+      bundles: ['base', 'active', 'added'],
+      disabledBundles: ['disabled'],
+    })
+    expect(result.addedBundles).toEqual(['added'])
+    expect(result.addedDisabledBundles).toEqual(['disabled'])
+
+    const dsh = result.manifest.dsh
+    if (dsh === undefined) throw new Error('upgraded profile must retain dsh metadata')
+    const removed = reconcileProfileBundles(result.manifest, {
+      dependencies: { active: '1.1.0', added: '1.0.0' },
+      dsh,
+    }, () => true)
+    expect(removed.manifest.dsh?.profile).toEqual({
+      bundles: ['base', 'active', 'added'],
+      disabledBundles: [],
+    })
+    expect(removed.removedDisabledBundles).toEqual(['disabled'])
+  })
+
+  it('activates a newly installed bundle even when stale disabled metadata names it', () => {
+    const before = { dependencies: {}, dsh: { profile: { bundles: ['base'], disabledBundles: [] } } }
+    const after = {
+      dependencies: { added: '1.0.0' },
+      dsh: { profile: { bundles: ['base'], disabledBundles: ['added'] } },
+    }
+    const result = reconcileProfileBundles(before, after, () => true)
+    expect(result.manifest.dsh?.profile).toEqual({ bundles: ['base', 'added'], disabledBundles: [] })
+  })
+})
+
+describe('disabled profile bundles', () => {
+  const manifest = {
+    dependencies: { managed: '1.0.0' },
+    dsh: { profile: { bundles: ['base', 'managed'], disabledBundles: [] } },
+  }
+
+  it('moves one installed Bundle between disjoint ordered lists without changing dependencies', () => {
+    const disabled = setProfileBundleEnabled(manifest, 'managed', false)
+    expect(disabled.dependencies).toBe(manifest.dependencies)
+    expect(readProfileBundleState(disabled)).toEqual({ bundles: ['base'], disabledBundles: ['managed'] })
+    const enabled = setProfileBundleEnabled(disabled, 'managed', true)
+    expect(readProfileBundleState(enabled)).toEqual({ bundles: ['base', 'managed'], disabledBundles: [] })
+    expect(setProfileBundleEnabled(enabled, 'managed', true)).toBe(enabled)
+  })
+
+  it('rejects overlap, duplicates, uninstalled names, and plain dependencies', () => {
+    expect(() => readProfileBundleState({
+      dsh: { profile: { bundles: ['same'], disabledBundles: ['same'] } },
+    })).toThrow('both active and disabled')
+    expect(() => readProfileBundleState({ dsh: { profile: { bundles: ['same', 'same'] } } }))
+      .toThrow('must not contain duplicates')
+    expect(() => setProfileBundleEnabled(manifest, 'missing', false)).toThrow('uninstalled')
+    expect(() => setProfileBundleEnabled({
+      dependencies: { plain: '1.0.0' },
+      dsh: { profile: { bundles: ['base'], disabledBundles: [] } },
+    }, 'plain', false)).toThrow('not a Profile Bundle')
   })
 })
 

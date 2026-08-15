@@ -9,7 +9,7 @@ import type { SidebarRootInjected } from '@deepseek-ai/dsh-client-ui-sidebar/cli
 async function bench(declare = true) {
   const ctx = new Context()
   await ctx.plugin(SlotRegistry).await()
-  const layout = { toggleSidebar: vi.fn() }
+  const layout = { toggleSidebar: vi.fn(), closePrimaryPage: vi.fn() }
   const workspaces = { startSession: vi.fn() }
   const sessions = { open: vi.fn(), clear: vi.fn() }
   ctx.provide('layout', layout)
@@ -35,6 +35,7 @@ describe('ui-sidebar apply', () => {
     const b = await bench()
     await b.ctx.plugin({ inject: [...inject], apply }).await()
     expect(b.slots.entries('sidebar')).toHaveLength(1)
+    expect(b.slots.spec('sidebar.primary.action')).toEqual({ kind: 'list', scope: 'root' })
     expect(b.slots.spec('sidebar.workspaces')).toEqual({ kind: 'single', scope: 'root' })
     expect(b.slots.spec('sidebar.settings')).toEqual({ kind: 'single', scope: 'root' })
     expect(b.slots.spec('sidebar.footer.action')).toEqual({ kind: 'list', scope: 'root' })
@@ -47,6 +48,7 @@ describe('ui-sidebar apply', () => {
     expect(b.workspaces.startSession).toHaveBeenCalledWith('workspace')
     injected.startSession()
     expect(b.workspaces.startSession).toHaveBeenLastCalledWith(undefined)
+    expect(b.layout.closePrimaryPage).toHaveBeenCalledTimes(2)
     injected.toggleSidebar()
     expect(b.layout.toggleSidebar).toHaveBeenCalledOnce()
   })
@@ -63,6 +65,7 @@ describe('ui-sidebar apply', () => {
     await fiber.dispose()
     expect(b.slots.entries('sidebar')).toHaveLength(0)
     expect(b.slots.spec('sidebar.workspaces')).toBeUndefined()
+    expect(b.slots.spec('sidebar.primary.action')).toBeUndefined()
     expect(b.slots.spec('sidebar.footer.action')).toBeUndefined()
   })
 })

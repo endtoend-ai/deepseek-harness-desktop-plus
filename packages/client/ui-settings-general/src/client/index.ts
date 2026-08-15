@@ -54,7 +54,7 @@ const NS = 'settings'
  * ui-settings' apply, whose activation order relative to this one is NOT
  * constrained; registrations depend on their slots through `slots.inject()`.
  */
-export const inject = ['slots', 'locale', 'connection']
+export const inject = ['slots', 'locale', 'connection', 'settingsNavigation']
 
 /**
  * Register the `settings` dictionaries, the chrome content, and the General
@@ -69,6 +69,7 @@ export function apply(ctx: ClientContext): void {
   // locale/change re-registration wiring.
   const t = ctx.locale.bind(NS)
   const connection = ctx.get('connection') as ConnectionHandle
+  const settingsNavigation = ctx.settingsNavigation
   const documentController = connection.isLoopback
     ? new SettingsDocumentStore(connection.api)
     : undefined
@@ -138,6 +139,7 @@ export function apply(ctx: ClientContext): void {
         subscribe: listener => ctx.slots.subscribe('settings.onboarding', listener),
       },
     },
+    subscribeNavigation: listener => settingsNavigation.subscribe(listener),
   })
   ctx.slots.inject('sidebar.settings', () => ctx.slots.register({
     name: 'sidebar.settings',

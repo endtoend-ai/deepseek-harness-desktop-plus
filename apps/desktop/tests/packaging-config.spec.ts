@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 interface DesktopPackage {
+  readonly dependencies: Readonly<Record<string, string>>
   readonly scripts: Readonly<Record<string, string>>
   readonly build: {
     readonly afterPack: string
@@ -33,6 +34,10 @@ interface RootPackage {
   readonly scripts: Readonly<Record<string, string>>
 }
 
+interface RuntimePackage {
+  readonly dependencies: Readonly<Record<string, string>>
+}
+
 const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const repositoryRoot = resolve(desktopRoot, '../..')
 const workspaceConfiguration = readFileSync(resolve(repositoryRoot, 'pnpm-workspace.yaml'), 'utf8')
@@ -44,6 +49,9 @@ const desktopPackage = JSON.parse(
 const rootPackage = JSON.parse(
   readFileSync(resolve(repositoryRoot, 'package.json'), 'utf8'),
 ) as RootPackage
+const runtimePackage = JSON.parse(
+  readFileSync(resolve(desktopRoot, 'runtime/package.json'), 'utf8'),
+) as RuntimePackage
 
 describe('desktop packaging configuration', () => {
   it('lets electron-builder resolve the target-platform Electron distribution', () => {
@@ -57,6 +65,21 @@ describe('desktop packaging configuration', () => {
       { from: 'runtime-host/node_modules', to: 'host/node_modules' },
     ]))
     expect(desktopPackage.build.afterPack).toBe('./scripts/verify-packaged-runtime.ts')
+  })
+
+  it('stages the pinned package manager with the Host dependency tree', () => {
+    expect(runtimePackage.dependencies.pnpm).toBe('11.7.0')
+  })
+
+  it('owns the app-boot runtime peers that must be packaged in app.asar', () => {
+    for (const packageName of [
+      '@deepseek-ai/cordis',
+      '@deepseek-ai/cordis-plugin-group',
+      '@deepseek-ai/cordis-plugin-loader',
+      '@deepseek-ai/dsh-launch-environment',
+    ]) {
+      expect(desktopPackage.dependencies[packageName]).toBe('workspace:^')
+    }
   })
 
   it('unlocks the temporary signing Keychain with its own password', () => {

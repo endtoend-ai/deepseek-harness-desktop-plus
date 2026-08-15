@@ -63,6 +63,7 @@ function mountFrame() {
     slotCalls.push({ key, props: owner })
     if (key === 'sidebar') return <div data-testid="sidebar-content" />
     if (key === 'conversation') return <div data-testid="center-content" />
+    if (key === 'main.page') return <div data-testid="primary-page-content" />
     if (key === 'details') return <div data-testid="details-content" />
     if (key === 'conversation.empty') return <div data-testid="empty-content" />
     return <div data-testid="other-content" />
@@ -221,7 +222,23 @@ describe('AppFrame', () => {
 
   it('sidebar slot receives live concession output as owner props', () => {
     const { slotCalls } = mountFrame()
-    expect(slotCalls.find(c => c.key === 'sidebar')!.props).toEqual({ collapsed: false, width: 280 })
+    expect(slotCalls.find(c => c.key === 'sidebar')!.props).toEqual({
+      collapsed: false,
+      width: 280,
+      primaryPage: null,
+    })
+  })
+
+  it('shows a keyed first-level page without unmounting Conversation and closes Details', () => {
+    const { frame, instance, getByTestId } = mountFrame()
+    act(() => { instance.actions.openDetails() })
+    expect(tracks(frame)).toEqual([280, 360])
+    act(() => { instance.actions.openPrimaryPage('plugin-center') })
+    expect(tracks(frame)).toEqual([280, 0])
+    expect(getByTestId('primary-page-content')).toBeTruthy()
+    expect(getByTestId('center-content').parentElement?.hidden).toBe(true)
+    act(() => { instance.actions.closePrimaryPage() })
+    expect(getByTestId('center-content').parentElement?.hidden).toBe(false)
   })
 
   it('sidebar drag widens through rAF-batched pointer moves', () => {
@@ -263,7 +280,7 @@ describe('AppFrame', () => {
     expect(getByTestId('sidebar-content')).toBeTruthy()
     expect(frame.hasAttribute('data-sidebar-collapsed')).toBe(true)
     const lastSidebarCall = slotCalls.filter(c => c.key === 'sidebar').at(-1)!
-    expect(lastSidebarCall.props).toEqual({ collapsed: true, width: SIDEBAR_COLLAPSED })
+    expect(lastSidebarCall.props).toEqual({ collapsed: true, width: SIDEBAR_COLLAPSED, primaryPage: null })
   })
 
   it('keeps the macOS traffic lights inside the collapsed rail geometry', () => {
@@ -275,6 +292,7 @@ describe('AppFrame', () => {
     expect(slotCalls.filter(c => c.key === 'sidebar').at(-1)!.props).toEqual({
       collapsed: true,
       width: SIDEBAR_COLLAPSED_MACOS,
+      primaryPage: null,
     })
   })
 
@@ -287,6 +305,7 @@ describe('AppFrame', () => {
     expect(slotCalls.filter(c => c.key === 'sidebar').at(-1)!.props).toEqual({
       collapsed: true,
       width: SIDEBAR_COLLAPSED,
+      primaryPage: null,
     })
   })
 
@@ -319,7 +338,11 @@ describe('AppFrame — narrow-viewport auto-collapse', () => {
     const { frame, slotCalls } = mountFrame()
     expect(tracks(frame)).toEqual([SIDEBAR_COLLAPSED, 0])
     expect(frame.hasAttribute('data-sidebar-collapsed')).toBe(true)
-    expect(slotCalls.filter(c => c.key === 'sidebar').at(-1)!.props).toEqual({ collapsed: true, width: SIDEBAR_COLLAPSED })
+    expect(slotCalls.filter(c => c.key === 'sidebar').at(-1)!.props).toEqual({
+      collapsed: true,
+      width: SIDEBAR_COLLAPSED,
+      primaryPage: null,
+    })
     expect(frame.querySelectorAll('[class*="handle"]')).toHaveLength(0)
   })
 

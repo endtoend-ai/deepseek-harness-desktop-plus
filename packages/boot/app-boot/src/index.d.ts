@@ -5,18 +5,18 @@
  * config expressions, and drive the Cordis Loader against a leaf `cordis.yml` until the tree settles.
  * @module @deepseek-ai/dsh-app-boot
  */
-import { Context } from '@deepseek-ai/cordis';
-import { type Entry } from '@deepseek-ai/cordis-plugin-loader';
-import { type PatchOptions } from '@deepseek-ai/cordis-plugin-include';
-import { dshHomePath } from '@deepseek-ai/dsh-home-paths';
-import { type LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment';
+import { Context } from '@deepseek-ai/cordis'
+import { type Entry } from '@deepseek-ai/cordis-plugin-loader'
+import { type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
+import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
+import { type LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
 declare module '@deepseek-ai/cordis' {
-    interface Context {
-        /** Harness-home path resolver available to Loader `!!js` config expressions. */
-        dshHomePath?: typeof dshHomePath;
-    }
+  interface Context {
+    /** Harness-home path resolver available to Loader `!!js` config expressions. */
+    dshHomePath?: typeof dshHomePath
+  }
 }
-export { composeEntries, DEFAULT_PROFILE_BUNDLES, healProfilesModuleFallback, initProfile, loadProfile, PROFILE_PATCH_FILENAME, PROFILE_TEMPLATES, PROFILES_DIR, readProfileManifest, resolveBundleDir, resolveProfileDir, writeProfileManifest, type DshBundleManifest, type DshManifestSection, type DshProfileManifest, type Profile, type ProfileLayer, type ProfileManifest, } from './profile.ts';
+export { composeEntries, DEFAULT_PROFILE_BUNDLES, healProfilesModuleFallback, initProfile, loadProfile, PROFILE_PATCH_FILENAME, PROFILE_TEMPLATES, PROFILES_DIR, readProfileManifest, readProfileBundleState, reconcileProfileBundles, resolveBundleDir, resolveProfileDir, setProfileBundleEnabled, writeProfileManifest, type DshBundleManifest, type DshManifestSection, type DshProfileManifest, type Profile, type ProfileBundleReconciliation, type ProfileBundleState, type ProfileLayer, type ProfileManifest } from './profile.ts'
 /**
  * Resolve the config to boot. Replay swaps a `cordis.yml` basename for
  * `cordis.snapshot.yml` in the same directory; every other mode keeps the path.
@@ -26,7 +26,7 @@ export { composeEntries, DEFAULT_PROFILE_BUNDLES, healProfilesModuleFallback, in
  * @param cwd - the base a relative `configPath` resolves against.
  * @returns the absolute path of the config to boot.
  */
-export declare function resolveConfigPath(configPath: string, snapshotMode: string | undefined, cwd?: string): string;
+export declare function resolveConfigPath(configPath: string, snapshotMode: string | undefined, cwd?: string): string
 /**
  * Load the optional gitignored `.env` from `dir`. Missing files fall back to the
  * ambient environment; other read failures are reported through `warn`.
@@ -34,7 +34,7 @@ export declare function resolveConfigPath(configPath: string, snapshotMode: stri
  * @param dir - the directory whose `.env` to load.
  * @param warn - sink for the one-line misconfiguration diagnostic.
  */
-export declare function loadEnv(binName: string, dir?: string, warn?: (line: string) => void): void;
+export declare function loadEnv(binName: string, dir?: string, warn?: (line: string) => void): void
 /**
  * Load the product CLI's inherited > invoking-directory `.env` > Harness-home
  * `.env` snapshot. The Harness home resolves before either file; both files
@@ -46,21 +46,21 @@ export declare function loadEnv(binName: string, dir?: string, warn?: (line: str
  * @returns this run's frozen environment snapshot.
  * @throws when either file declares a bootstrap-only variable.
  */
-export declare function loadLayeredEnv(binName: string, cwd?: string, warn?: (line: string) => void): LaunchEnvironmentSnapshot;
+export declare function loadLayeredEnv(binName: string, cwd?: string, warn?: (line: string) => void): LaunchEnvironmentSnapshot
 /** Options for live user patch-layer reconciliation. */
 export interface UserPatchWatchOptions {
-    /** Diagnostic prefix used by {@link loadOptionalPatches}. */
-    binName: string;
-    /** Absolute path of the watched patch file (a profile's `cordis.patch.yml`). */
-    filename: string;
-    /**
+  /** Diagnostic prefix used by {@link loadOptionalPatches}. */
+  binName: string
+  /** Absolute path of the watched patch file (a profile's `cordis.patch.yml`). */
+  filename: string
+  /**
      * Compose the full patch list for a fresh user-layer generation —
      * the same composition the app booted with, so a reload can interleave the
      * new user patches between app-owned layers (bundle layers below,
      * overlays above). Identity when omitted: the user layer
      * is the whole patch list.
      */
-    compose?: (userPatches: PatchOptions[]) => PatchOptions[];
+  compose?: (userPatches: PatchOptions[]) => PatchOptions[]
 }
 /**
  * Watch the user patch layer through Cordis HMR and transactionally reapply it to the boot include.
@@ -69,7 +69,7 @@ export interface UserPatchWatchOptions {
  * @returns an asynchronous disposer after the exact-path watcher is ready.
  * @throws when HMR or the root Include is absent, watcher setup fails, or initial path resolution fails.
  */
-export declare function watchUserPatches(ctx: Context, options: UserPatchWatchOptions): Promise<() => Promise<void>>;
+export declare function watchUserPatches(ctx: Context, options: UserPatchWatchOptions): Promise<() => Promise<void>>
 /**
  * Load an optional patch-list file: a top-level YAML array of loader patch
  * entries (`@deepseek-ai/cordis-plugin-include`'s `PatchOptions`): id-targeted config
@@ -81,7 +81,7 @@ export declare function watchUserPatches(ctx: Context, options: UserPatchWatchOp
  * @param file - absolute path of the patch file.
  * @returns the parsed patches, or `undefined` when the file does not exist.
  */
-export declare function loadOptionalPatches(binName: string, file: string): PatchOptions[] | undefined;
+export declare function loadOptionalPatches(binName: string, file: string): PatchOptions[] | undefined
 /**
  * Load a required overlay patch list: a bundle's `cordis.patch.yml` or a
  * `--patch <path>` overlay. Same file format as {@link loadOptionalPatches},
@@ -91,13 +91,13 @@ export declare function loadOptionalPatches(binName: string, file: string): Patc
  * @param file - absolute path of the overlay file.
  * @returns the parsed patch list.
  */
-export declare function loadOverlayPatches(binName: string, file: string): PatchOptions[];
+export declare function loadOverlayPatches(binName: string, file: string): PatchOptions[]
 /** One overlay patch list with the source label printed in dump comments. */
 export interface ConfigDumpLayer {
-    /** Source name shown in dump comments (a file basename or path). */
-    label: string;
-    /** The layer's patches, from {@link loadOverlayPatches} / {@link loadOptionalPatches}. */
-    patches: PatchOptions[];
+  /** Source name shown in dump comments (a file basename or path). */
+  label: string
+  /** The layer's patches, from {@link loadOverlayPatches} / {@link loadOptionalPatches}. */
+  patches: PatchOptions[]
 }
 /**
  * Compose the effective entry list exactly as `boot()` would mount it: parse
@@ -130,7 +130,12 @@ export interface ConfigDumpLayer {
  * @returns the composed entry list rendered as a YAML document with
  * source comment separators.
  */
-export declare function renderConfigDump(binName: string, absoluteConfigPath: string, layers: ConfigDumpLayer[], warn?: (line: string) => void): string;
+export declare function renderConfigDump(
+  binName: string,
+  absoluteConfigPath: string,
+  layers: ConfigDumpLayer[],
+  warn?: (line: string) => void,
+): string
 /**
  * Mount and remember the exact root Include entry used by app boot and user patch-layer HMR.
  * @param ctx - context carrying an initialized Loader service.
@@ -142,29 +147,34 @@ export declare function renderConfigDump(binName: string, absoluteConfigPath: st
  * disposed the whole tree (taking the Loader service with it) while the
  * transactional create was still settling entry lifecycle.
  */
-export declare function mountRootInclude(ctx: Context, absoluteConfigPath: string, patches?: readonly PatchOptions[], bareModuleBaseUrl?: string): Promise<Entry | undefined>;
+export declare function mountRootInclude(
+  ctx: Context,
+  absoluteConfigPath: string,
+  patches?: readonly PatchOptions[],
+  bareModuleBaseUrl?: string,
+): Promise<Entry | undefined>
 /**
  * The slice of `process` {@link installFailLoud} needs — injectable so tests
  * exercise the handler without registering on (or exiting) the real process.
  */
 export interface FailLoudProcess {
-    on(event: 'unhandledRejection', handler: (err: unknown) => void): unknown;
-    off(event: 'unhandledRejection', handler: (err: unknown) => void): unknown;
-    stderr: {
-        write(chunk: string): unknown;
-    };
-    /**
+  on(event: 'unhandledRejection', handler: (err: unknown) => void): unknown
+  off(event: 'unhandledRejection', handler: (err: unknown) => void): unknown
+  stderr: {
+    write(chunk: string): unknown
+  }
+  /**
      * Terminate the process. Callers treat this as the end of the run, as
      * `process.exit` is; a fake that returns lets the caller continue, which only
      * a test observes.
      */
-    exit(code: number): void;
+  exit(code: number): void
 }
 /**
  * How long {@link installFailLoud} waits for its `release` hook before exiting
  * anyway. A wedged disposer must delay the fatal exit, never cancel it.
  */
-export declare const FAIL_LOUD_RELEASE_TIMEOUT_MS = 2000;
+export declare const FAIL_LOUD_RELEASE_TIMEOUT_MS = 2000
 /**
  * Install before boot to turn a late unhandled plugin-init rejection into one
  * labelled stderr diagnostic and `exit(1)`. A rejection already included by
@@ -194,7 +204,7 @@ export declare const FAIL_LOUD_RELEASE_TIMEOUT_MS = 2000;
  *   swallowed because the pending fatal exit already owns the outcome.
  * @returns the uninstaller that removes the rejection handler.
  */
-export declare function installFailLoud(binName: string, proc?: FailLoudProcess, release?: () => Promise<void> | void): () => void;
+export declare function installFailLoud(binName: string, proc?: FailLoudProcess, release?: () => Promise<void> | void): () => void
 /**
  * After the tree settles, reject entries with no fiber and name every plugin
  * whose module failed to resolve. Disabled entries are the only valid
@@ -202,7 +212,7 @@ export declare function installFailLoud(binName: string, proc?: FailLoudProcess,
  * @param ctx - the settled context whose loader entries to audit.
  * @param binName - the diagnostic prefix on the thrown error.
  */
-export declare function assertEntriesLoaded(ctx: Context, binName: string): void;
+export declare function assertEntriesLoaded(ctx: Context, binName: string): void
 /**
  * Reject a settled Loader tree when an enabled entry failed or remains inactive.
  * Plugin failures include the original thrown stack; pending entries name their
@@ -215,7 +225,7 @@ export declare function assertEntriesLoaded(ctx: Context, binName: string): void
  * @throws after one process rejection checkpoint when an entry failed to
  * import, rejected during activation, or did not become active.
  */
-export declare function assertEntriesActivated(ctx: Context, binName: string): Promise<void>;
+export declare function assertEntriesActivated(ctx: Context, binName: string): Promise<void>
 /**
  * Boot the Loader against `absoluteConfigPath` and return only after the whole
  * tree settles. Relative entry names resolve against the config directory;
@@ -246,9 +256,15 @@ export declare function assertEntriesActivated(ctx: Context, binName: string): P
  * preparation failed` when `prepare` threw before any config-tree entry
  * mounted, `plugin tree failed to load` afterwards.
  */
-export declare function boot(binName: string, absoluteConfigPath: string, patches?: PatchOptions[], prepare?: (ctx: Context) => Promise<void> | void, bareModuleBaseUrl?: string): Promise<Context>;
+export declare function boot(
+  binName: string,
+  absoluteConfigPath: string,
+  patches?: PatchOptions[],
+  prepare?: (ctx: Context) => Promise<void> | void,
+  bareModuleBaseUrl?: string,
+): Promise<Context>
 /** Prompt-section name for the harness-source location line an app bin adds after boot. */
-export declare const HARNESS_SOURCE_SECTION = "harness:source";
+export declare const HARNESS_SOURCE_SECTION = 'harness:source'
 /**
  * Add a global prompt section naming the on-disk harness source checkout while
  * explicitly distinguishing it from the task workspace and current working
@@ -263,5 +279,5 @@ export declare const HARNESS_SOURCE_SECTION = "harness:source";
  * @param sourceRoot - the absolute path to the harness checkout root.
  * @returns the section disposer, or `undefined` when no `systemPrompt` service is mounted.
  */
-export declare function addHarnessSourceSection(ctx: Context, sourceRoot: string): (() => void) | undefined;
+export declare function addHarnessSourceSection(ctx: Context, sourceRoot: string): (() => void) | undefined
 //# sourceMappingURL=index.d.ts.map

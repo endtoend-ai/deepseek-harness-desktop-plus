@@ -25,4 +25,8 @@ export interface PluginInventoryEntry {
 /** Point-in-time inventory returned by the plugin inventory Remote. */
 export interface PluginInventorySnapshot {
   readonly entries: readonly PluginInventoryEntry[]
+  /** Active browser module identities in the current boot graph. */
+  readonly clientModules: readonly string[]
+  /** Globally discoverable Skill identities after provider resolution. */
+  readonly skillIds: readonly string[]
 }

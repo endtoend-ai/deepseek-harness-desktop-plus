@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { Context, type Plugin } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
+import type {} from '@deepseek-ai/dsh-client-modules'
 import { remoteMethods } from '@deepseek-ai/dsh-typert-protocol'
 import PluginInventoryGateway from '../src/index.ts'
 
@@ -23,6 +24,18 @@ async function harness(): Promise<{
   const ctx = new Context()
   contexts.push(ctx)
   await ctx.plugin(Loader)
+  ctx.provide('clientModules', {
+    graph: () => ({ rev: 'fixture', entries: [{ id: '@fixture/client', url: '/client.js', rev: '1' }] }),
+  } as Context['clientModules'])
+  ctx.provide('skills', {
+    list: () => Promise.resolve([{
+      name: 'fixture-skill',
+      description: 'Fixture',
+      invocation: { modelInvocable: true, userInvocable: true },
+      source: 'runtime',
+      provider: 'fixture',
+    }]),
+  } as Context['skills'])
   ctx.loader.builtins.active = activePlugin
   ctx.loader.builtins.pending = pendingPlugin
   await ctx.plugin(PluginInventoryGateway)
@@ -52,7 +65,7 @@ describe('PluginInventoryGateway', () => {
     })
     await ctx.loader.create({ name: 'cordis:active', group: true })
 
-    const snapshot = inventory.list()
+    const snapshot = await inventory.list()
     expect(snapshot.entries).toHaveLength(3)
     expect(snapshot.entries).toEqual(expect.arrayContaining([
       {
@@ -74,9 +87,11 @@ describe('PluginInventoryGateway', () => {
         fiberPhase: null,
       },
     ]))
+    expect(snapshot.clientModules).toEqual(['@fixture/client'])
+    expect(snapshot.skillIds).toEqual(['fixture-skill'])
 
     await ctx.loader.update(activeId, { disabled: true })
-    expect(inventory.list().entries.find(entry => entry.entryId === activeId)).toEqual({
+    expect((await inventory.list()).entries.find(entry => entry.entryId === activeId)).toEqual({
       entryId: activeId,
       moduleName: 'cordis:active',
       enabled: false,
@@ -84,6 +99,6 @@ describe('PluginInventoryGateway', () => {
     })
 
     await ctx.loader.remove(pendingId)
-    expect(inventory.list().entries.some(entry => entry.entryId === pendingId)).toBe(false)
+    expect((await inventory.list()).entries.some(entry => entry.entryId === pendingId)).toBe(false)
   })
 })

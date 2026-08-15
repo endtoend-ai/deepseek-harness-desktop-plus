@@ -16,7 +16,7 @@ import Include, { applyEntryPatches, entryListSchema } from '@deepseek-ai/cordis
 import Group from '@deepseek-ai/cordis-plugin-group';
 import { dshHomePath, resolveDshHome } from '@deepseek-ai/dsh-home-paths';
 import { createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment';
-export { composeEntries, DEFAULT_PROFILE_BUNDLES, healProfilesModuleFallback, initProfile, loadProfile, PROFILE_PATCH_FILENAME, PROFILE_TEMPLATES, PROFILES_DIR, readProfileManifest, resolveBundleDir, resolveProfileDir, writeProfileManifest, } from "./profile.js";
+export { composeEntries, DEFAULT_PROFILE_BUNDLES, healProfilesModuleFallback, initProfile, loadProfile, PROFILE_PATCH_FILENAME, PROFILE_TEMPLATES, PROFILES_DIR, readProfileManifest, readProfileBundleState, reconcileProfileBundles, resolveBundleDir, resolveProfileDir, setProfileBundleEnabled, writeProfileManifest, } from "./profile.js";
 /**
  * Resolve the config to boot. Replay swaps a `cordis.yml` basename for
  * `cordis.snapshot.yml` in the same directory; every other mode keeps the path.

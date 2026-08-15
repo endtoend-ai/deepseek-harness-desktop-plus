@@ -14,5 +14,16 @@
     "../scripts/**/*.ts",
     "../src/**/*.ts",
     "**/*.ts"
+  ],
+  "references": [
+    {
+      "path": "../../../packages/boot/app-boot"
+    },
+    {
+      "path": "../../../packages/util/atomic-write"
+    },
+    {
+      "path": "../../../packages/plugin-center/contracts"
+    }
   ]
 }

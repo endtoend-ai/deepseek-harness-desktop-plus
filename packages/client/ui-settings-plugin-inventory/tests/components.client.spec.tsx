@@ -98,7 +98,7 @@ describe('PluginInventorySettingsTab', () => {
   it('shows a generic failure and retries into the empty state', async () => {
     const list = vi.fn<PluginInventorySettingsTabInjected['list']>()
       .mockRejectedValueOnce(new Error('private transport detail'))
-      .mockResolvedValueOnce({ entries: [] })
+      .mockResolvedValueOnce({ entries: [], clientModules: [], skillIds: [] })
     render(<PluginInventorySettingsTab {...props(list)} />)
 
     expect((await screen.findByRole('alert')).textContent).toBe(en.error)

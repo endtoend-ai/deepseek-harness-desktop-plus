@@ -85,6 +85,9 @@ const pwshCoverageExclusions = spawnSync(resolvePwshPath(), ['-NoLogo', '-NoProf
 const testIncludes = [
   'packages/*/*/tests/**/*.spec.{ts,tsx}',
   'apps/*/tests/**/*.spec.ts',
+  // Fast, keyless Desktop integration checks belong to the ordinary gate;
+  // real provider and built-browser e2e suites retain their dedicated configs.
+  'apps/desktop/tests/**/*.e2e.ts',
   'examples/*/tests/**/*.spec.ts',
   'scripts/**/*.spec.ts',
 ]

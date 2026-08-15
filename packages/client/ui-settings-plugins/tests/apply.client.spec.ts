@@ -34,6 +34,7 @@ async function bench() {
     },
   } as never)
   await ctx.plugin(SettingsScopeBinder).await()
+  ctx.provide('settingsNavigation', { open: vi.fn(), subscribe: () => () => {} } as never)
   return { ctx, slots: ctx.get('slots') as SlotRegistry, describeCredentials }
 }
 
@@ -46,7 +47,7 @@ function declareRoot(slots: SlotRegistry): () => void {
 
 describe('ui-settings-plugins apply', () => {
   it('declares the services it uses', () => {
-    expect(inject).toEqual(['slots', 'locale', 'connection', 'remote', 'settingsScope'])
+    expect(inject).toEqual(['slots', 'locale', 'connection', 'remote', 'settingsScope', 'settingsNavigation'])
   })
 
   it('registers one Plugins section and declares the tab and card slots', async () => {

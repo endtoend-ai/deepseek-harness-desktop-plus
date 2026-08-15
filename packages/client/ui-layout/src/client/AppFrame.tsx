@@ -26,7 +26,7 @@ import css from './AppFrame.module.css'
 /** Full composed props: runtime share + child-slot render share + store share. */
 export type AppFrameProps =
   & PropsRuntime<'root'>
-  & PropsRenderSlots<'sidebar' | 'conversation' | 'details' | 'shell.overlay'>
+  & PropsRenderSlots<'sidebar' | 'conversation' | 'main.page' | 'details' | 'shell.overlay'>
   & PropsStore<ReturnType<typeof createLayoutStore>>
 
 /** Center column grid item (session-body building block). */
@@ -97,6 +97,7 @@ export function AppFrame({
   renderSlot,
 }: AppFrameProps) {
   const panels = useStore(s => s)
+  const primaryPage = panels.primaryPage
   const detailsSession = useSessions((s) => {
     const current = s.current
     return current !== undefined && s.byId[current]?.blank === false ? current : undefined
@@ -151,7 +152,7 @@ export function AppFrame({
   const cols = computeColumns(
     viewport,
     sidebarPreference,
-    detailsSession === undefined ? 0 : panels.details,
+    detailsSession === undefined || primaryPage !== null ? 0 : panels.details,
     collapsedSidebar,
   )
   const colsRef = useRef(cols)
@@ -193,6 +194,7 @@ export function AppFrame({
         {renderSlot('sidebar', {
           collapsed: sidebarCollapsed,
           width: cols.sidebar,
+          primaryPage,
         })}
       </div>
       <>
@@ -201,7 +203,16 @@ export function AppFrame({
             the shell's own pending rendering. The conversation
             is session-maybe; the strict details entry naturally renders
             empty while no session is current. */}
-        <CenterColumn>{renderSlot('conversation', {})}</CenterColumn>
+        <CenterColumn>
+          <div className={css.centerSurface} hidden={primaryPage !== null}>
+            {renderSlot('conversation', {})}
+          </div>
+          {primaryPage !== null ? (
+            <div className={css.centerSurface} data-primary-page={primaryPage}>
+              {renderSlot('main.page', {}, { entryKey: primaryPage })}
+            </div>
+          ) : null}
+        </CenterColumn>
         <DetailsColumn>{renderSlot('details', {})}</DetailsColumn>
       </>
       <div className={css.overlayLayer} data-shell-overlay>

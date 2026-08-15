@@ -10,12 +10,22 @@
  */
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { SettingsScopeBinder } from './settings-scope.ts'
+import { SettingsNavigationController } from './settings-navigation.ts'
 
 export type {
   SettingsGeneralItemOwnerProps, SettingsHeaderOwnerProps, SettingsOnboardingOwnerProps,
   SettingsPluginsTabOwnerProps, SettingsSectionOwnerProps, SettingsTriggerOwnerProps,
 } from './contract/slots.ts'
 export { SettingsScopeController, SettingsScopeBinder } from './settings-scope.ts'
+export { SettingsNavigationController } from './settings-navigation.ts'
+export type { ISettingsNavigation, SettingsNavigationTarget } from './settings-navigation.ts'
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    /** Ephemeral cross-feature links into the Settings shell. */
+    settingsNavigation: import('./settings-navigation.ts').ISettingsNavigation
+  }
+}
 
 /**
  * Required services: none. The transport is resolved per caller through
@@ -32,4 +42,9 @@ export const inject = []
  */
 export function apply(ctx: ClientContext): void {
   new SettingsScopeBinder(ctx)
+  const navigation = new SettingsNavigationController()
+  ctx.effect(() => {
+    const dispose = ctx.reflect.provide('settingsNavigation', navigation)
+    return () => { void dispose() }
+  }, 'ui-settings: navigation service')
 }

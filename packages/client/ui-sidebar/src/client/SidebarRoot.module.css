@@ -131,6 +131,7 @@
    render stays static. */
 .railIn .iconButton,
 .railIn .newSession,
+.railIn .primaryActions,
 .railIn .regionArea {
   animation: rail-in 150ms var(--ds-ease-in-out) backwards;
 }
@@ -292,6 +293,19 @@
   white-space: nowrap;
 }
 
+.primaryActions {
+  flex: none;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  margin: 0 0 8px;
+}
+
+.collapsed .primaryActions {
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
 .collapsed .newSessionLabel {
   max-width: 0;
 }
@@ -351,6 +365,7 @@
   .fading > *,
   .railIn .iconButton,
   .railIn .newSession,
+  .railIn .primaryActions,
   .railIn .footArea,
   .railIn .regionArea {
     transition: none;
