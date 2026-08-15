@@ -14,6 +14,7 @@ import {
 import { ZH_BROWSER_LOCALE, connectFreshWorkspaceZh, saveFailureShot } from './support.ts'
 
 const SNAPSHOT_DIR = fileURLToPath(new URL('./snapshots/access-confirmation', import.meta.url))
+const MENU_EXPECTED = join(SNAPSHOT_DIR, 'menu.expected.md')
 const UI_EXPECTED = join(SNAPSHOT_DIR, 'ui.expected.md')
 const MODE = webSnapshotMode()
 
@@ -52,7 +53,14 @@ describe('web e2e: Full access confirmation', () => {
     expect(await access.getAttribute('aria-label')).toBe('访问模式，当前：工作区写入')
 
     await access.click()
-    await page.getByRole('menuitem', { name: '完全访问' }).click()
+    const permissionMenu = page.getByRole('menu')
+    await permissionMenu.waitFor({ timeout: 10_000 })
+    await compareOrRefreshGolden(
+      MENU_EXPECTED,
+      await captureStableAria(page, '[role="menu"]', scaffold.workspaceCwd),
+      MODE,
+    )
+    await page.getByRole('menuitem', { name: /^完全访问/ }).click()
     const dialog = page.getByRole('dialog', { name: '确认启用完全访问？' })
     await dialog.waitFor({ timeout: 10_000 })
     const enable = dialog.getByRole('button', { name: '启用完全访问' })
@@ -75,6 +83,6 @@ describe('web e2e: Full access confirmation', () => {
 
   it('keeps its snapshot inventory closed', async () => {
     expect(tripwire.warnings).toEqual([])
-    await assertFixtureInventory(SNAPSHOT_DIR, ['ui.expected.md'])
+    await assertFixtureInventory(SNAPSHOT_DIR, ['menu.expected.md', 'ui.expected.md'])
   })
 })

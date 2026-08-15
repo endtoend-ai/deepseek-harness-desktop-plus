@@ -64,7 +64,27 @@ describe.skipIf(MODE === 'record')('web e2e: DeepSeek model controls use Chinese
       MODE,
     )
 
-    await root.getByRole('menuitem', { name: /思考模式/ }).click()
+    const triggerBox = await trigger.boundingBox()
+    const rootBeforeHover = await root.boundingBox()
+    expect(triggerBox).not.toBeNull()
+    expect(rootBeforeHover).not.toBeNull()
+    expect(Math.abs(
+      ((rootBeforeHover?.x ?? 0) + (rootBeforeHover?.width ?? 0))
+      - ((triggerBox?.x ?? 0) + (triggerBox?.width ?? 0)),
+    )).toBeLessThan(1)
+    const thinkingRow = root.getByRole('menuitem', { name: /思考模式/ })
+    await thinkingRow.hover()
+    const thinkingMenu = page.getByRole('menu', { name: '思考模式' })
+    await thinkingMenu.waitFor({ timeout: 10_000 })
+    expect(await thinkingRow.getAttribute('aria-expanded')).toBe('true')
+    const rootBox = await root.boundingBox()
+    const thinkingBox = await thinkingMenu.boundingBox()
+    expect(rootBox).not.toBeNull()
+    expect(thinkingBox).not.toBeNull()
+    expect(Math.abs((rootBox?.x ?? 0) - (rootBeforeHover?.x ?? 0))).toBeLessThan(1)
+    expect(Math.abs(
+      (thinkingBox?.x ?? 0) - ((rootBox?.x ?? 0) + (rootBox?.width ?? 0)) - 8,
+    )).toBeLessThan(1)
     const levels = page.getByRole('menuitemradio')
     await expect.poll(async () => levels.allTextContents(), { timeout: 10_000 })
       .toEqual([
@@ -74,7 +94,7 @@ describe.skipIf(MODE === 'record')('web e2e: DeepSeek model controls use Chinese
       ])
     await compareOrRefreshGolden(
       THINKING_EXPECTED,
-      await captureStableAria(page, '[role="menu"]', scaffold.workspaceCwd),
+      await captureStableAria(page, '[role="menu"][aria-label="思考模式"]', scaffold.workspaceCwd),
       MODE,
     )
 

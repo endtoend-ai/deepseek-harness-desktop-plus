@@ -62,14 +62,21 @@
   transform: rotate(180deg);
 }
 
-.menu {
+.menuRegion {
   position: absolute;
   right: 0;
   bottom: calc(100% + 8px);
   z-index: 20;
+  width: min(240px, calc(100vw - 24px));
+}
+
+.menu {
+  position: relative;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   width: min(240px, calc(100vw - 32px));
+  min-width: 0;
   max-height: min(360px, calc(100vh - 96px));
   overflow: hidden;
   padding: 4px;
@@ -87,6 +94,17 @@
      styles/scrollbar.css for the rebinding contract). */
   --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
   --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+
+/* The reference interaction keeps the root card fixed above its trigger and
+   opens the hovered/focused choice as a second, compact card on the right.
+   Absolute positioning keeps the root row under the pointer while the child
+   card appears. */
+.submenu {
+  position: absolute;
+  bottom: 0;
+  left: calc(100% + 8px);
+  width: min(220px, calc(100vw - 32px));
 }
 
 .status,

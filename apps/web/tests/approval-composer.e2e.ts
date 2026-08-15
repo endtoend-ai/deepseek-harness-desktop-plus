@@ -91,7 +91,7 @@ describe('web e2e: approval takeover keeps its actions reachable', () => {
     // Read-only: the mode whose denial the model escalates from. Switched
     // through the shipped access-mode chip, not a test-only override.
     await page.locator('[aria-label^="Access mode"]').click()
-    await page.getByRole('menuitem', { name: 'Read Only' }).click()
+    await page.getByRole('menuitem', { name: /^Read Only/ }).click()
     await expect.poll(
       () => page.locator('[aria-label="Access mode, current: Read Only"]').count(),
       { timeout: 15_000 },

@@ -2,7 +2,7 @@
  * ModelSelect: the composer's named model seat (`conversation.input.model`).
  * Two-level selection per figma 496:26454's MenuDropdown: the root menu is
  * the Model / reasoning row pair (label + current value + a right chevron),
- * each drilling into its own list — the provider-grouped model list over
+ * each opening a side card on hover, focus, or click — the provider-grouped model list over
  * the shared directory, and the adapter levels. DeepSeek's off/high/max ids
  * render as localized thinking modes; other routes keep adapter-owned names.
  * The trigger (313:14108's ToggleButton) shows both values.
@@ -28,8 +28,8 @@ import css from './ModelSelect.module.css'
 
 type ModelTranslate = PropsLocale<'model'>['t']
 
-/** Which pane the dropdown shows: the two-row root or one drilled-in list. */
-type Pane = 'root' | 'model' | 'effort'
+/** Which root row currently owns the visible side card. */
+type Submenu = 'model' | 'effort'
 
 /** One dynamic effort row; undefined means preserve the provider default. */
 interface EffortChoice {
@@ -72,7 +72,7 @@ export function ModelSelect(
     () => directory.getSnapshot(),
   )
   const [open, setOpen] = useState(false)
-  const [pane, setPane] = useState<Pane>('root')
+  const [submenu, setSubmenu] = useState<Submenu | null>(null)
   // The in-menu error strip serves catalog loads (its Retry re-runs the
   // load); a rejected SELECTION announces through the transient toast
   // instead, so the strip renders only while the latest failure-capable
@@ -159,14 +159,14 @@ export function ModelSelect(
   if (!available) return null
 
   const show = (): void => {
-    setPane('root')
+    setSubmenu(null)
     setOpen(true)
     reload()
   }
 
   const close = (restoreFocus = false): void => {
     setOpen(false)
-    setPane('root')
+    setSubmenu(null)
     if (restoreFocus) queueMicrotask(() => { triggerRef.current?.focus() })
   }
 
@@ -181,9 +181,14 @@ export function ModelSelect(
   const onRootKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Escape' && open) {
       event.preventDefault()
-      // Escape backs out of a drilled pane first, then closes.
-      if (pane !== 'root') setPane('root')
+      // Escape dismisses the side card first, then the whole selector.
+      if (submenu !== null) setSubmenu(null)
       else close(true)
+      return
+    }
+    if (event.key === 'ArrowLeft' && submenu !== null) {
+      event.preventDefault()
+      setSubmenu(null)
       return
     }
     if (!open) return
@@ -279,31 +284,60 @@ export function ModelSelect(
 
       {open && (
         <div
-          id={`${id}-menu`}
-          className={css.menu}
-          role="menu"
-          aria-label={menuAria}
-          aria-busy={state.status === 'loading' || busy}
+          className={css.menuRegion}
+          onMouseLeave={() => { setSubmenu(null) }}
         >
-          {pane === 'root' && (
-            <>
-              <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { setPane('model') }}>
-                <span className={css.cellLabel}>{t('menu.model')}</span>
-                <span className={css.cellValue}>{modelLabel}</span>
+          <div
+            id={`${id}-menu`}
+            className={css.menu}
+            role="menu"
+            aria-label={menuAria}
+            aria-busy={state.status === 'loading' || busy}
+          >
+            <button
+              ref={itemRef()}
+              type="button"
+              role="menuitem"
+              className={css.cell}
+              aria-haspopup="menu"
+              aria-expanded={submenu === 'model'}
+              aria-controls={submenu === 'model' ? `${id}-model-menu` : undefined}
+              onMouseEnter={() => { setSubmenu('model') }}
+              onFocus={() => { setSubmenu('model') }}
+              onClick={() => { setSubmenu('model') }}
+            >
+              <span className={css.cellLabel}>{t('menu.model')}</span>
+              <span className={css.cellValue}>{modelLabel}</span>
+              <IconChevronRightOutline14 className={css.cellChevron} />
+            </button>
+            {reasoning !== undefined && (
+              <button
+                ref={itemRef()}
+                type="button"
+                role="menuitem"
+                className={css.cell}
+                aria-haspopup="menu"
+                aria-expanded={submenu === 'effort'}
+                aria-controls={submenu === 'effort' ? `${id}-effort-menu` : undefined}
+                onMouseEnter={() => { setSubmenu('effort') }}
+                onFocus={() => { setSubmenu('effort') }}
+                onClick={() => { setSubmenu('effort') }}
+              >
+                <span className={css.cellLabel}>{effortMenuLabel}</span>
+                <span className={css.cellValue}>{effortLabel}</span>
                 <IconChevronRightOutline14 className={css.cellChevron} />
               </button>
-              {reasoning !== undefined && (
-                <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { setPane('effort') }}>
-                  <span className={css.cellLabel}>{effortMenuLabel}</span>
-                  <span className={css.cellValue}>{effortLabel}</span>
-                  <IconChevronRightOutline14 className={css.cellChevron} />
-                </button>
-              )}
-            </>
-          )}
+            )}
+          </div>
 
-          {pane === 'model' && (
-            <>
+          {submenu === 'model' && (
+            <div
+              id={`${id}-model-menu`}
+              className={clsx(css.menu, css.submenu)}
+              role="menu"
+              aria-label={t('menu.model')}
+              aria-busy={state.status === 'loading' || busy}
+            >
               {state.status === 'loading' && (
                 <div className={css.status}>{t('status.loading')}</div>
               )}
@@ -358,11 +392,17 @@ export function ModelSelect(
               {state.status === 'ready' && choices.length === 0 && (
                 <div className={css.empty}>{t('empty.models')}</div>
               )}
-            </>
+            </div>
           )}
 
-          {pane === 'effort' && (
-            <>
+          {submenu === 'effort' && (
+            <div
+              id={`${id}-effort-menu`}
+              className={clsx(css.menu, css.submenu)}
+              role="menu"
+              aria-label={effortMenuLabel}
+              aria-busy={busy}
+            >
               {state.error !== null && lastActionRef.current === 'load' && (
                 <div className={css.error}>
                   <span>{t('error.action', { message: state.error })}</span>
@@ -393,7 +433,7 @@ export function ModelSelect(
                     </span>
                   </button>
                 ))}
-            </>
+            </div>
           )}
         </div>
       )}

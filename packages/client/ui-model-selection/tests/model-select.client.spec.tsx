@@ -67,8 +67,12 @@ describe('ModelSelect reasoning effort', () => {
       name: '选择模型，当前 DeepSeek-V4-Flash，思考模式 深度思考',
     })
     fireEvent.click(trigger)
-    expect(screen.getByRole('menu', { name: 'DeepSeek 模型设置' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('menuitem', { name: /思考模式/ }))
+    const rootMenu = screen.getByRole('menu', { name: 'DeepSeek 模型设置' })
+    const thinkingRow = screen.getByRole('menuitem', { name: /思考模式/ })
+    fireEvent.mouseEnter(thinkingRow)
+    expect(rootMenu).toBeTruthy()
+    expect(thinkingRow.getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByRole('menu', { name: '思考模式' })).toBeTruthy()
     expect(screen.getAllByRole('menuitemradio').map(item => item.textContent))
       .toEqual([
         '关闭思考不启用深度思考',

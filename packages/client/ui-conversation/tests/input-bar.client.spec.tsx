@@ -1196,8 +1196,13 @@ describe('command launcher chrome and control seats', () => {
     expect([...trigger.querySelectorAll('svg')]
       .every(icon => icon.closest('[aria-hidden="true"]') !== null)).toBe(true)
     fireEvent.click(trigger)
+    expect(view.getByText('应如何批准 DeepSeek Harness 操作？')).toBeTruthy()
     const items = view.getAllByRole('menuitem')
-    expect(items.map(o => o.textContent)).toEqual(['只读', '工作区写入', '完全访问'])
+    expect(items.map(o => o.textContent)).toEqual([
+      '只读可查看文件；修改文件或执行受限操作时会请求批准',
+      '工作区写入可编辑工作区文件；访问工作区外部时会请求批准',
+      '完全访问可访问互联网，并读取或修改电脑上的任何文件',
+    ])
     fireEvent.click(items[1]!)
     // Optimistic pick + disable until admission resolves (command stub resolves true).
     const busy = view.getByLabelText(/^访问模式/) as HTMLButtonElement
@@ -1220,7 +1225,10 @@ describe('command launcher chrome and control seats', () => {
     const trigger = view.getByLabelText(/^访问模式/) as HTMLButtonElement
     expect(trigger.textContent).toBe('Workspace')
     fireEvent.click(trigger)
-    expect(view.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['只读', 'Workspace'])
+    expect(view.getAllByRole('menuitem').map(item => item.textContent)).toEqual([
+      '只读可查看文件；修改文件或执行受限操作时会请求批准',
+      'Workspace可编辑工作区文件；访问工作区外部时会请求批准',
+    ])
   })
 
   it('requires explicit risk acknowledgement before submitting Full access', async () => {
@@ -1234,7 +1242,7 @@ describe('command launcher chrome and control seats', () => {
     }
     const { view } = bench({ permissions, command })
     fireEvent.click(view.getByLabelText(/^访问模式/))
-    fireEvent.click(view.getByRole('menuitem', { name: '完全访问' }))
+    fireEvent.click(view.getByRole('menuitem', { name: /^完全访问/ }))
 
     expect(command).not.toHaveBeenCalled()
     expect(view.getByRole('dialog', { name: '确认启用完全访问？' })).toBeTruthy()
@@ -1264,7 +1272,7 @@ describe('command launcher chrome and control seats', () => {
     const { view } = bench({ permissions, command })
     const openConfirmation = () => {
       fireEvent.click(view.getByLabelText(/^访问模式/))
-      fireEvent.click(view.getByRole('menuitem', { name: '完全访问' }))
+      fireEvent.click(view.getByRole('menuitem', { name: /^完全访问/ }))
     }
 
     openConfirmation()
@@ -1289,7 +1297,7 @@ describe('command launcher chrome and control seats', () => {
     }
     const { view, session } = bench({ permissions, command })
     fireEvent.click(view.getByLabelText(/^访问模式/))
-    fireEvent.click(view.getByRole('menuitem', { name: '完全访问' }))
+    fireEvent.click(view.getByRole('menuitem', { name: /^完全访问/ }))
     fireEvent.click(view.getByRole('checkbox'))
     act(() => { session.set(snapshotOf({ removed: true })) })
     expect(view.queryByRole('dialog')).toBeNull()
@@ -1307,7 +1315,7 @@ describe('command launcher chrome and control seats', () => {
     }
     const { view, props } = bench({ permissions, command })
     fireEvent.click(view.getByLabelText(/^访问模式/))
-    fireEvent.click(view.getByRole('menuitem', { name: '完全访问' }))
+    fireEvent.click(view.getByRole('menuitem', { name: /^完全访问/ }))
     fireEvent.click(view.getByRole('checkbox'))
     view.rerender(<InputBar {...props} sessionId={'s2' as SessionId} />)
     expect(view.queryByRole('dialog')).toBeNull()

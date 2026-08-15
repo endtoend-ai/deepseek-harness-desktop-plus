@@ -73,6 +73,13 @@ function optionLabel(option: PermissionSelectValue['options'][number], t: Compos
   return permissionLabel(option.value, option.name, t)
 }
 
+function optionDescription(option: PermissionSelectValue['options'][number], t: ComposerBarProps['t']): string | undefined {
+  if (option.value === READ_ONLY) return t('access.menu.readOnlyDescription')
+  if (option.value === WORKSPACE_WRITE) return t('access.menu.workspaceWriteDescription')
+  if (option.value === FULL_ACCESS) return t('access.menu.fullAccessDescription')
+  return option.description
+}
+
 export interface PermissionSelectProps {
   value: PermissionSelectValue | undefined
   locked: boolean
@@ -100,12 +107,30 @@ export function PermissionSelect({ value, locked, command, t }: PermissionSelect
   const current = value.options.find(option => option.value === currentValue)
   const busy = pick !== null || confirmation !== null
 
-  const items: MenuEntry[] = value.options
-    .filter(o => o.value !== 'custom')
-    .map((option) => {
-      const icon = permissionGlyph(option.value)
-      return { id: option.value, label: optionLabel(option, t), ...icon === undefined ? {} : { icon } }
-    })
+  const items: MenuEntry[] = [
+    { type: 'label', id: 'permission-menu-title', text: t('access.menu.title') },
+    ...value.options
+      .filter(o => o.value !== 'custom')
+      .map((option) => {
+        const glyph = permissionGlyph(option.value)
+        const description = optionDescription(option, t)
+        const warning = option.value === FULL_ACCESS
+        return {
+          id: option.value,
+          label: (
+            <span className={clsx(css.optionCopy, warning && css.warningCopy)}>
+              <span className={css.optionTitle}>{optionLabel(option, t)}</span>
+              {description !== undefined && (
+                <span className={css.optionDescription}>{description}</span>
+              )}
+            </span>
+          ),
+          ...glyph === undefined
+            ? {}
+            : { icon: <span className={clsx(css.optionIcon, warning && css.warningIcon)}>{glyph}</span> },
+        }
+      }),
+  ]
 
   const submit = (id: string): void => {
     setPick(id)
@@ -146,6 +171,7 @@ export function PermissionSelect({ value, locked, command, t }: PermissionSelect
         onSelect={choose}
         onClose={() => { setOpen(false) }}
         side="top"
+        className={css.menuRoot ?? ''}
         anchor={
           <button
             type="button"
@@ -155,7 +181,7 @@ export function PermissionSelect({ value, locked, command, t }: PermissionSelect
                 ? permissionLabel(currentValue, currentValue, t)
                 : optionLabel(current, t),
             })}
-            title={current?.description}
+            title={current === undefined ? undefined : optionDescription(current, t)}
             disabled={locked || busy}
             onClick={() => { setOpen(!open) }}
           >
