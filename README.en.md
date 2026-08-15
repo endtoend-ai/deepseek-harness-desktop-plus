@@ -36,11 +36,11 @@
 
 | Capability | Status | What it enables |
 | --- | --- | --- |
+| **Public Plugin Center** | ✅ Available | Discover plugins and Bundle-wrapped Skill Packs carrying the `dsh-plugin` keyword in the public npm ecosystem, inspect details and risk, install them online, and enable, disable, or uninstall them. |
 | **Desktop development workspace** | ✅ Available | Open local projects, manage sessions and workspaces, use Harness models, tools, Skills, and plugins, and modify the complete source code directly. |
 | **Vision enhancement** | ✅ Available | Add image understanding to a text-based DeepSeek workflow by reading conversation attachments and workspace images, then providing traceable observations to the Agent. |
 | **Chinese DeepSeek controls** | ✅ Available | Choose Chinese permission levels and DeepSeek-specific thinking modes directly in the composer for the current session. |
 | **Built-in skins and custom backgrounds** | ✅ Available | Start with the whale-maid skin, switch to Cloud Cat, or choose a local image and let the app adapt its interface palette. |
-| **Public Plugin Center** | ✅ Available | Discover plugins and Bundle-wrapped Skill Packs carrying the `dsh-plugin` keyword in the public npm ecosystem, inspect details and risk, install them online, and enable, disable, or uninstall them. |
 | **Standalone MCP, Skills, and tool management** | 🗓️ Planned | Add discovery and connection management for MCP servers, Skills, and tools that are not distributed as Bundles, then compose Agent capabilities per project. |
 | **Agent presets and multi-Agent collaboration** | 🗓️ Planned | Define Agents and subagents that collaborate across coding, testing, research, and review work. |
 | **Planning, background runs, and session recovery** | 🗓️ Planned | Manage plans and tasks, keep long-running work active in the background, inspect progress, and resume previous sessions. |
@@ -48,6 +48,20 @@
 | **Git, worktrees, and code review** | 🗓️ Planned | Develop concurrently in isolated worktrees, inspect diffs, commits, and review results, and reduce interference between tasks. |
 | **Browser and desktop automation** | 🗓️ Planned | Let Agents operate websites and local applications, then verify completion through real interaction results. |
 | **Mobile remote access and channels** | 🗓️ Planned | Inspect and resume tasks from a mobile device, and receive notifications or trigger Agents through common messaging channels. |
+
+## Public Plugin Center: discover, install, and remove online
+
+<p align="center">
+  <img src="assets/plugin-center-desktop.png" alt="Real DeepSeek Harness Desktop public Plugin Center interface" width="100%">
+  <br><sub>Real Desktop interface: public catalog, Installed area, Install buttons, and three-dot management actions.</sub>
+</p>
+
+Open **Plugin Center** from the sidebar to search plugins and Skill Packs in the public npm Registry that carry the `dsh-plugin` keyword and follow the DeepSeek Harness Bundle format.
+
+- **Online discovery**: search public plugins and inspect versions, capabilities, permissions, compatibility, and risk.
+- **One-click installation**: download and verify an exact package version, integrity metadata, and Bundle declaration; after confirmation, Desktop installs it, restarts the Harness Host, and verifies runtime state.
+- **Installed management**: review system, public-catalog, and local sources together, then enable, disable, update, or uninstall an entry from its three-dot menu.
+- **Safe removal**: uninstall retains configuration and plugin data by default; deleting data requires a separate user confirmation.
 
 ## Project overview
 
@@ -181,19 +195,6 @@ deepseek-harness-desktop/
 3. `apps/desktop/src/preload.ts`: fixed desktop interfaces exposed to the renderer.
 4. `apps/web/`: the Web workspace loaded by the desktop window.
 5. `apps/cli/` and `packages/`: CLI composition and Harness capabilities.
-
-## Public Plugin Center: discover, install, and remove online
-
-Open **Plugin Center** from the sidebar to search plugins and Skill Packs in the public npm Registry that carry the `dsh-plugin` keyword and follow the DeepSeek Harness Bundle format. Packages without `dsh.bundle.patch`, an exact version, or trusted npm integrity metadata never enter the install path.
-
-- **Discovery and detail**: switch between Plugins and Skills, search public entries, and inspect version, capabilities, permissions, compatibility, and risk. When the network is unavailable, the app can use the most recent locally verified cache and shows its freshness explicitly.
-- **One-click online installation**: after you select Install, Desktop downloads the exact npm version and verifies package identity, integrity, the Bundle Patch, expected runtime evidence, and the local environment. Once confirmed, it updates the current Profile and restarts the Harness Host; completion appears only after the declared Host, client, or Skill evidence is active.
-- **Installed management**: the Installed view distinguishes system, public-catalog, and local sources, and shows both Bundle enablement and current runtime state. Public-catalog plugins can be enabled, disabled, or uninstalled.
-- **Safe removal**: uninstall removes the package and its active Bundle composition while retaining configuration and plugin data by default. After a successful uninstall, Desktop separately lists plugin-declared owned directories so the user can explicitly choose whether to remove them.
-
-The shortest path is **Plugin Center → Search → Open details → Install and confirm → Wait for Host restart and runtime verification**. To remove an item, choose Uninstall from the installed entry or its action menu, then decide whether to retain its data.
-
-> The current public catalog comes from npm's `dsh-plugin` ecosystem. GitHub Topics are used only for project discovery and never grant installation authority. Verifying an exact community artifact and its Bundle structure does not mean DeepSeek has security-audited it; review the permission and risk disclosure before installation.
 
 ## Relationship to DeepSeek Harness
 
