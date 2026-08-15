@@ -11,6 +11,9 @@ import { BrandBadge } from '../src/client/BrandBadge.tsx'
 import { validateImageFile } from '../src/client/background-image.ts'
 import { UpdateSection } from '../src/client/UpdateSection.tsx'
 import { VisionEnhancementRow } from '../src/client/VisionEnhancementRow.tsx'
+import {
+  VisionEnhancementShortcut, type VisionEnhancementInjected,
+} from '../src/client/VisionEnhancementShortcut.tsx'
 
 async function bench() {
   const ctx = new Context()
@@ -21,6 +24,7 @@ async function bench() {
   const disposeTokens = vi.fn()
   const overrideTokens = vi.fn(() => disposeTokens)
   ctx.provide('theme', { overrideTokens } as never)
+  ctx.provide('remote', { $on: () => () => {} } as never)
   ctx.provide('connection', {
     api: {
       vision: {
@@ -36,6 +40,7 @@ async function bench() {
     children: {
       'settings.section': { kind: 'list', scope: 'root' },
       'settings.general.item': { kind: 'list', scope: 'root' },
+      'conversation.input.left': { kind: 'list', scope: 'session' },
       'shell.overlay': { kind: 'list', scope: 'root' },
     },
   } as never, () => null)
@@ -43,7 +48,7 @@ async function bench() {
 }
 
 describe('Desktop customization client plugin', () => {
-  it('registers both settings sections and the frame-wide brand badge', async () => {
+  it('registers both settings sections, the shared vision controls, and the frame-wide brand badge', async () => {
     const b = await bench()
     const fiber = b.ctx.plugin({ inject: [...inject], apply })
     await fiber.await()
@@ -52,18 +57,25 @@ describe('Desktop customization client plugin', () => {
     expect(sections.map(entry => resolveSlotLabel(entry.options.label))).toEqual(['背景', '软件更新'])
     expect(b.slots.entries('shell.overlay')[0]?.component).toBe(BrandBadge)
     expect(b.slots.entries('settings.general.item')[0]?.component).toBe(VisionEnhancementRow)
+    const shortcut = b.slots.entries('conversation.input.left')[0]
+    expect(shortcut?.component).toBe(VisionEnhancementShortcut)
+    expect(shortcut?.options).toMatchObject({ id: 'vision-enhancement', order: 20 })
+    const rowInjected = b.slots.entries('settings.general.item')[0]?.inject?.() as unknown as VisionEnhancementInjected
+    const shortcutInjected = shortcut?.inject?.('session-id' as never) as unknown as VisionEnhancementInjected
+    expect(shortcutInjected.hooks.visionEnhancement).toBe(rowInjected.hooks.visionEnhancement)
     expect(document.body.getAttribute('data-dsh-desktop-skin')).toBe('active')
     expect(b.overrideTokens).toHaveBeenCalledOnce()
     await fiber.dispose()
     expect(b.slots.entries('settings.section')).toHaveLength(0)
     expect(b.slots.entries('shell.overlay')).toHaveLength(0)
     expect(b.slots.entries('settings.general.item')).toHaveLength(0)
+    expect(b.slots.entries('conversation.input.left')).toHaveLength(0)
     expect(document.body.hasAttribute('data-dsh-desktop-skin')).toBe(false)
     expect(b.disposeTokens).toHaveBeenCalledOnce()
   })
 
   it('declares only the services it uses', () => {
-    expect(inject).toEqual(['slots', 'locale', 'theme', 'connection'])
+    expect(inject).toEqual(['slots', 'locale', 'theme', 'connection', 'remote'])
   })
 
   it('accepts the three supported image formats and rejects unsafe inputs', () => {

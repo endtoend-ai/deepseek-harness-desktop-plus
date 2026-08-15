@@ -13,6 +13,20 @@
 .toggle span,.toggleOn span { position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 5px rgba(0,0,0,.22); transition:transform .18s ease; }
 .toggleOn span { transform:translateX(18px); }
 .toggle:disabled,.toggleOn:disabled { cursor:default; opacity:.55; }
+.shortcut,.shortcutOn { display:inline-flex; height:28px; align-items:center; gap:5px; padding:0 8px; border:0; border-radius:999px; color:var(--dsw-alias-label-secondary); background:transparent; font:inherit; font-size:13px; font-weight:500; line-height:20px; white-space:nowrap; cursor:pointer; transition:color 100ms ease,background-color 100ms ease; }
+.shortcut:hover:not(:disabled) { background:var(--dsw-alias-interactive-bg-hover); }
+.shortcutOn { color:var(--dsw-alias-state-business-primary); background:var(--dsw-alias-state-business-tertiary); }
+.shortcutOn:hover:not(:disabled) { background:color-mix(in srgb,var(--dsw-alias-state-business-primary) 14%,transparent); }
+.shortcut:focus-visible,.shortcutOn:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary); outline-offset:2px; }
+.shortcut:disabled,.shortcutOn:disabled { color:var(--dsw-alias-label-dimmed); cursor:default; }
+.shortcutLabel { overflow:hidden; text-overflow:ellipsis; }
+.shortcutDot { width:5px; height:5px; flex:0 0 auto; border-radius:50%; background:currentColor; }
+.shortcutHover { display:flex; flex-direction:column; gap:8px; color:var(--dsw-static-neutral-bluish-00); }
+.shortcutHoverTitle { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:14px; font-weight:600; line-height:20px; }
+.shortcutHoverStatus,.shortcutHoverOn { flex:0 0 auto; padding:1px 6px; border-radius:999px; color:var(--dsw-static-neutral-bluish-300); background:color-mix(in srgb,var(--dsw-static-neutral-bluish-00) 10%,transparent); font-size:11px; font-weight:500; line-height:16px; }
+.shortcutHoverOn { color:var(--dsw-static-deepseek-300); background:color-mix(in srgb,var(--dsw-static-deepseek-400) 18%,transparent); }
+.shortcutHover p { margin:0; color:var(--dsw-static-neutral-bluish-300); font-size:12px; line-height:18px; }
+.shortcutHoverHint { padding-top:7px; border-top:1px solid color-mix(in srgb,var(--dsw-static-neutral-bluish-00) 12%,transparent); color:var(--dsw-static-neutral-bluish-400); font-size:11px; line-height:16px; }
 .modal { width:min(680px,calc(100vw - 32px)); }
 .modalBody { display:flex; flex-direction:column; gap:16px; color:var(--dsw-alias-label-primary); }
 .hero { display:flex; align-items:center; gap:13px; padding:14px; border:1px solid color-mix(in srgb,var(--dsw-alias-brand-primary) 24%,var(--dsw-alias-border-l1)); border-radius:14px; background:linear-gradient(135deg,color-mix(in srgb,var(--dsw-alias-brand-primary) 9%,var(--dsw-alias-bg-layer-1)),var(--dsw-alias-bg-layer-1)); }
@@ -44,4 +58,4 @@
 .primary { border:0; color:var(--dsw-alias-label-primary-foreground); background:var(--dsw-alias-button-primary-fill); }
 .secondary { border:1px solid var(--dsw-alias-border-l2); color:var(--dsw-alias-label-primary); background:var(--dsw-alias-bg-layer-1); }
 .primary:disabled,.secondary:disabled { cursor:default; opacity:.55; }
-@media (max-width:620px) { .testCard { flex-direction:column; } .imageWrap { width:100%; height:180px; } .row { align-items:flex-start; } }
+@media (max-width:620px) { .testCard { flex-direction:column; } .imageWrap { width:100%; height:180px; } .row { align-items:flex-start; } .shortcutLabel { display:none; } .shortcut,.shortcutOn { width:28px; justify-content:center; padding:0; } .shortcutDot { display:none; } }

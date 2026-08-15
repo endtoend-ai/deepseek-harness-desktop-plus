@@ -7,16 +7,19 @@
 <h1 align="center">DeepSeek Harness Desktop</h1>
 
 <p align="center">
-  <a href="https://github.com/fufankeji/deepseek-harness-app/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-app?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
+  <a href="https://github.com/fufankeji/deepseek-harness-desktop/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-desktop?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
   <img src="https://img.shields.io/badge/Desktop-App-2563EB" alt="Desktop App">
   <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-app?color=22C55E" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/Vision-Qwen3.8-7C3AED" alt="Qwen3.8 视觉增强">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-desktop?color=22C55E" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
 </p>
 
 <p align="center"><strong>中文</strong> · <a href="README.en.md">English</a></p>
 
 <p align="center"><strong>赋范空间出品 · 为 DeepSeek Harness 生态打造的现代化桌面开发体验</strong></p>
+
+<p align="center"><strong>让文本型 DeepSeek 看懂截图、照片、图表和图片文字</strong></p>
 
 <p align="center">把 DeepSeek Harness 的本地 Web 工作区、Host 运行管理和桌面窗口整合为开箱即用的开发环境，让开发者可以获取源码、直接修改并在本地继续构建。</p>
 
@@ -33,6 +36,7 @@
 | 能力 | 状态 | 可以做什么 |
 | --- | --- | --- |
 | **桌面开发工作区** | ✅ 已支持 | 在本地打开项目、管理会话与工作区，调用 Harness 的模型、工具、Skills 和插件能力，并直接修改完整源码。 |
+| **视觉增强** | ✅ 已支持 | 为 DeepSeek 文本工作流补齐图像理解：读取对话附件和工作区图片，再把可追溯的识别结果交给 Agent。 |
 | **中文 DeepSeek 控制** | ✅ 已支持 | 使用中文权限选项和适配 DeepSeek 的思考模式，在输入区直接完成会话级选择。 |
 | **插件中心** | 🚧 开发中 · **预计 1 天内上线** | 首个可用版本集中提供插件发现、搜索、分类、详情、安装入口和结果反馈；自由组装、卸载、更新与兼容性检查按后续版本开放。 |
 | **MCP、Skills 与工具扩展** | 🗓️ 规划中 | 在桌面端发现、连接和管理 MCP Server、Skills 与工具，按项目自由组合 Agent 能力。 |
@@ -54,6 +58,7 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 - **Electron 桌面端**：提供应用窗口、系统托盘、单实例运行、外部链接处理和安全的 preload 通信接口。
 - **本地 Harness Host**：桌面主进程启动 `dsh web`，等待本地服务就绪，并在应用退出时关闭 Host 进程。
 - **Web 工作区**：保留 DeepSeek Harness 的会话、工作区、模型、工具、Skills 和插件运行能力。
+- **对话区视觉增强**：一键启用百炼 Qwen3.8 图像理解，支持截图、照片、图表、OCR 和工作区图片，不替换当前 DeepSeek 主模型。
 - **桌面外观设置**：支持本地背景图片及相关显示效果设置，界面效果以本页项目截图为准。
 - **完整开发源码**：仓库同时包含桌面应用、Web 界面、CLI、功能包、原生辅助模块、Python SDK、示例和构建脚本。
 
@@ -62,6 +67,14 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 - **权限选择**：输入区使用 `只读`、`工作区写入` 和 `完全访问` 三档中文权限，作用于当前会话；通用设置只决定后续新会话的默认权限，启用完全访问前必须确认风险。
 - **模型与思考模式**：模型和 API Key 仍在设置页统一管理；输入区可查看当前 DeepSeek 模型，并选择 `关闭思考`、`深度思考` 或 `最大思考`，不显示 DeepSeek 不支持的速度档位。
 
+## 视觉增强：让 DeepSeek 看懂图片
+
+当前桌面端使用的 DeepSeek 文本模型无法直接理解图片。开启视觉增强后，内置的百炼 `qwen3.8-max` 会先读取对话中的图片附件或工作区内的 PNG、JPEG、WebP、GIF 文件，再把识别结果作为可追溯的视觉观察提供给 Agent，原有 DeepSeek 模型、权限和会话流程保持不变。
+
+- **随手可用**：输入框左侧提供“视觉增强”快捷开关，悬浮即可查看用途和当前状态。
+- **真实验证后开启**：首次启用需要使用一张真实图片验证百炼 API Key；凭证只保存在本机受保护的凭证文件中。
+- **覆盖开发场景**：可理解产品截图、报错界面、设计稿、数据图表、照片和图片文字，也可以按路径读取当前工作区图片。
+
 ## 快速开始
 
 ### 获取源码
@@ -69,8 +82,8 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 使用 Git 克隆仓库：
 
 ```sh
-git clone https://github.com/fufankeji/deepseek-harness-app.git
-cd deepseek-harness-app
+git clone https://github.com/fufankeji/deepseek-harness-desktop.git
+cd deepseek-harness-desktop
 ```
 
 也可以在 GitHub 仓库页面选择 **Code → Download ZIP**，下载并解压源码后进入项目目录。
@@ -109,7 +122,7 @@ pnpm run dev:desktop:rebuild
 ## 目录结构
 
 ```text
-deepseek-harness-app/
+deepseek-harness-desktop/
 ├── apps/
 │   ├── desktop/       # Electron 主进程、preload、Host 生命周期与桌面构建脚本
 │   ├── web/           # DeepSeek Harness Web 界面入口与桌面端组合

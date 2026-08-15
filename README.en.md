@@ -7,16 +7,19 @@
 <h1 align="center">DeepSeek Harness Desktop</h1>
 
 <p align="center">
-  <a href="https://github.com/fufankeji/deepseek-harness-app/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-app?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
+  <a href="https://github.com/fufankeji/deepseek-harness-desktop/stargazers"><img src="https://img.shields.io/github/stars/fufankeji/deepseek-harness-desktop?style=flat&logo=github&label=Stars" alt="GitHub Stars"></a>
   <img src="https://img.shields.io/badge/Desktop-App-2563EB" alt="Desktop App">
   <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-app?color=22C55E" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/Vision-Qwen3.8-7C3AED" alt="Qwen3.8 vision enhancement">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-desktop?color=22C55E" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
 </p>
 
 <p align="center"><a href="README.md">中文</a> · <strong>English</strong></p>
 
 <p align="center"><strong>Built by Beyondata · A modern desktop development experience for the DeepSeek Harness ecosystem</strong></p>
+
+<p align="center"><strong>Let text-based DeepSeek understand screenshots, photos, charts, and text in images</strong></p>
 
 <p align="center">DeepSeek Harness Desktop combines the local Web workspace, Host lifecycle management, and a native desktop window into a development environment that developers can download as source, modify directly, and continue building locally.</p>
 
@@ -33,6 +36,7 @@
 | Capability | Status | What it enables |
 | --- | --- | --- |
 | **Desktop development workspace** | ✅ Available | Open local projects, manage sessions and workspaces, use Harness models, tools, Skills, and plugins, and modify the complete source code directly. |
+| **Vision enhancement** | ✅ Available | Add image understanding to a text-based DeepSeek workflow by reading conversation attachments and workspace images, then providing traceable observations to the Agent. |
 | **Chinese DeepSeek controls** | ✅ Available | Choose Chinese permission levels and DeepSeek-specific thinking modes directly in the composer for the current session. |
 | **Plugin Center** | 🚧 In development · **expected within 1 day** | The first usable release brings plugin discovery, search, categories, details, an installation entry, and result feedback into one desktop view. Composition, removal, updates, and compatibility checks follow in later releases. |
 | **MCP, Skills, and tool extensions** | 🗓️ Planned | Discover, connect, and manage MCP servers, Skills, and tools in the desktop app, then compose Agent capabilities for each project. |
@@ -54,6 +58,7 @@ This README documents source access and development only. It does not provide a 
 - **Electron desktop app**: application window, system tray, single-instance behavior, external-link handling, and a restricted preload bridge.
 - **Local Harness Host**: the desktop main process starts `dsh web`, waits for the local service to become ready, and stops the Host process when the app exits.
 - **Web workspace**: DeepSeek Harness sessions, workspaces, models, tools, Skills, and plugin runtime remain available.
+- **Composer vision enhancement**: enable Bailian Qwen3.8 image understanding in one click for screenshots, photos, charts, OCR, and workspace images without replacing the current DeepSeek model.
 - **Desktop appearance settings**: local background images and related display settings; the screenshot on this page shows the project interface.
 - **Complete development source**: desktop app, Web interface, CLI, capability packages, native helpers, Python SDK, examples, and build scripts are kept in the repository.
 
@@ -62,6 +67,14 @@ This README documents source access and development only. It does not provide a 
 - **Permission selection**: the composer uses the Chinese `只读`, `工作区写入`, and `完全访问` labels for the current session. General settings affect only new sessions, and enabling Full access requires an explicit risk confirmation.
 - **Model and thinking modes**: the model and API key remain managed in Settings. The composer shows the current DeepSeek model and offers `关闭思考`, `深度思考`, and `最大思考` without inventing a speed setting that DeepSeek does not expose.
 
+## Vision enhancement: let DeepSeek understand images
+
+The text-based DeepSeek model used by the desktop workflow cannot interpret images directly. When vision enhancement is enabled, the built-in Bailian `qwen3.8-max` capability first reads image attachments or PNG, JPEG, WebP, and GIF files in the workspace, then gives the Agent a traceable visual observation. The existing DeepSeek model, permission level, and session flow remain unchanged.
+
+- **Available in the composer**: use the “视觉增强” shortcut on the left side of the input bar; hover to see its purpose and current state.
+- **Enabled through real verification**: the first activation verifies a Bailian API key with a real image; the credential remains in the protected local credential file.
+- **Built for development work**: understand product screenshots, error dialogs, designs, charts, photos, and text in images, or inspect an image by its workspace path.
+
 ## Quick start
 
 ### Get the source
@@ -69,8 +82,8 @@ This README documents source access and development only. It does not provide a 
 Clone the repository with Git:
 
 ```sh
-git clone https://github.com/fufankeji/deepseek-harness-app.git
-cd deepseek-harness-app
+git clone https://github.com/fufankeji/deepseek-harness-desktop.git
+cd deepseek-harness-desktop
 ```
 
 You can also choose **Code → Download ZIP** on the GitHub repository page, extract the archive, and open the project directory.
@@ -109,7 +122,7 @@ pnpm run dev:desktop:rebuild
 ## Repository layout
 
 ```text
-deepseek-harness-app/
+deepseek-harness-desktop/
 ├── apps/
 │   ├── desktop/       # Electron main process, preload, Host lifecycle, and desktop build scripts
 │   ├── web/           # DeepSeek Harness Web entry and desktop composition
