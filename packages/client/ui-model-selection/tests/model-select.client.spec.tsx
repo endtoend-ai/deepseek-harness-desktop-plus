@@ -24,7 +24,7 @@ const reasoning = {
   efforts: [
     { id: 'off', name: 'Off' },
     { id: 'high', name: 'High' },
-    { id: 'max', name: 'Max', description: 'Largest budget' },
+    { id: 'max', name: 'Max' },
   ],
   defaultEffort: 'high',
 }
@@ -64,21 +64,26 @@ describe('ModelSelect reasoning effort', () => {
     />)
 
     const trigger = screen.getByRole('button', {
-      name: '选择模型，当前 DeepSeek-V4-Flash，推理等级 High',
+      name: '选择模型，当前 DeepSeek-V4-Flash，思考模式 深度思考',
     })
     fireEvent.click(trigger)
-    fireEvent.click(screen.getByRole('menuitem', { name: /推理等级/ }))
+    expect(screen.getByRole('menu', { name: 'DeepSeek 模型设置' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('menuitem', { name: /思考模式/ }))
     expect(screen.getAllByRole('menuitemradio').map(item => item.textContent))
-      .toEqual(['Off', 'High', 'MaxLargest budget'])
+      .toEqual([
+        '关闭思考不启用深度思考',
+        '深度思考启用深度思考，适合大多数开发任务',
+        '最大思考使用最高推理强度，适合复杂任务',
+      ])
 
-    fireEvent.click(screen.getByRole('menuitemradio', { name: /Max/ }))
+    fireEvent.click(screen.getByRole('menuitemradio', { name: /最大思考/ }))
     await waitFor(() => {
       expect(select).toHaveBeenCalledWith({
         provider: 'deepseek-official',
         model: 'deepseek-v4-flash',
         reasoningEffort: 'max',
       })
-      expect(trigger.getAttribute('aria-label')).toBe('选择模型，当前 DeepSeek-V4-Flash，推理等级 Max')
+      expect(trigger.getAttribute('aria-label')).toBe('选择模型，当前 DeepSeek-V4-Flash，思考模式 最大思考')
     })
   })
 
@@ -105,11 +110,11 @@ describe('ModelSelect reasoning effort', () => {
     />)
 
     fireEvent.click(screen.getByRole('button', {
-      name: '选择模型，当前 Model，推理等级 Default',
+      name: '选择模型，当前 Model，推理等级 跟随模型默认',
     }))
     fireEvent.click(screen.getByRole('menuitem', { name: /推理等级/ }))
     expect(screen.getAllByRole('menuitemradio').map(item => item.textContent))
-      .toEqual(['Default', 'Standard'])
+      .toEqual(['跟随模型默认', 'Standard'])
   })
 
   it('prompts for a selection when the current model is no longer advertised', () => {

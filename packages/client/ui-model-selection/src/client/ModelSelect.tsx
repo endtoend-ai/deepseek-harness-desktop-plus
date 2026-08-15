@@ -1,10 +1,11 @@
 /**
  * ModelSelect: the composer's named model seat (`conversation.input.model`).
  * Two-level selection per figma 496:26454's MenuDropdown: the root menu is
- * the Model / Effort row pair (label + current value + a right chevron),
+ * the Model / reasoning row pair (label + current value + a right chevron),
  * each drilling into its own list — the provider-grouped model list over
- * the shared directory, and the effort levels. The trigger (313:14108's
- * ToggleButton) shows both: model name + effort in the caption tone.
+ * the shared directory, and the adapter levels. DeepSeek's off/high/max ids
+ * render as localized thinking modes; other routes keep adapter-owned names.
+ * The trigger (313:14108's ToggleButton) shows both values.
  * Data and submission ride the SAME per-session ModelDirectory as the
  * /model popup; exact-model reasoning metadata and the selected effort come
  * from the Host rather than a client-owned vocabulary. A rejected selection
@@ -25,6 +26,8 @@ import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ModelSelectInjected } from './slots.ts'
 import css from './ModelSelect.module.css'
 
+type ModelTranslate = PropsLocale<'model'>['t']
+
 /** Which pane the dropdown shows: the two-row root or one drilled-in list. */
 type Pane = 'root' | 'model' | 'effort'
 
@@ -34,6 +37,24 @@ interface EffortChoice {
   effort: string | undefined
   label: string
   description?: string
+}
+
+function isDeepSeekProvider(id: string, name: string): boolean {
+  return id === 'deepseek' || id.startsWith('deepseek-') || name.toLocaleLowerCase() === 'deepseek'
+}
+
+function deepSeekEffortLabel(id: string, t: ModelTranslate): string | undefined {
+  if (id === 'off') return t('deepseek.effort.off')
+  if (id === 'high') return t('deepseek.effort.high')
+  if (id === 'max') return t('deepseek.effort.max')
+  return undefined
+}
+
+function deepSeekEffortDescription(id: string, t: ModelTranslate): string | undefined {
+  if (id === 'off') return t('deepseek.effort.offDescription')
+  if (id === 'high') return t('deepseek.effort.highDescription')
+  if (id === 'max') return t('deepseek.effort.maxDescription')
+  return undefined
 }
 
 /**
@@ -81,25 +102,36 @@ export function ModelSelect(
     : choices.findIndex(c => c.selection.provider === state.current?.provider && c.selection.model === state.current.model)
   const currentChoice = choices[selectedIndex]
   const reasoning = currentChoice?.model.reasoning
+  const usesDeepSeekThinking = currentChoice !== undefined
+    && isDeepSeekProvider(currentChoice.group.id, currentChoice.group.name)
   const effectiveEffort = state.current?.reasoningEffort ?? reasoning?.defaultEffort
+  const effectiveEffortInfo = reasoning?.efforts.find(level => level.id === effectiveEffort)
   const effortLabel = reasoning === undefined
     ? undefined
     : effectiveEffort === undefined
       ? t('effort.providerDefault')
-      : reasoning.efforts.find(level => level.id === effectiveEffort)?.name ?? effectiveEffort
+      : usesDeepSeekThinking
+        ? deepSeekEffortLabel(effectiveEffort, t) ?? effectiveEffortInfo?.name ?? effectiveEffort
+        : effectiveEffortInfo?.name ?? effectiveEffort
   const effortChoices = useMemo<readonly EffortChoice[]>(() => reasoning === undefined
     ? []
     : [
       ...reasoning.defaultEffort === undefined
         ? [{ key: 'provider-default', effort: undefined, label: t('effort.providerDefault') }]
         : [],
-      ...reasoning.efforts.map((effort: ModelReasoningEffort) => ({
-        key: `effort:${effort.id}`,
-        effort: effort.id,
-        label: effort.name,
-        ...effort.description === undefined ? {} : { description: effort.description },
-      })),
-    ], [reasoning, t])
+      ...reasoning.efforts.map((effort: ModelReasoningEffort) => {
+        const description = effort.description
+          ?? (usesDeepSeekThinking ? deepSeekEffortDescription(effort.id, t) : undefined)
+        return {
+          key: `effort:${effort.id}`,
+          effort: effort.id,
+          label: usesDeepSeekThinking
+            ? deepSeekEffortLabel(effort.id, t) ?? effort.name
+            : effort.name,
+          ...description === undefined ? {} : { description },
+        }
+      }),
+    ], [reasoning, t, usesDeepSeekThinking])
   const busy = state.status === 'selecting'
 
   const reload = (): void => {
@@ -208,7 +240,11 @@ export function ModelSelect(
     ? t('trigger.selectAria')
     : effortLabel === undefined
       ? t('trigger.aria', { model: modelLabel })
-      : t('trigger.ariaEffort', { model: modelLabel, effort: effortLabel })
+      : usesDeepSeekThinking
+        ? t('trigger.ariaThinking', { model: modelLabel, effort: effortLabel })
+        : t('trigger.ariaEffort', { model: modelLabel, effort: effortLabel })
+  const menuAria = usesDeepSeekThinking ? t('menu.ariaDeepSeek') : t('menu.aria')
+  const effortMenuLabel = usesDeepSeekThinking ? t('menu.thinking') : t('menu.effort')
   itemRefs.current = []
   let itemIndex = 0
   const itemRef = () => {
@@ -246,7 +282,7 @@ export function ModelSelect(
           id={`${id}-menu`}
           className={css.menu}
           role="menu"
-          aria-label={t('menu.aria')}
+          aria-label={menuAria}
           aria-busy={state.status === 'loading' || busy}
         >
           {pane === 'root' && (
@@ -258,7 +294,7 @@ export function ModelSelect(
               </button>
               {reasoning !== undefined && (
                 <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { setPane('effort') }}>
-                  <span className={css.cellLabel}>{t('menu.effort')}</span>
+                  <span className={css.cellLabel}>{effortMenuLabel}</span>
                   <span className={css.cellValue}>{effortLabel}</span>
                   <IconChevronRightOutline14 className={css.cellChevron} />
                 </button>

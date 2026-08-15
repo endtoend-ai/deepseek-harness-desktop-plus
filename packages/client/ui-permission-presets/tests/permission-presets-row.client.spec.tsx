@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
 import type { SettingsNamespaceView } from '@deepseek-ai/dsh-api-remotes/client'
 import { PermissionRow, type PermissionRowProps } from '../src/client/PermissionRow.tsx'
-import { en } from '../src/client/locales.ts'
+import { en, zh } from '../src/client/locales.ts'
 import { PermissionPresetSettingsController } from '../src/client/settings-store.ts'
 
 afterEach(cleanup)
@@ -36,14 +36,13 @@ function ok<T>(value: T) {
   return { rpcId: 'test', result: { ok: true as const, value } }
 }
 
-const dictionary: Record<string, string> = en
-const t: PermissionRowProps['t'] = key => dictionary[key] ?? key
 const runtime = {
   useSessions: (() => { throw new Error('unused') }) as never,
   useWorkspaces: (() => { throw new Error('unused') }) as never,
 }
 
-function mount(controller: PermissionPresetSettingsController) {
+function mount(controller: PermissionPresetSettingsController, dictionary: Record<string, string> = en) {
+  const t: PermissionRowProps['t'] = key => dictionary[key] ?? key
   return render(
     <PermissionRow
       {...runtime}
@@ -64,8 +63,8 @@ describe('PermissionRow', () => {
         mutate,
       } as never,
     })
-    mount(controller)
-    const button = await screen.findByRole('button', { name: 'Read Only' })
+    mount(controller, zh)
+    const button = await screen.findByRole('button', { name: '只读' })
     expect(button.getAttribute('aria-expanded')).toBe('false')
     fireEvent.click(button)
     expect(button.getAttribute('aria-expanded')).toBe('true')
@@ -75,11 +74,11 @@ describe('PermissionRow', () => {
     fireEvent.click(button)
     expect(button.getAttribute('aria-expanded')).toBe('false')
     fireEvent.click(button)
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Read Only' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: '只读' }))
     expect(mutate).not.toHaveBeenCalled()
     fireEvent.click(button)
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Workspace Write' }))
-    await screen.findByRole('button', { name: 'Workspace Write' })
+    fireEvent.click(screen.getByRole('menuitem', { name: '工作区写入' }))
+    await screen.findByRole('button', { name: '工作区写入' })
     expect(mutate).toHaveBeenCalledOnce()
   })
 

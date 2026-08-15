@@ -46,7 +46,7 @@
   white-space: nowrap;
 }
 
-/* Effort value beside the model name (mock's 'High': same 13/20/500, caption tone). */
+/* Selected reasoning or thinking value beside the model name. */
 .triggerEffort {
   flex: 0 0 auto;
   color: var(--dsw-alias-label-caption);
