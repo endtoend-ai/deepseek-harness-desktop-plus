@@ -5,7 +5,7 @@
 A desktop project developed from the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) source code for developers who want to download, modify, run, and extend the application locally.
 
 <p align="center">
-  <img src="assets/desktop-preview.png" alt="DeepSeek Harness Desktop project interface" width="100%">
+  <img src="assets/deepseek-harness-desktop-cn.png" alt="DeepSeek Harness Desktop project interface" width="100%">
 </p>
 
 ## Project overview

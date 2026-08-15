@@ -5,7 +5,7 @@
 基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 源码持续开发的桌面端项目，面向需要下载源码、修改功能并在本地运行的开发者。
 
 <p align="center">
-  <img src="assets/desktop-preview.png" alt="DeepSeek Harness Desktop 项目界面" width="100%">
+  <img src="assets/deepseek-harness-desktop-cn.png" alt="DeepSeek Harness Desktop 项目界面" width="100%">
 </p>
 
 ## 项目简介
