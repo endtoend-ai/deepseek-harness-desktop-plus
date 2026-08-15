@@ -96,4 +96,4 @@ export function apply(ctx: ClientContext): void {
 }
 
 export type { AppearanceSnapshot } from './appearance-controller.ts'
-export type { AppearanceSettings, DesktopUpdateState } from './bridge.ts'
+export type { AppearanceSettings, BuiltinAppearanceTheme, DesktopUpdateState } from './bridge.ts'

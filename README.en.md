@@ -26,7 +26,7 @@
 <p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>Desktop downloads (installers in development)</strong></a> · <a href="#quick-start"><strong>Get the source and start developing</strong></a></p>
 
 <p align="center">
-  <img src="assets/deepseek-harness-desktop-cn.png" alt="DeepSeek Harness Desktop project interface" width="100%">
+  <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Desktop whale-maid default skin" width="100%">
 </p>
 
 ## At a glance: available features and near-term roadmap
@@ -38,6 +38,7 @@
 | **Desktop development workspace** | ✅ Available | Open local projects, manage sessions and workspaces, use Harness models, tools, Skills, and plugins, and modify the complete source code directly. |
 | **Vision enhancement** | ✅ Available | Add image understanding to a text-based DeepSeek workflow by reading conversation attachments and workspace images, then providing traceable observations to the Agent. |
 | **Chinese DeepSeek controls** | ✅ Available | Choose Chinese permission levels and DeepSeek-specific thinking modes directly in the composer for the current session. |
+| **Built-in skins and custom backgrounds** | ✅ Available | Start with the whale-maid skin, switch to Cloud Cat, or choose a local image and let the app adapt its interface palette. |
 | **Plugin Center** | 🚧 In development · **expected within 1 day** | The first usable release brings plugin discovery, search, categories, details, an installation entry, and result feedback into one desktop view. Composition, removal, updates, and compatibility checks follow in later releases. |
 | **MCP, Skills, and tool extensions** | 🗓️ Planned | Discover, connect, and manage MCP servers, Skills, and tools in the desktop app, then compose Agent capabilities for each project. |
 | **Agent presets and multi-Agent collaboration** | 🗓️ Planned | Define Agents and subagents that collaborate across coding, testing, research, and review work. |
@@ -59,8 +60,23 @@ Desktop installers are published only through this repository's GitHub Releases 
 - **Local Harness Host**: the desktop main process starts `dsh web`, waits for the local service to become ready, and stops the Host process when the app exits.
 - **Web workspace**: DeepSeek Harness sessions, workspaces, models, tools, Skills, and plugin runtime remain available.
 - **Composer vision enhancement**: enable Bailian Qwen3.8 image understanding in one click for screenshots, photos, charts, OCR, and workspace images without replacing the current DeepSeek model.
-- **Desktop appearance settings**: local background images and related display settings; the screenshot on this page shows the project interface.
+- **Desktop appearance settings**: built-in Whale Maid and Cloud Cat skins, plus local backgrounds, subject focus, and interface glass controls.
 - **Complete development source**: desktop app, Web interface, CLI, capability packages, native helpers, Python SDK, examples, and build scripts are kept in the repository.
+
+## Built-in skins and custom backgrounds
+
+Open **Settings → Background** to switch built-in skins. For a custom image, the app performs the 1920×1080 WebP crop and interface color adaptation locally without uploading the original.
+
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="assets/theme-whale-maid-ui.png" alt="Whale Maid default skin"></td>
+    <td width="50%" align="center"><img src="assets/theme-cloud-cat-ui.png" alt="Cloud Cat skin"></td>
+  </tr>
+  <tr>
+    <td><strong>Whale Maid · Default</strong><br>Two blue-and-white whale assistants frame a bright palace while the center remains clear for conversation.</td>
+    <td><strong>Cloud Cat</strong><br>The original soft blue-and-white cat theme remains available as a calm, low-distraction option.</td>
+  </tr>
+</table>
 
 ## Chinese permissions and DeepSeek model controls
 

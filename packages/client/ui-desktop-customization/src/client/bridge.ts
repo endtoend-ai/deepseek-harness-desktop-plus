@@ -16,8 +16,12 @@ export interface DesktopUpdateState {
 /** Accent, deep, mist, and highlight colors derived from one background. */
 export type AppearancePalette = readonly [string, string, string, string]
 
+/** Stable identifiers for themes bundled with the Desktop frontend. */
+export type BuiltinAppearanceTheme = 'whale-maid' | 'cloud-cat'
+
 /** Renderer-safe persisted appearance values. */
 export interface AppearanceSettings {
+  readonly builtinTheme: BuiltinAppearanceTheme | null
   readonly imageDataUrl: string | null
   readonly focusY: number
   readonly glassStrength: number

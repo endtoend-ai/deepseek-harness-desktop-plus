@@ -8,6 +8,7 @@ const REQUIRED_HOST_FILES = [
   ['@deepseek-ai', 'dsh', 'lib', 'bin.js'],
   ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'index.html'],
   ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'default-background.webp'],
+  ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'cloud-cat-background.webp'],
   ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'beyondata-logo.png'],
 ] as const
 

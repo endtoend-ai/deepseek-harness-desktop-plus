@@ -2,17 +2,22 @@
 
 import type { ThemeRuntime, ThemeTokenOverrides } from '@deepseek-ai/dsh-client-ui-theme/client'
 import type { AppearanceSettings, DesktopRendererBridge } from './bridge.ts'
-import { DEFAULT_PALETTE } from './background-image.ts'
+import {
+  BUNDLED_APPEARANCE_THEMES,
+  DEFAULT_BUILTIN_APPEARANCE_THEME,
+  resolveAppearanceBackground,
+} from './appearance-themes.ts'
 
 /** Bundled learner background served by the Desktop web host. */
-export const DEFAULT_BACKGROUND_URL = '/dsh-desktop/default-background.webp'
+export const DEFAULT_BACKGROUND_URL = BUNDLED_APPEARANCE_THEMES[DEFAULT_BUILTIN_APPEARANCE_THEME].imageUrl
 
 /** Initial appearance before an optional persisted learner choice loads. */
 export const DEFAULT_APPEARANCE: AppearanceSettings = Object.freeze({
+  builtinTheme: DEFAULT_BUILTIN_APPEARANCE_THEME,
   imageDataUrl: null,
   focusY: 50,
   glassStrength: 72,
-  palette: DEFAULT_PALETTE,
+  palette: BUNDLED_APPEARANCE_THEMES[DEFAULT_BUILTIN_APPEARANCE_THEME].palette,
 })
 
 /** Observable state exposed to the background settings section. */
@@ -105,7 +110,7 @@ export class AppearanceController {
   }
 
   private apply(settings: AppearanceSettings): void {
-    const image = settings.imageDataUrl ?? DEFAULT_BACKGROUND_URL
+    const image = resolveAppearanceBackground(settings)
     document.body.setAttribute('data-dsh-desktop-skin', 'active')
     document.body.style.setProperty('--dsh-desktop-background-image', `url("${image}")`)
     document.body.style.setProperty('--dsh-desktop-background-position', `${String(settings.focusY)}%`)

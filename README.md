@@ -26,7 +26,7 @@
 <p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>桌面端下载（安装包开发中）</strong></a> · <a href="#快速开始"><strong>获取源码并启动开发</strong></a></p>
 
 <p align="center">
-  <img src="assets/deepseek-harness-desktop-cn.png" alt="DeepSeek Harness Desktop 项目界面" width="100%">
+  <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Desktop 大肥鱼拟人默认皮肤" width="100%">
 </p>
 
 ## 先看功能：当前能力与近期路线图
@@ -38,6 +38,7 @@
 | **桌面开发工作区** | ✅ 已支持 | 在本地打开项目、管理会话与工作区，调用 Harness 的模型、工具、Skills 和插件能力，并直接修改完整源码。 |
 | **视觉增强** | ✅ 已支持 | 为 DeepSeek 文本工作流补齐图像理解：读取对话附件和工作区图片，再把可追溯的识别结果交给 Agent。 |
 | **中文 DeepSeek 控制** | ✅ 已支持 | 使用中文权限选项和适配 DeepSeek 的思考模式，在输入区直接完成会话级选择。 |
+| **内置皮肤与自由换肤** | ✅ 已支持 | 默认使用“大肥鱼拟人”皮肤，可切换“云端猫咪”，也可选择本地图片并自动适配界面配色。 |
 | **插件中心** | 🚧 开发中 · **预计 1 天内上线** | 首个可用版本集中提供插件发现、搜索、分类、详情、安装入口和结果反馈；自由组装、卸载、更新与兼容性检查按后续版本开放。 |
 | **MCP、Skills 与工具扩展** | 🗓️ 规划中 | 在桌面端发现、连接和管理 MCP Server、Skills 与工具，按项目自由组合 Agent 能力。 |
 | **Agent 预设与多 Agent 协作** | 🗓️ 规划中 | 自定义 Agent 与子 Agent，把编码、测试、调研和审查任务交给不同角色协同完成。 |
@@ -59,8 +60,23 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 - **本地 Harness Host**：桌面主进程启动 `dsh web`，等待本地服务就绪，并在应用退出时关闭 Host 进程。
 - **Web 工作区**：保留 DeepSeek Harness 的会话、工作区、模型、工具、Skills 和插件运行能力。
 - **对话区视觉增强**：一键启用百炼 Qwen3.8 图像理解，支持截图、照片、图表、OCR 和工作区图片，不替换当前 DeepSeek 主模型。
-- **桌面外观设置**：支持本地背景图片及相关显示效果设置，界面效果以本页项目截图为准。
+- **桌面外观设置**：内置“大肥鱼拟人”和“云端猫咪”两套皮肤，也支持本地背景图片、主体焦点和界面玻璃层调节。
 - **完整开发源码**：仓库同时包含桌面应用、Web 界面、CLI、功能包、原生辅助模块、Python SDK、示例和构建脚本。
+
+## 内置皮肤与自由换肤
+
+进入 **设置 → 背景** 即可切换内置皮肤；选择自定义图片时，应用会在本机完成 1920×1080 WebP 裁切与界面配色，不上传原图。
+
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="assets/theme-whale-maid-ui.png" alt="大肥鱼拟人默认皮肤"></td>
+    <td width="50%" align="center"><img src="assets/theme-cloud-cat-ui.png" alt="云端猫咪皮肤"></td>
+  </tr>
+  <tr>
+    <td><strong>大肥鱼拟人 · 默认</strong><br>蓝白鲸灵助手与明亮宫殿，中央留白适配对话区。</td>
+    <td><strong>云端猫咪</strong><br>保留原有柔和蓝白猫咪主题，清爽、安静、低干扰。</td>
+  </tr>
+</table>
 
 ## 中文权限与 DeepSeek 模型控制
 

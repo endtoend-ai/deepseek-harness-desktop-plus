@@ -23,8 +23,12 @@ export interface DesktopUpdateState {
 /** Four colors extracted from the selected background. */
 export type DesktopAppearancePalette = readonly [string, string, string, string]
 
-/** Persisted appearance settings. A null image selects the bundled default. */
+/** Stable identifiers for themes bundled with the Desktop frontend. */
+export type DesktopBuiltinAppearanceTheme = 'whale-maid' | 'cloud-cat'
+
+/** Persisted appearance settings. A null image selects one bundled theme. */
 export interface DesktopAppearanceSettings {
+  readonly builtinTheme: DesktopBuiltinAppearanceTheme | null
   readonly imageDataUrl: string | null
   readonly focusY: number
   readonly glassStrength: number

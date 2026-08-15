@@ -26,6 +26,7 @@ describe('desktop appearance storage', () => {
   it('atomically saves an owner-only validated WebP document', async () => {
     const fixture = await storage()
     const settings = {
+      builtinTheme: null,
       imageDataUrl: `data:image/webp;base64,${Buffer.from('webp').toString('base64')}`,
       focusY: 64,
       glassStrength: 80,
@@ -41,6 +42,18 @@ describe('desktop appearance storage', () => {
     expect(() => parseAppearance({ ...DEFAULT_APPEARANCE, imageDataUrl: 'https://example.test/a.png' })).toThrow('WebP')
     expect(() => parseAppearance({ ...DEFAULT_APPEARANCE, focusY: 101 })).toThrow('focusY')
     expect(() => parseAppearance({ ...DEFAULT_APPEARANCE, palette: ['red'] })).toThrow('four')
+    expect(() => parseAppearance({ ...DEFAULT_APPEARANCE, builtinTheme: 'unknown' })).toThrow('not supported')
+    expect(() => parseAppearance({ ...DEFAULT_APPEARANCE, builtinTheme: null })).toThrow('must contain')
+  })
+
+  it('maps pre-theme documents to the matching bundled or custom selection', () => {
+    const { builtinTheme: _defaultTheme, ...legacyDefault } = DEFAULT_APPEARANCE
+    expect(parseAppearance(legacyDefault).builtinTheme).toBe('whale-maid')
+    const legacyCustom = {
+      ...legacyDefault,
+      imageDataUrl: `data:image/webp;base64,${Buffer.from('legacy').toString('base64')}`,
+    }
+    expect(parseAppearance(legacyCustom).builtinTheme).toBeNull()
   })
 
   it('removes the custom document on reset', async () => {
@@ -50,4 +63,3 @@ describe('desktop appearance storage', () => {
     await expect(fixture.storage.read()).resolves.toEqual(DEFAULT_APPEARANCE)
   })
 })
-

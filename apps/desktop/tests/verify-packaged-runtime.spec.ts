@@ -20,6 +20,7 @@ describe('packaged desktop runtime verification', () => {
       const cli = join(resources, '@deepseek-ai', 'dsh', 'lib', 'bin.js')
       const web = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'index.html')
       const background = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'default-background.webp')
+      const catBackground = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'cloud-cat-background.webp')
       const logo = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'beyondata-logo.png')
       await mkdir(join(cli, '..'), { recursive: true })
       await mkdir(join(web, '..'), { recursive: true })
@@ -27,6 +28,7 @@ describe('packaged desktop runtime verification', () => {
       await writeFile(cli, '')
       await writeFile(web, '')
       await writeFile(background, '')
+      await writeFile(catBackground, '')
       await writeFile(logo, '')
 
       await expect(afterPack(context(appOutDir))).resolves.toBeUndefined()
@@ -52,6 +54,7 @@ describe('packaged desktop runtime verification', () => {
         ['@deepseek-ai', 'dsh', 'lib', 'bin.js'],
         ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'index.html'],
         ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'default-background.webp'],
+        ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'cloud-cat-background.webp'],
         ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'beyondata-logo.png'],
         ['@koromix', 'koffi-win32-x64', 'win32_x64', 'koffi.node'],
         ['node-addon-require-builtin-win32-x64-msvc', 'prebuilt', 'win32-x64-msvc-napi-v9.node'],

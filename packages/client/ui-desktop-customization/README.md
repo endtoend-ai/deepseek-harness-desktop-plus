@@ -4,7 +4,7 @@ English | [中文](README.zh.md)
 
 Desktop-only browser plugin for learner-facing visual enhancement, background selection, the visible update center, and the Beyondata attribution badge. The package is mounted only when the Desktop Host exports `DSH_DESKTOP=1`; persistence and update operations cross the fixed Electron preload bridge.
 
-The background path accepts PNG, JPEG, or WebP up to 16 MB, renders a 1920×1080 WebP locally, persists it under Electron `userData`, and applies ThemeRuntime token overrides. No selected image is uploaded.
+The package ships two named background themes: Whale Maid is the first-run default and Cloud Cat remains selectable. Their stable identifiers are persisted without duplicating bundled images in `userData`. The custom-background path still accepts PNG, JPEG, or WebP up to 16 MB, renders a 1920×1080 WebP locally, persists it under Electron `userData`, and applies ThemeRuntime token overrides. No selected image is uploaded.
 
 The visual-enhancement Settings row and the composer shortcut consume one Host-backed status source. The shortcut opens the existing real-image verification flow while disabled, disables through the same Settings namespace while enabled, and explains the supported image workflow on hover. Host-pushed settings and credential updates refresh both entries together.
 

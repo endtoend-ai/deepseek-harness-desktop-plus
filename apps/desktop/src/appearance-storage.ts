@@ -3,17 +3,22 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, open, readFile, rename, rm } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import type { DesktopAppearancePalette, DesktopAppearanceSettings } from './desktop-bridge-contract.ts'
+import type {
+  DesktopAppearancePalette,
+  DesktopAppearanceSettings,
+  DesktopBuiltinAppearanceTheme,
+} from './desktop-bridge-contract.ts'
 
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024
 const HEX_COLOR = /^#[0-9a-f]{6}$/iu
 
 /** Appearance shown before a learner selects a custom image. */
 export const DEFAULT_APPEARANCE: DesktopAppearanceSettings = Object.freeze({
+  builtinTheme: 'whale-maid',
   imageDataUrl: null,
   focusY: 50,
   glassStrength: 72,
-  palette: Object.freeze(['#3b5891', '#1d2739', '#b0c7e8', '#7091cc']) as DesktopAppearancePalette,
+  palette: Object.freeze(['#587ac2', '#253555', '#d9e5f7', '#8ba5d6'] as const),
 })
 
 function finiteRange(value: unknown, minimum: number, maximum: number, label: string): number {
@@ -36,19 +41,40 @@ function imageDataUrl(value: unknown): string | null {
   return value
 }
 
+function builtinTheme(value: unknown, image: string | null): DesktopBuiltinAppearanceTheme | null {
+  if (value === undefined) return image === null ? 'whale-maid' : null
+  if (value === null) {
+    if (image === null) throw new Error('custom desktop appearance must contain a WebP image')
+    return null
+  }
+  if (value !== 'whale-maid' && value !== 'cloud-cat') {
+    throw new Error('desktop bundled theme is not supported')
+  }
+  if (image !== null) throw new Error('bundled desktop appearance must not contain a custom image')
+  return value
+}
+
 function palette(value: unknown): DesktopAppearancePalette {
-  if (!Array.isArray(value) || value.length !== 4 || value.some(color => typeof color !== 'string' || !HEX_COLOR.test(color))) {
+  if (!isPalette(value)) {
     throw new Error('desktop background palette must contain four six-digit hex colors')
   }
-  return Object.freeze([...value]) as unknown as DesktopAppearancePalette
+  return Object.freeze([value[0], value[1], value[2], value[3]])
+}
+
+function isPalette(value: unknown): value is [string, string, string, string] {
+  return Array.isArray(value)
+    && value.length === 4
+    && value.every((color: unknown) => typeof color === 'string' && HEX_COLOR.test(color))
 }
 
 /** Validate data crossing the renderer-to-main or durable-file boundary. */
 export function parseAppearance(value: unknown): DesktopAppearanceSettings {
   if (typeof value !== 'object' || value === null) throw new Error('desktop appearance must be an object')
   const input = value as Record<string, unknown>
+  const image = imageDataUrl(input.imageDataUrl)
   return Object.freeze({
-    imageDataUrl: imageDataUrl(input.imageDataUrl),
+    builtinTheme: builtinTheme(input.builtinTheme, image),
+    imageDataUrl: image,
     focusY: finiteRange(input.focusY, 0, 100, 'focusY'),
     glassStrength: finiteRange(input.glassStrength, 35, 92, 'glassStrength'),
     palette: palette(input.palette),
@@ -101,4 +127,3 @@ export class AppearanceStorage {
     return DEFAULT_APPEARANCE
   }
 }
-
