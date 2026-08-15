@@ -1,0 +1,42 @@
+# 不进入开发源码 ZIP 的内容
+
+# 依赖与包管理缓存
+**/node_modules/
+**/.pnpm-store/
+
+# 构建与发布产物
+/dist/
+/apps/web/dist/
+/apps/desktop/dist/
+/apps/desktop/runtime-host/
+/apps/desktop/runtime/node_modules/
+**/lib/
+/website/.dist/
+/website/.generated/
+*.tsbuildinfo
+coverage/
+.artifacts/
+
+# 本机运行与测试残留
+.cache/
+tmp/
+.sessions/
+.storages/
+.playwright-mcp/
+.worktrees/
+worktrees/
+*.log
+.DS_Store
+
+# 凭证与私钥
+.env
+.env.*
+.credentials.env
+.credentials.yaml
+*.pem
+*.p12
+*.key
+
+# 版本控制内部数据
+.git/
+
