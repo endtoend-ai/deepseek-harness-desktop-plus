@@ -40,3 +40,5 @@ apps/desktop/dist/
 worktrees/
 .agents/worktrees/
 .typert-*/
+/docs/
+/DEVELOPER-HANDOFF/

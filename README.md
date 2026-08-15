@@ -1,93 +1,137 @@
 # DeepSeek Harness Desktop
 
-中文 | [English](README.en.md)
+English | [中文](README.zh.md)
 
-将 DeepSeek Harness 打包成开箱即用的桌面应用。
+An installable desktop application for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), with a bundled runtime, native window and tray integration, local service management, appearance customization, and packaged-app updates.
 
-DeepSeek 官方目前通过命令行启动本地 Web UI。这个项目在官方 DeepSeek Harness 的基础上增加了 Electron 桌面外壳，负责启动和管理本地 Harness 服务，让用户无需配置 Node.js 或执行命令，即可直接使用。
+**Developer preview:** The current source version is `0.1.0-rc.5`, and interfaces, packaging, and plugin behavior may change before a stable release.
+
+<p align="center">
+  <img src="assets/desktop-preview.png" alt="DeepSeek Harness Desktop interface" width="100%">
+</p>
+
+## Why this project
+
+The upstream DeepSeek Harness starts a local Web UI from the command line. DeepSeek Harness Desktop packages that experience as an Electron application: an installed build starts and supervises its own local Harness Host, opens the UI in a native window, and remains available from the system tray without requiring the user to install Node.js or run terminal commands.
+
+## Features
+
+- **Ready-to-use desktop packaging** — installed builds include the Harness runtime and Web UI.
+- **Local Host lifecycle** — the Electron main process starts `dsh web` on an OS-assigned loopback port, waits for readiness, and shuts it down cleanly when the app exits.
+- **Native desktop behavior** — single-instance launch, system tray restore and quit, platform-specific window chrome, and external links opened in the system browser.
+- **Full Harness workspace** — sessions, workspaces, agent presets, model settings, tools, skills, and the Cordis-based plugin runtime remain available through the upstream Web UI.
+- **Desktop customization** — choose a local background, adjust its focus and glass strength, or restore the bundled default. The selected image is processed locally and stored under Electron's private user-data directory.
+- **Optional image understanding** — users can enable Bailian Qwen3.8 vision with their own DashScope credential so text-only agents can inspect supported workspace images.
+- **In-app updates** — packaged macOS and Windows builds can check, download, and install releases from the configured desktop update channel.
+- **Current plugin controls** — Settings includes plugin configuration and a searchable, read-only view of the active Loader inventory.
+
+## Plugin center status
+
+The repository already keeps the Harness plugin architecture intact. The desktop marketplace and mutation controls are the next product milestone; they are not presented as complete in the current preview.
+
+| Available now | In development |
+| --- | --- |
+| Cordis plugins, Profiles, and Bundles | Curated popular-plugin catalog |
+| Plugin configuration in Settings | One-click install, enable, disable, update, and uninstall |
+| Searchable read-only runtime inventory | Compatibility checks, controlled Host restart, and rollback |
+
+The first marketplace version is intended to install reviewed, version-pinned artifacts rather than accept arbitrary npm names, Git URLs, or local paths.
 
 <a id="run"></a>
 
-## 下载
+## Download
 
-| 平台 | 支持情况 |
+Preview builds are available from [deepseekdesktop.com](https://deepseekdesktop.com).
+
+| Platform | Current status |
 | --- | --- |
-| macOS Apple Silicon | 支持 |
-| macOS Intel | 计划支持 |
-| Windows x64 | 支持 |
+| macOS Apple Silicon | Preview build; signed and notarized DMG/ZIP release path is implemented |
+| Windows 10/11 x64 | Preview NSIS installer; production Authenticode signing is pending |
+| macOS Intel | Planned |
+| Linux | Source and unpacked-app path only; no installer release yet |
 
-前往 [deepseekdesktop.com](https://deepseekdesktop.com) 下载最新版本。
+After installation, follow the in-app onboarding to configure a supported model provider. Model requests leave the device for the provider selected by the user; optional Qwen vision requests use Alibaba Cloud Bailian.
 
-## 界面预览
+## Run from source
 
-<p align="center">
-  <img src="assets/desktop-preview.png" alt="DeepSeek Harness Desktop 界面预览" width="100%">
-</p>
+### Requirements
 
-## 主要功能
-
-- 将 DeepSeek Harness 打包为原生桌面应用
-- 自动启动和管理本地 Harness 服务
-- 无需手动安装 Node.js 或运行命令
-- 支持系统托盘驻留
-- 针对 macOS 和 Windows 优化窗口与界面
-- 保留官方 Harness 的插件化能力和本地 Web UI
-- 应用数据和 Harness 服务均运行在本地
-
-## 与官方项目的关系
-
-本项目基于 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 构建。
-
-DeepSeek Harness 的核心能力、插件系统和 Web UI 来自官方项目。本项目主要负责：
-
-- Electron 桌面封装
-- 本地服务生命周期管理
-- 桌面窗口和系统托盘集成
-- macOS、Windows 安装包构建与发布
-- 桌面环境下的界面适配
-
-如果你希望通过命令行运行 Harness，或者参与核心功能开发，请优先查看官方仓库。
-
-<a id="run-from-source"></a>
-
-## 开发
-
-桌面端代码位于：
-
-```text
-apps/desktop
-```
-
-安装依赖并启动桌面应用：
+- Node.js `^22.19.0 || >=24.0.0`
+- pnpm `11.7.0`
 
 ```sh
+git clone https://github.com/fufankeji/deepseek-harness-app.git
+cd deepseek-harness-app
 pnpm install
 pnpm run dev:desktop
 ```
 
-## 社区交流
+`dev:desktop` builds the workspace, Web frontend, and Electron main process before launching the application.
 
-可选择常用的平台参与讨论，交流使用问题、插件开发和项目进展。
+### Useful commands
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm run dev:desktop` | Build and launch the desktop app from source |
+| `pnpm run package:desktop` | Create an unpacked app for the current platform |
+| `pnpm run dist:mac:desktop` | Build the signed and notarized macOS DMG and update ZIP; release credentials are required |
+| `pnpm run dist:win:desktop` | Build the Windows x64 NSIS installer and update metadata |
+| `pnpm run typecheck` | Run the repository TypeScript checks |
+| `pnpm run test` | Run the keyless Vitest unit suite |
+
+## Architecture
+
+```text
+Electron main process
+├── window, tray, update, and appearance owners
+├── fixed sandboxed preload bridge
+└── HostSupervisor
+    └── dsh web on 127.0.0.1:<dynamic-port>
+        ├── Cordis plugin runtime
+        └── React Web UI loaded by the desktop window
+```
+
+The desktop window accepts navigation only from the current loopback Host origin. The renderer uses `contextIsolation: true`, `nodeIntegration: false`, and Electron sandboxing; the preload exposes fixed appearance and update methods instead of generic IPC access.
+
+## Repository layout
+
+| Path | Responsibility |
+| --- | --- |
+| `apps/desktop/` | Electron main process, preload, lifecycle, packaging, and update publishing |
+| `apps/web/` | Browser application entry and desktop-aware Web composition |
+| `apps/cli/` | `dsh` CLI, Profiles, and plugin commands |
+| `packages/` | Harness Host, client, agent, tool, session, plugin, and SDK packages |
+| `native/` | Native sandbox helper source |
+| `python/` | Python SDK and bundled runtime |
+| `vendor/` | Pinned Cordis foundation source and license records |
+
+## Community
+
+Use the community channels for setup help, plugin development, and project updates.
 
 <table>
   <thead>
     <tr>
-      <th align="center">微信群</th>
-      <th align="center">QQ群</th>
+      <th align="center">WeChat group</th>
+      <th align="center">QQ group</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td align="center"><img src="assets/community-wechat-group.png" alt="DeepSeek Harness Desktop 微信群二维码" width="180" height="180"></td>
-      <td align="center"><img src="assets/community-qq-group.jpg" alt="DeepSeek Harness Desktop QQ群二维码" width="180" height="180"></td>
+      <td align="center"><img src="assets/community-wechat-group.png" alt="DeepSeek Harness Desktop WeChat group QR code" width="180" height="180"></td>
+      <td align="center"><img src="assets/community-qq-group.jpg" alt="DeepSeek Harness Desktop QQ group QR code" width="180" height="180"></td>
     </tr>
   </tbody>
 </table>
 
-Discord：[加入 DeepSeek Harness Desktop 社区](https://discord.gg/TJeGqKRNM)
+Discord: [Join the DeepSeek Harness Desktop community](https://discord.gg/TJeGqKRNM)
+
+## Relationship to DeepSeek Harness
+
+This repository is built from [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness). The Harness core, Cordis plugin system, and Web UI originate upstream; this project owns the Electron shell, local Host supervision, desktop customization, platform packaging, and desktop release channel.
+
+This is an independent community project and is not an official DeepSeek product. DeepSeek and related names belong to their respective owners.
 
 ## License
 
-本项目遵循 [MIT License](LICENSE)。
-
-> 本项目是基于 DeepSeek Harness 构建的社区桌面版本，并非 DeepSeek 官方产品。
+The project is distributed under the [MIT License](LICENSE). Third-party components retain their own notices in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
