@@ -32,22 +32,22 @@
 
 ## At a glance: available features and near-term roadmap
 
-> The desktop development workspace, public Plugin Center, and Chinese DeepSeek controls are available today. Features marked "In development" or "Planned" are not yet available and will be updated only after the corresponding workflow is runnable.
+> Status key: ✅ Available; 🗓️ Planned. The desktop development workspace, public Plugin Center, and Chinese DeepSeek controls are available today. Planned capabilities will be updated only after the corresponding workflow is runnable.
 
 | Capability | Status | What it enables |
 | --- | --- | --- |
-| **Public Plugin Center** | ✅ Available | Discover plugins and Bundle-wrapped Skill Packs carrying the `dsh-plugin` keyword in the public npm ecosystem, inspect details and risk, install them online, and enable, disable, or uninstall them. |
-| **Desktop development workspace** | ✅ Available | Open local projects, manage sessions and workspaces, use Harness models, tools, Skills, and plugins, and modify the complete source code directly. |
-| **Vision enhancement** | ✅ Available | Add image understanding to a text-based DeepSeek workflow by reading conversation attachments and workspace images, then providing traceable observations to the Agent. |
-| **Chinese DeepSeek controls** | ✅ Available | Choose Chinese permission levels and DeepSeek-specific thinking modes directly in the composer for the current session. |
-| **Built-in skins and custom backgrounds** | ✅ Available | Start with the whale-maid skin, switch to Cloud Cat, or choose a local image and let the app adapt its interface palette. |
-| **Standalone MCP, Skills, and tool management** | 🗓️ Planned | Add discovery and connection management for MCP servers, Skills, and tools that are not distributed as Bundles, then compose Agent capabilities per project. |
-| **Agent presets and multi-Agent collaboration** | 🗓️ Planned | Define Agents and subagents that collaborate across coding, testing, research, and review work. |
-| **Planning, background runs, and session recovery** | 🗓️ Planned | Manage plans and tasks, keep long-running work active in the background, inspect progress, and resume previous sessions. |
-| **Project rules, hooks, and durable memory** | 🗓️ Planned | Manage repository instructions, automation hooks, and reusable context so Agents work consistently with project rules. |
-| **Git, worktrees, and code review** | 🗓️ Planned | Develop concurrently in isolated worktrees, inspect diffs, commits, and review results, and reduce interference between tasks. |
-| **Browser and desktop automation** | 🗓️ Planned | Let Agents operate websites and local applications, then verify completion through real interaction results. |
-| **Mobile remote access and channels** | 🗓️ Planned | Inspect and resume tasks from a mobile device, and receive notifications or trigger Agents through common messaging channels. |
+| **Public Plugin Center** | ✅ | Discover plugins and Bundle-wrapped Skill Packs carrying the `dsh-plugin` keyword in the public npm ecosystem, inspect details and risk, install them online, and enable, disable, or uninstall them. |
+| **Desktop development workspace** | ✅ | Open local projects, manage sessions and workspaces, use Harness models, tools, Skills, and plugins, and modify the complete source code directly. |
+| **Vision enhancement** | ✅ | Add image understanding to a text-based DeepSeek workflow by reading conversation attachments and workspace images, then providing traceable observations to the Agent. |
+| **Chinese DeepSeek controls** | ✅ | Choose Chinese permission levels and DeepSeek-specific thinking modes directly in the composer for the current session. |
+| **Built-in skins and custom backgrounds** | ✅ | Start with the whale-maid skin, switch to Cloud Cat, or choose a local image and let the app adapt its interface palette. |
+| **Standalone MCP, Skills, and tool management** | 🗓️ | Add discovery and connection management for MCP servers, Skills, and tools that are not distributed as Bundles, then compose Agent capabilities per project. |
+| **Agent presets and multi-Agent collaboration** | 🗓️ | Define Agents and subagents that collaborate across coding, testing, research, and review work. |
+| **Planning, background runs, and session recovery** | 🗓️ | Manage plans and tasks, keep long-running work active in the background, inspect progress, and resume previous sessions. |
+| **Project rules, hooks, and durable memory** | 🗓️ | Manage repository instructions, automation hooks, and reusable context so Agents work consistently with project rules. |
+| **Git, worktrees, and code review** | 🗓️ | Develop concurrently in isolated worktrees, inspect diffs, commits, and review results, and reduce interference between tasks. |
+| **Browser and desktop automation** | 🗓️ | Let Agents operate websites and local applications, then verify completion through real interaction results. |
+| **Mobile remote access and channels** | 🗓️ | Inspect and resume tasks from a mobile device, and receive notifications or trigger Agents through common messaging channels. |
 
 ## Project overview
 
@@ -83,8 +83,8 @@ Open **Settings → Background** to switch built-in skins. For a custom image, t
 ## Public Plugin Center: discover, install, and remove online
 
 <p align="center">
-  <img src="assets/plugin-center-desktop.png" alt="Real DeepSeek Harness Studio public Plugin Center interface" width="100%">
-  <br><sub>Real Desktop interface: public catalog, Installed area, Install buttons, and three-dot management actions.</sub>
+  <img src="assets/plugin-center-avatars-desktop.png" alt="Real DeepSeek Harness Studio public Plugin Center interface" width="100%">
+  <br><sub>Real Desktop interface: plugin avatars, public catalog, Installed area, Install buttons, and three-dot management actions.</sub>
 </p>
 
 Open **Plugin Center** from the sidebar to search plugins and Skill Packs in the public npm Registry that carry the `dsh-plugin` keyword and follow the DeepSeek Harness Bundle format.
