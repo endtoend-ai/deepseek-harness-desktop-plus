@@ -49,20 +49,6 @@
 | **Browser and desktop automation** | 🗓️ Planned | Let Agents operate websites and local applications, then verify completion through real interaction results. |
 | **Mobile remote access and channels** | 🗓️ Planned | Inspect and resume tasks from a mobile device, and receive notifications or trigger Agents through common messaging channels. |
 
-## Public Plugin Center: discover, install, and remove online
-
-<p align="center">
-  <img src="assets/plugin-center-desktop.png" alt="Real DeepSeek Harness Desktop public Plugin Center interface" width="100%">
-  <br><sub>Real Desktop interface: public catalog, Installed area, Install buttons, and three-dot management actions.</sub>
-</p>
-
-Open **Plugin Center** from the sidebar to search plugins and Skill Packs in the public npm Registry that carry the `dsh-plugin` keyword and follow the DeepSeek Harness Bundle format.
-
-- **Online discovery**: search public plugins and inspect versions, capabilities, permissions, compatibility, and risk.
-- **One-click installation**: download and verify an exact package version, integrity metadata, and Bundle declaration; after confirmation, Desktop installs it, restarts the Harness Host, and verifies runtime state.
-- **Installed management**: review system, public-catalog, and local sources together, then enable, disable, update, or uninstall an entry from its three-dot menu.
-- **Safe removal**: uninstall retains configuration and plugin data by default; deleting data requires a separate user confirmation.
-
 ## Project overview
 
 DeepSeek Harness Desktop uses Electron to host the DeepSeek Harness Web workspace. The desktop main process starts and manages a local `dsh web` service. This repository provides the complete development source so users can clone or download it, install dependencies, edit the code, launch the desktop app, and continue development.
@@ -93,6 +79,20 @@ Open **Settings → Background** to switch built-in skins. For a custom image, t
     <td><strong>Cloud Cat</strong><br>The original soft blue-and-white cat theme remains available as a calm, low-distraction option.</td>
   </tr>
 </table>
+
+## Public Plugin Center: discover, install, and remove online
+
+<p align="center">
+  <img src="assets/plugin-center-desktop.png" alt="Real DeepSeek Harness Desktop public Plugin Center interface" width="100%">
+  <br><sub>Real Desktop interface: public catalog, Installed area, Install buttons, and three-dot management actions.</sub>
+</p>
+
+Open **Plugin Center** from the sidebar to search plugins and Skill Packs in the public npm Registry that carry the `dsh-plugin` keyword and follow the DeepSeek Harness Bundle format.
+
+- **Online discovery**: search public plugins and inspect versions, capabilities, permissions, compatibility, and risk.
+- **One-click installation**: download and verify an exact package version, integrity metadata, and Bundle declaration; after confirmation, Desktop installs it, restarts the Harness Host, and verifies runtime state.
+- **Installed management**: review system, public-catalog, and local sources together, then enable, disable, update, or uninstall an entry from its three-dot menu.
+- **Safe removal**: uninstall retains configuration and plugin data by default; deleting data requires a separate user confirmation.
 
 ## Chinese permissions and DeepSeek model controls
 

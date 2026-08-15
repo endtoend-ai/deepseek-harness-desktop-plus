@@ -49,20 +49,6 @@
 | **浏览器与桌面自动化** | 🗓️ 规划中 | 让 Agent 操作网页和本地应用，并通过真实交互结果验证任务是否完成。 |
 | **手机远程与消息通道** | 🗓️ 规划中 | 从移动端查看和接续任务，并通过常用消息渠道接收通知或触发 Agent。 |
 
-## 公开插件中心：在线发现、安装与移除
-
-<p align="center">
-  <img src="assets/plugin-center-desktop.png" alt="DeepSeek Harness Desktop 公开插件中心真实界面" width="100%">
-  <br><sub>真实 Desktop 界面：公开目录、已安装区域、“安装”按钮与三点管理入口。</sub>
-</p>
-
-从左侧进入 **插件中心**，即可搜索 npm 公共 Registry 中带 `dsh-plugin` 标签、并符合 DeepSeek Harness Bundle 规范的插件与 Skill Pack。
-
-- **在线发现**：搜索公开插件，查看版本、能力、权限、兼容性和风险说明。
-- **一键安装**：下载确定版本并校验包身份、完整性和 Bundle 声明；确认后自动安装并重启 Harness Host 验证运行状态。
-- **已安装管理**：集中查看系统、公开目录和本地来源，通过三点菜单启用、停用、更新或卸载插件。
-- **安全移除**：卸载默认保留配置与插件数据；需要清理数据时，再由用户单独确认。
-
 ## 项目简介
 
 DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作区，并由桌面主进程启动和管理本地 `dsh web` 服务。这个仓库提供完整源码开发环境，使用者可以从 GitHub 克隆或下载代码，在本地安装依赖、编辑源码、启动桌面应用并继续开发。
@@ -93,6 +79,20 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
     <td><strong>云端猫咪</strong><br>保留原有柔和蓝白猫咪主题，清爽、安静、低干扰。</td>
   </tr>
 </table>
+
+## 公开插件中心：在线发现、安装与移除
+
+<p align="center">
+  <img src="assets/plugin-center-desktop.png" alt="DeepSeek Harness Desktop 公开插件中心真实界面" width="100%">
+  <br><sub>真实 Desktop 界面：公开目录、已安装区域、“安装”按钮与三点管理入口。</sub>
+</p>
+
+从左侧进入 **插件中心**，即可搜索 npm 公共 Registry 中带 `dsh-plugin` 标签、并符合 DeepSeek Harness Bundle 规范的插件与 Skill Pack。
+
+- **在线发现**：搜索公开插件，查看版本、能力、权限、兼容性和风险说明。
+- **一键安装**：下载确定版本并校验包身份、完整性和 Bundle 声明；确认后自动安装并重启 Harness Host 验证运行状态。
+- **已安装管理**：集中查看系统、公开目录和本地来源，通过三点菜单启用、停用、更新或卸载插件。
+- **安全移除**：卸载默认保留配置与插件数据；需要清理数据时，再由用户单独确认。
 
 ## 中文权限与 DeepSeek 模型控制
 
