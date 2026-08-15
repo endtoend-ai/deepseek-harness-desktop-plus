@@ -13,6 +13,15 @@ import {
   SIDEBAR_DEFAULT, SIDEBAR_MAX, SIDEBAR_MIN,
 } from './columns.ts'
 
+const PRIMARY_PAGE_PARAMETER = 'dsh-primary-page'
+const PRIMARY_PAGE_ID = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/u
+
+/** Read the one-shot first-level page selected by the Desktop Host reload URL. */
+function initialPrimaryPage(): string | null {
+  const pageId = new URLSearchParams(globalThis.location?.search ?? '').get(PRIMARY_PAGE_PARAMETER)
+  return pageId !== null && pageId.length <= 64 && PRIMARY_PAGE_ID.test(pageId) ? pageId : null
+}
+
 /**
  * Layout store state: panel width preferences in px (0 = closed), plus the
  * narrow-viewport pair — `narrow` mirrors AppFrame's breakpoint reading
@@ -60,7 +69,7 @@ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutAction
       details: 0,
       narrow: false,
       narrowExpanded: false,
-      primaryPage: null,
+      primaryPage: initialPrimaryPage(),
     }),
     actions: {
       setSidebar: (d, px: number) => { d.sidebar = clampWidth(px, SIDEBAR_MIN, SIDEBAR_MAX) },

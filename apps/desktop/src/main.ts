@@ -72,6 +72,8 @@ import { createDesktopLifecycle, type DesktopLifecycle } from './window-lifecycl
 const APP_NAME = 'DeepSeek Harness'
 const WINDOW_WIDTH = 1440
 const WINDOW_HEIGHT = 920
+const PRIMARY_PAGE_PARAMETER = 'dsh-primary-page'
+const PLUGIN_CENTER_PAGE_ID = 'plugin-center'
 const DESKTOP_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const REPOSITORY_ROOT = resolve(DESKTOP_DIR, '../..')
 
@@ -158,9 +160,10 @@ function currentHostOrigin(): string | undefined {
   return host?.current?.origin
 }
 
-function rendererUrl(origin: string): string {
+function rendererUrl(origin: string, primaryPage?: string): string {
   const url = new URL(origin)
   url.searchParams.set('dsh-desktop-platform', process.platform)
+  if (primaryPage !== undefined) url.searchParams.set(PRIMARY_PAGE_PARAMETER, primaryPage)
   return url.href
 }
 
@@ -181,8 +184,8 @@ function isRecoveryPageUrl(raw: string): boolean {
   }
 }
 
-async function loadWindowHost(window: BrowserWindow, origin: string): Promise<void> {
-  await window.loadURL(rendererUrl(origin))
+async function loadWindowHost(window: BrowserWindow, origin: string, primaryPage?: string): Promise<void> {
+  await window.loadURL(rendererUrl(origin, primaryPage))
 }
 
 function manifestVersion(path: string): string {
@@ -292,8 +295,14 @@ async function createMainWindow(): Promise<BrowserWindow> {
 
 /** Register the closed renderer bridge after Electron app paths are available. */
 function registerDesktopBridge(): PluginCenterBackend {
-  const appearance = new AppearanceStorage(app.getPath('userData'))
-  const catalog = new NpmEcosystemCatalogRepository(new CatalogCache(app.getPath('userData')))
+  const userDataDirectory = app.getPath('userData')
+  const appearance = new AppearanceStorage(userDataDirectory)
+  const catalog = new NpmEcosystemCatalogRepository(
+    new CatalogCache(userDataDirectory),
+    fetch,
+    Date.now,
+    userDataDirectory,
+  )
   const paths = hostPaths()
   const systemComponents = deriveProtectedSystemComponents(paths.shippedBundleManifests)
   const readFingerprint = (
@@ -453,7 +462,7 @@ function registerDesktopBridge(): PluginCenterBackend {
       const window = mainWindow
       const origin = currentHostOrigin()
       if (window !== undefined && !window.isDestroyed() && origin !== undefined) {
-        await loadWindowHost(window, origin)
+        await loadWindowHost(window, origin, PLUGIN_CENTER_PAGE_ID)
       }
     }
     return result
@@ -516,7 +525,7 @@ async function initializePluginOperations(backend: PluginCenterBackend): Promise
     packageManager,
     host: currentHost,
     runtimeVerifier,
-    reloadHost: origin => currentLifecycle.reloadHost(origin),
+    reloadHost: origin => currentLifecycle.reloadHost(origin, PLUGIN_CENTER_PAGE_ID),
   })
   pluginRecoveryController = recovery
   pluginDiagnosticExporter = new PluginRecoveryDiagnosticExporter(journal)
@@ -541,7 +550,7 @@ async function initializePluginOperations(backend: PluginCenterBackend): Promise
     profileDirectory,
     installAnchor: backend.paths.cliManifest,
     host: currentHost,
-    reloadHost: (origin: string) => currentLifecycle.reloadHost(origin),
+    reloadHost: (origin: string) => currentLifecycle.reloadHost(origin, PLUGIN_CENTER_PAGE_ID),
     runtimeVerifier,
     postFingerprint: backend.readTransactionFingerprint,
   } as const
@@ -645,7 +654,9 @@ async function boot(): Promise<void> {
   lifecycle = createDesktopLifecycle({
     getWindow: () => mainWindow,
     createWindow: createMainWindow,
-    loadHost: async (window, origin) => { await loadWindowHost(window as BrowserWindow, origin) },
+    loadHost: async (window, origin, primaryPage) => {
+      await loadWindowHost(window as BrowserWindow, origin, primaryPage)
+    },
     disposeHost: async () => { await host?.shutdown() },
     quit: releaseAppQuit,
     reportError: (error) => { console.error('desktop shutdown failed:', error) },

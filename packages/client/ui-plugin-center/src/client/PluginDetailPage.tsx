@@ -67,9 +67,18 @@ const CAPABILITY_KEYS = {
 function DetailMark({ entry }: { readonly entry: CatalogSummary }) {
   return (
     <span className={css.detailMark} style={{ background: entry.brandColor ?? undefined }} aria-hidden="true">
-      {entry.icon === null
-        ? entry.displayName.slice(0, 1).toLocaleUpperCase()
-        : <img src={entry.icon.url} alt="" width={entry.icon.width} height={entry.icon.height} />}
+      {entry.displayName.slice(0, 1).toLocaleUpperCase()}
+      {entry.icon === null ? null : (
+        <img
+          key={entry.icon.url}
+          src={entry.icon.url}
+          alt=""
+          width={entry.icon.width}
+          height={entry.icon.height}
+          referrerPolicy="no-referrer"
+          onError={(event) => { event.currentTarget.hidden = true }}
+        />
+      )}
     </span>
   )
 }

@@ -14,7 +14,10 @@ import {
 
 const PERSIST_KEY = 'dsh.layout.panels'
 
-beforeEach(() => { localStorage.clear() })
+beforeEach(() => {
+  localStorage.clear()
+  window.history.replaceState(null, '', '/')
+})
 
 describe('createLayoutStore', () => {
   it('initializes the sidebar at its default width, details closed, wide viewport assumed', () => {
@@ -106,6 +109,14 @@ describe('createLayoutStore', () => {
     expect(store.getSnapshot().primaryPage).toBe('plugin-center')
     actions.closePrimaryPage('plugin-center')
     expect(store.getSnapshot().primaryPage).toBeNull()
+  })
+
+  it('restores only a valid first-level page requested by a Desktop Host reload', () => {
+    window.history.replaceState(null, '', '/?dsh-primary-page=plugin-center')
+    expect(createLayoutStore().create().store.getSnapshot().primaryPage).toBe('plugin-center')
+
+    window.history.replaceState(null, '', '/?dsh-primary-page=../../settings')
+    expect(createLayoutStore().create().store.getSnapshot().primaryPage).toBeNull()
   })
 
   it('does not persist panel geometry', () => {

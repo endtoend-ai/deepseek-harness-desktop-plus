@@ -36,8 +36,25 @@ const ACTION_KEYS = {
 
 function InstalledMark({ item }: { readonly item: InstalledPluginProjection }) {
   return (
-    <span className={css.installedMark} aria-hidden="true" data-source={item.source}>
+    <span
+      className={css.installedMark}
+      style={{ background: item.brandColor ?? undefined }}
+      aria-hidden="true"
+      data-source={item.source}
+    >
       {item.displayName.slice(0, 1).toLocaleUpperCase()}
+      {item.icon === null ? null : (
+        <img
+          key={item.icon.url}
+          src={item.icon.url}
+          alt=""
+          width={item.icon.width}
+          height={item.icon.height}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(event) => { event.currentTarget.hidden = true }}
+        />
+      )}
     </span>
   )
 }
@@ -48,7 +65,13 @@ export function InstalledIcons({ state, onOpen, t }: {
   readonly onOpen: () => void
   readonly t: PluginCenterTabProps['t']
 }): ReactNode {
-  if (state.status === 'loading') return <span className={css.installedEmpty}>{t('installedLoading')}</span>
+  if (state.status === 'loading') {
+    return (
+      <span className={css.installedSkeleton} role="status" aria-label={t('installedLoading')}>
+        {[0, 1, 2, 3, 4, 5, 6].map(index => <span key={index} aria-hidden="true" />)}
+      </span>
+    )
+  }
   if (state.status === 'error') return <span className={css.installedEmpty}>{t('installedError')}</span>
   if (state.result.items.length === 0) return <span className={css.installedEmpty}>{t('installedEmpty')}</span>
   return state.result.items.map(item => (

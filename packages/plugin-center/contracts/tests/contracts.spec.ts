@@ -4,6 +4,7 @@ import {
   decodeCatalogDetailQuery,
   decodeCatalogListQuery,
   decodeCatalogSnapshot,
+  decodeCatalogSummary,
 } from '../src/index.ts'
 
 const SUMMARY = {
@@ -87,6 +88,7 @@ function snapshot() {
 describe('plugin center catalog contracts', () => {
   it('decodes an exact Plugin or Skill Bundle snapshot', () => {
     expect(decodeCatalogSnapshot(snapshot())).toEqual(snapshot())
+    expect(decodeCatalogSummary(SUMMARY)).toEqual(SUMMARY)
     expect(decodeCatalogListQuery({ catalogKind: 'skill-pack', scope: 'public', query: '', limit: 24 }))
       .toEqual({ catalogKind: 'skill-pack', scope: 'public', query: '', limit: 24 })
     expect(decodeCatalogDetailQuery({ pluginId: 'fixture.skill-pack', version: '1.2.3' }))

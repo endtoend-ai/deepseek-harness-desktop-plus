@@ -277,6 +277,8 @@ export interface InstalledPluginProjection {
   readonly packageName: string
   readonly version: string | null
   readonly displayName: string
+  readonly icon: CatalogMedia | null
+  readonly brandColor: string | null
   readonly catalogKind: CatalogKind | null
   readonly source: InstalledPluginSource
   readonly protected: boolean
@@ -1250,7 +1252,7 @@ function installedUpdate(value: unknown, path: string): InstalledPluginUpdate {
 function installedProjection(value: unknown, path: string): InstalledPluginProjection {
   const source = record(value, path)
   exact(source, path, [
-    'pluginId', 'packageName', 'version', 'displayName', 'catalogKind', 'source', 'protected',
+    'pluginId', 'packageName', 'version', 'displayName', 'icon', 'brandColor', 'catalogKind', 'source', 'protected',
     'enabled', 'bundleOrder', 'disabledOrder', 'runtimeStatus', 'runtime', 'expectedEntries',
     'expectedClientModules', 'expectedSkillIds', 'compatibility', 'compatibilityReason', 'update',
     'pendingAction', 'supportedActions', 'configurationEntryIds', 'ownedData',
@@ -1268,6 +1270,10 @@ function installedProjection(value: unknown, path: string): InstalledPluginProje
   const pendingAction = source['pendingAction'] === null
     ? null
     : enumeration(source['pendingAction'], `${path}.pendingAction`, COMPATIBILITY_ACTIONS)
+  const brand = source['brandColor']
+  if (brand !== null && (typeof brand !== 'string' || !COLOR.test(brand))) {
+    fail(`${path}.brandColor`, 'must be null or a six-digit hex color')
+  }
   const ownedData = array(source['ownedData'], `${path}.ownedData`, 64, installedOwnedData)
   if (new Set(ownedData.map(item => item.path)).size !== ownedData.length) {
     fail(`${path}.ownedData`, 'must not contain duplicate paths')
@@ -1289,6 +1295,8 @@ function installedProjection(value: unknown, path: string): InstalledPluginProje
     packageName: packageIdentity(source['packageName'], `${path}.packageName`),
     version: source['version'] === null ? null : version(source['version'], `${path}.version`),
     displayName: string(source['displayName'], `${path}.displayName`, 120),
+    icon: source['icon'] === null ? null : media(source['icon'], `${path}.icon`),
+    brandColor: brand,
     catalogKind,
     source: sourceValue,
     protected: protectedValue,
@@ -1411,6 +1419,24 @@ export function decodeCatalogSnapshot(value: unknown): CatalogSnapshot {
     details,
     preflights,
   }
+}
+
+/**
+ * Decode one untrusted media reference before using it in a renderer-safe projection.
+ * @param value - Candidate media metadata from a catalog publisher.
+ * @returns A bounded HTTPS media reference from an approved origin.
+ */
+export function decodeCatalogMedia(value: unknown): CatalogMedia {
+  return media(value, '$media')
+}
+
+/**
+ * Decode one untrusted catalog summary before it enters a renderer-safe cache.
+ * @param value - Candidate catalog-card metadata.
+ * @returns The closed catalog summary.
+ */
+export function decodeCatalogSummary(value: unknown): CatalogSummary {
+  return summary(value, '$summary')
 }
 
 /**

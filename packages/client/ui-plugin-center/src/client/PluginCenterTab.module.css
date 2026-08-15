@@ -400,18 +400,42 @@
   line-height: 20px;
 }
 
+.installedSkeleton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.installedSkeleton > span {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--dsw-alias-interactive-bg-hover);
+  animation: plugin-center-skeleton-pulse 1.25s ease-in-out infinite alternate;
+}
+
 .installedMark {
   display: grid;
+  position: relative;
   width: 38px;
   height: 38px;
   flex: none;
   place-items: center;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 10px;
+  overflow: hidden;
   background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 76%, var(--dsw-alias-bg-layer-2));
   color: var(--dsw-static-neutral-00);
   font-size: 15px;
   font-weight: 600;
+}
+
+.installedMark img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .installedMark[data-source='system'] {
@@ -657,6 +681,79 @@
   flex-direction: column;
 }
 
+.catalogSkeleton {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeletonHeading {
+  min-height: 40px;
+  border-bottom: 1px solid var(--dsw-alias-border-l2);
+  padding: 9px 8px;
+  box-sizing: border-box;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.skeletonCards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 34px;
+  row-gap: 2px;
+  margin: 0;
+  padding: 10px 0 0;
+  list-style: none;
+}
+
+.skeletonCard {
+  display: grid;
+  min-height: 66px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.skeletonMark,
+.skeletonTitle,
+.skeletonSummary {
+  display: block;
+  background: var(--dsw-alias-interactive-bg-hover);
+  animation: plugin-center-skeleton-pulse 1.25s ease-in-out infinite alternate;
+}
+
+.skeletonMark {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.skeletonCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.skeletonTitle {
+  width: min(52%, 150px);
+  height: 12px;
+  border-radius: 5px;
+}
+
+.skeletonSummary {
+  width: min(78%, 230px);
+  height: 9px;
+  border-radius: 4px;
+}
+
+@keyframes plugin-center-skeleton-pulse {
+  from { opacity: .48; }
+  to { opacity: .9; }
+}
+
 .cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -749,6 +846,7 @@
 .catalogMark,
 .detailMark {
   display: grid;
+  position: relative;
   width: 40px;
   height: 40px;
   flex: none;
@@ -765,6 +863,8 @@
 
 .catalogMark img,
 .detailMark img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -1624,7 +1724,11 @@
     transition: none;
   }
 
-  .recoveryStatusIcon svg {
+  .recoveryStatusIcon svg,
+  .installedSkeleton > span,
+  .skeletonMark,
+  .skeletonTitle,
+  .skeletonSummary {
     animation: none;
   }
 }
@@ -1649,6 +1753,7 @@
   }
 
   .cards,
+  .skeletonCards,
   .detailMedia,
   .detailFacts {
     grid-template-columns: 1fr;

@@ -164,9 +164,9 @@ describe('desktop window lifecycle', () => {
       quit: vi.fn(),
     })
 
-    await lifecycle.reloadHost('http://127.0.0.1:5123')
+    await lifecycle.reloadHost('http://127.0.0.1:5123', 'plugin-center')
 
-    expect(loadCurrentHost).toHaveBeenCalledWith(window, 'http://127.0.0.1:5123')
+    expect(loadCurrentHost).toHaveBeenCalledWith(window, 'http://127.0.0.1:5123', 'plugin-center')
     expect(window.show).not.toHaveBeenCalled()
     expect(window.focus).not.toHaveBeenCalled()
   })

@@ -45,6 +45,23 @@ describe('catalog states', () => {
     expect(list).not.toHaveBeenCalled()
   })
 
+  it('shows structured first-paint skeletons before starting the background refresh', async () => {
+    let resolveList!: (result: ReturnType<typeof listResult>) => void
+    const firstRead = new Promise<ReturnType<typeof listResult>>((resolve) => { resolveList = resolve })
+    const list = vi.fn<PluginCenterTabProps['list']>(() => firstRead)
+    const refresh = vi.fn<PluginCenterTabProps['refresh']>(async query => listResult(query))
+    const view = render(<PluginCenterTab {...props({ list, refresh })} />)
+
+    expect(screen.getByRole('status', { name: en.loading })).toBeTruthy()
+    expect(view.container.querySelectorAll('[data-catalog-skeleton-card]')).toHaveLength(6)
+    expect(refresh).not.toHaveBeenCalled()
+
+    await act(async () => { resolveList(listResult({ catalogKind: 'plugin', scope: 'public', query: '', limit: 24 })) })
+
+    expect((await screen.findAllByText('Workspace tools')).length).toBeGreaterThan(0)
+    await waitFor(() => { expect(refresh).toHaveBeenCalledTimes(1) })
+  })
+
   it('shows the hierarchy, both kinds, scope, deterministic sections, search, and freshness', async () => {
     const list = vi.fn<PluginCenterTabProps['list']>(async query =>
       listResult(query, query.catalogKind === 'skill-pack' ? 'cached' : 'fresh'))
@@ -56,6 +73,13 @@ describe('catalog states', () => {
     expect(screen.getByRole('searchbox', { name: en.searchPlugins })).toBeTruthy()
     expect(screen.getByRole('button', { name: en.publicScope }).getAttribute('aria-pressed')).toBe('true')
     expect((await screen.findAllByText('Workspace tools')).length).toBe(3)
+    const logo = view.container.querySelector<HTMLImageElement>(
+      'img[src="https://avatars.githubusercontent.com/fixture?s=128"]',
+    )
+    expect(logo).not.toBeNull()
+    fireEvent.error(logo!)
+    expect(logo?.hidden).toBe(true)
+    expect(logo?.parentElement?.textContent).toContain('W')
     expect(screen.getByRole('heading', { name: en.featured })).toBeTruthy()
     expect(screen.getByRole('heading', { name: en.popular })).toBeTruthy()
     expect(screen.getByRole('heading', { name: en.recent })).toBeTruthy()

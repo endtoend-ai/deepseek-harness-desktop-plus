@@ -166,9 +166,19 @@ function CatalogMark({ entry, compact = false }: { readonly entry: CatalogSummar
       style={{ background: entry.brandColor ?? undefined }}
       aria-hidden="true"
     >
-      {entry.icon === null
-        ? entry.displayName.slice(0, 1).toLocaleUpperCase()
-        : <img src={entry.icon.url} alt="" width={entry.icon.width} height={entry.icon.height} />}
+      {entry.displayName.slice(0, 1).toLocaleUpperCase()}
+      {entry.icon === null ? null : (
+        <img
+          key={entry.icon.url}
+          src={entry.icon.url}
+          alt=""
+          width={entry.icon.width}
+          height={entry.icon.height}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(event) => { event.currentTarget.hidden = true }}
+        />
+      )}
     </span>
   )
 }
@@ -341,6 +351,27 @@ export function CatalogSectionView({
   )
 }
 
+const SKELETON_CARDS = [0, 1, 2, 3, 4, 5] as const
+
+function CatalogSkeleton({ t }: { readonly t: PluginCenterTabProps['t'] }) {
+  return (
+    <section className={css.catalogSkeleton} role="status" aria-label={t('loading')}>
+      <div className={css.skeletonHeading}>{t('loading')}</div>
+      <ul className={css.skeletonCards} aria-hidden="true">
+        {SKELETON_CARDS.map(index => (
+          <li key={index} className={css.skeletonCard} data-catalog-skeleton-card>
+            <span className={css.skeletonMark} />
+            <span className={css.skeletonCopy}>
+              <span className={css.skeletonTitle} />
+              <span className={css.skeletonSummary} />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 /** Searchable Desktop Plugin Center with handed-off lifecycle actions. */
 export function PluginCenterTab({
   available, development, list, refresh, detail, checkCompatibility, listInstalled, openPluginSettings,
@@ -361,6 +392,7 @@ export function PluginCenterTab({
   const detailRequest = useRef(0)
   const catalogInstallOpener = useRef<HTMLButtonElement | null>(null)
   const catalogInstallRequest = useRef(0)
+  const initialRefreshStarted = useRef(false)
   const observedTerminal = useRef<string | null>(null)
   const [kind, setKind] = useState<CatalogKind>('plugin')
   const [scope, setScope] = useState<CatalogScope>('public')
@@ -414,11 +446,22 @@ export function PluginCenterTab({
     if (!available) return
     let current = true
     void Promise.resolve().then(() => list(criteria)).then(
-      (result) => { if (current) setView({ status: 'ready', result }) },
+      (result) => {
+        if (current) setView({ status: 'ready', result })
+        if (criteria.catalogKind !== 'plugin' || criteria.scope !== 'public' || criteria.query !== ''
+          || initialRefreshStarted.current) return
+        initialRefreshStarted.current = true
+        if (result.source === 'network' && result.freshness === 'fresh'
+          && uniqueEntries([result]).length >= criteria.limit) return
+        void Promise.resolve().then(() => refresh(criteria)).then(
+          () => { if (current) setRevision(value => value + 1) },
+          () => {},
+        )
+      },
       () => { if (current) setView({ status: 'error' }) },
     )
     return () => { current = false }
-  }, [available, criteria, list, revision])
+  }, [available, criteria, list, refresh, revision])
 
   useEffect(() => {
     if (!available) return
@@ -429,17 +472,6 @@ export function PluginCenterTab({
     )
     return () => { current = false }
   }, [available, listInstalled, revision])
-
-  useEffect(() => {
-    if (!available) return
-    let current = true
-    const initial: CatalogListQuery = { catalogKind: 'plugin', scope: 'public', query: '', limit: 24 }
-    void Promise.resolve().then(() => refresh(initial)).then(
-      () => { if (current) setRevision(value => value + 1) },
-      () => { if (current) setRevision(value => value + 1) },
-    )
-    return () => { current = false }
-  }, [available, refresh])
 
   useEffect(() => {
     if (!available) return
@@ -960,7 +992,7 @@ export function PluginCenterTab({
               <button type="button" onClick={retry}>{t('retry')}</button>
             </div>
           ) : null}
-          {view.status === 'loading' ? <p className={css.status}>{t('loading')}</p> : null}
+          {view.status === 'loading' ? <CatalogSkeleton t={t} /> : null}
           {view.status === 'error' ? (
             <div className={css.failure}>
               <p role="alert">{t('error')}</p>

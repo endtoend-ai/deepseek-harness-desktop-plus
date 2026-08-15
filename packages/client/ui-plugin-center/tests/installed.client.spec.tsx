@@ -68,6 +68,9 @@ describe('retained management paths', () => {
     expect(within(row('Harness system')).getByText(en.installedSourceSystem)).toBeTruthy()
     expect(within(row('Harness system')).getByText(en.protectedPlugin)).toBeTruthy()
     expect(within(row('Workspace tools')).getByText(en.installedSourceCatalog)).toBeTruthy()
+    expect(row('Workspace tools').querySelector(
+      'img[src="https://avatars.githubusercontent.com/fixture?s=128"]',
+    )).not.toBeNull()
     expect(within(row('Harness basics')).getByText(en.bundleDisabled)).toBeTruthy()
     expect(within(row('Harness basics')).getByText(en.runtimeInactive)).toBeTruthy()
     expect(within(row('Harness basics')).getByText(/Incompatible with this release/u)).toBeTruthy()

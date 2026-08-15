@@ -321,6 +321,8 @@ export function deriveInstalledPluginProjection(input: InstalledProjectionInput)
       packageName,
       version: observation.version,
       displayName: catalog?.summary.displayName ?? packageName,
+      icon: catalog?.summary.icon ?? null,
+      brandColor: catalog?.summary.brandColor ?? null,
       catalogKind: catalog?.summary.catalogKind ?? null,
       source: system ? 'system' : catalog === null ? 'local' : 'catalog',
       protected: system,

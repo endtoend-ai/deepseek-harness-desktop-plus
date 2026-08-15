@@ -15,6 +15,13 @@ const CATALOG_ITEM = {
   packageName: '@fixture/dsh-workspace-tools',
   version: '1.2.3',
   displayName: 'Workspace tools',
+  icon: {
+    url: 'https://avatars.githubusercontent.com/fixture?s=128',
+    alt: 'Fixture publisher avatar',
+    width: 128,
+    height: 128,
+  },
+  brandColor: '#2563EB',
   catalogKind: 'plugin',
   source: 'catalog',
   protected: false,
@@ -51,6 +58,8 @@ function installedResult() {
       packageName: '@local/developer-bundle',
       version: '0.1.0',
       displayName: '@local/developer-bundle',
+      icon: null,
+      brandColor: null,
       catalogKind: null,
       source: 'local',
       protected: false,
@@ -156,6 +165,10 @@ describe('installed management contract', () => {
     ['active and disabled overlap', { ...CATALOG_ITEM, enabled: true, bundleOrder: 2 }],
     ['local mutation authority', { ...CATALOG_ITEM, source: 'local' }],
     ['absolute owned path', { ...CATALOG_ITEM, ownedData: [{ path: '/tmp/cache', label: 'cache' }] }],
+    ['unapproved icon origin', {
+      ...CATALOG_ITEM,
+      icon: { ...CATALOG_ITEM.icon, url: 'https://example.com/icon.png' },
+    }],
   ])('rejects %s', (_name, item) => {
     expect(() => decodeInstalledPluginListResult({ ...installedResult(), items: [item] }))
       .toThrow(CatalogContractError)
