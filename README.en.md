@@ -8,6 +8,23 @@ A desktop project developed from the [DeepSeek Harness](https://github.com/deeps
   <img src="assets/deepseek-harness-desktop-cn.png" alt="DeepSeek Harness Desktop project interface" width="100%">
 </p>
 
+## At a glance: available features and near-term roadmap
+
+> The desktop development workspace and Chinese DeepSeek controls are available today. Features marked "In development" or "Planned" are not yet available and will be updated only after the corresponding workflow is runnable.
+
+| Capability | Status | What it enables |
+| --- | --- | --- |
+| **Desktop development workspace** | ✅ Available | Open local projects, manage sessions and workspaces, use Harness models, tools, Skills, and plugins, and modify the complete source code directly. |
+| **Chinese DeepSeek controls** | ✅ Available | Choose Chinese permission levels and DeepSeek-specific thinking modes directly in the composer for the current session. |
+| **Plugin Center** | 🚧 In development · **expected within 1 day** | The first usable release brings plugin discovery, search, categories, details, an installation entry, and result feedback into one desktop view. Composition, removal, updates, and compatibility checks follow in later releases. |
+| **MCP, Skills, and tool extensions** | 🗓️ Planned | Discover, connect, and manage MCP servers, Skills, and tools in the desktop app, then compose Agent capabilities for each project. |
+| **Agent presets and multi-Agent collaboration** | 🗓️ Planned | Define Agents and subagents that collaborate across coding, testing, research, and review work. |
+| **Planning, background runs, and session recovery** | 🗓️ Planned | Manage plans and tasks, keep long-running work active in the background, inspect progress, and resume previous sessions. |
+| **Project rules, hooks, and durable memory** | 🗓️ Planned | Manage repository instructions, automation hooks, and reusable context so Agents work consistently with project rules. |
+| **Git, worktrees, and code review** | 🗓️ Planned | Develop concurrently in isolated worktrees, inspect diffs, commits, and review results, and reduce interference between tasks. |
+| **Browser and desktop automation** | 🗓️ Planned | Let Agents operate websites and local applications, then verify completion through real interaction results. |
+| **Mobile remote access and channels** | 🗓️ Planned | Inspect and resume tasks from a mobile device, and receive notifications or trigger Agents through common messaging channels. |
+
 ## Project overview
 
 DeepSeek Harness Desktop uses Electron to host the DeepSeek Harness Web workspace. The desktop main process starts and manages a local `dsh web` service. This repository provides the complete development source so users can clone or download it, install dependencies, edit the code, launch the desktop app, and continue development.
@@ -108,9 +125,9 @@ deepseek-harness-app/
 4. `apps/web/`: the Web workspace loaded by the desktop window.
 5. `apps/cli/` and `packages/`: CLI composition and Harness capabilities.
 
-## Plugin center roadmap (in development)
+## Plugin Center (in development, expected within 1 day)
 
-The plugin center remains a placeholder rather than a completed feature. Planned scope includes browsing and searching popular plugins, assembling a custom selection, and one-click installation and removal. Real project screens and usage details will be added after implementation.
+The first usable Plugin Center release will bring plugin discovery, search, categories, details, an installation entry, and result feedback into the desktop app, and is expected within one day. Composition, removal, updates, and compatibility checks will become available through later runnable releases; this page will add real screens and usage instructions as each capability ships.
 
 ## Relationship to DeepSeek Harness
 
