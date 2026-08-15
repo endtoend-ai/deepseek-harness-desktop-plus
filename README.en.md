@@ -23,7 +23,7 @@
 
 <p align="center">DeepSeek Harness Desktop combines the local Web workspace, Host lifecycle management, and a native desktop window into a development environment that developers can download as source, modify directly, and continue building locally.</p>
 
-<p align="center"><a href="#quick-start"><strong>Get the source and start developing</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>Desktop downloads (installers in development)</strong></a> · <a href="#quick-start"><strong>Get the source and start developing</strong></a></p>
 
 <p align="center">
   <img src="assets/deepseek-harness-desktop-cn.png" alt="DeepSeek Harness Desktop project interface" width="100%">
@@ -51,7 +51,7 @@
 
 DeepSeek Harness Desktop uses Electron to host the DeepSeek Harness Web workspace. The desktop main process starts and manages a local `dsh web` service. This repository provides the complete development source so users can clone or download it, install dependencies, edit the code, launch the desktop app, and continue development.
 
-This README documents source access and development only. It does not provide a third-party download site or unconfirmed installer information.
+Desktop installers are published only through this repository's GitHub Releases page, never through a third-party download site. Until the first platform-accepted build is published, users must launch the development environment from source.
 
 ## Core features
 
@@ -74,6 +74,14 @@ The text-based DeepSeek model used by the desktop workflow cannot interpret imag
 - **Available in the composer**: use the “视觉增强” shortcut on the left side of the input bar; hover to see its purpose and current state.
 - **Enabled through real verification**: the first activation verifies a Bailian API key with a real image; the credential remains in the protected local credential file.
 - **Built for development work**: understand product screenshots, error dialogs, designs, charts, photos, and text in images, or inspect an image by its workspace path.
+
+## Download the desktop app
+
+> The project remains in development and GitHub Releases does not yet contain a public installer. After the first platform-accepted build is ready, the download page will provide a macOS Apple Silicon `.dmg` and a Windows x64 `.exe` without requiring Node.js or pnpm.
+
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>Open the GitHub Releases download center</strong></a></p>
+
+The release workflow accepts only a `desktop-v*` tag that exactly matches the Desktop version. GitHub publishes the installers and `SHA256SUMS` together only after both platform signatures pass verification; a failed build or verification never creates a public partial Release.
 
 ## Quick start
 

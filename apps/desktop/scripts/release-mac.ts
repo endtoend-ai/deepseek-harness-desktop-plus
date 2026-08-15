@@ -12,6 +12,28 @@ const RELEASE_VARIABLES = [
   'CSC_LINK', 'CSC_NAME', 'MACOS_SIGN_IDENTITY', 'MAC_CERT_P12_BASE64',
 ] as const
 
+/** macOS CPU architectures supported by the signed release wrapper. */
+export type MacReleaseArchitecture = 'arm64' | 'x64'
+
+/**
+ * Resolve one explicit Electron Builder architecture without accepting config overrides.
+ * @param argv - Command arguments passed after the release script.
+ * @param hostArchitecture - Architecture used when no override is supplied.
+ * @returns The macOS architecture to stage and package.
+ */
+export function resolveMacReleaseArchitecture(
+  argv: readonly string[],
+  hostArchitecture: string,
+): MacReleaseArchitecture {
+  if (argv.length === 0 && (hostArchitecture === 'arm64' || hostArchitecture === 'x64')) {
+    return hostArchitecture
+  }
+  if (argv.length === 1 && (argv[0] === '--arm64' || argv[0] === '--x64')) {
+    return argv[0].slice(2) as MacReleaseArchitecture
+  }
+  throw new Error('macOS release accepts exactly one optional architecture: --arm64 or --x64')
+}
+
 function sanitizedEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const sanitized = { ...env }
   for (const name of RELEASE_VARIABLES) delete sanitized[name]
@@ -31,8 +53,12 @@ function run(command: string, args: readonly string[], cwd: string, env: NodeJS.
   if (result.status !== 0) throw new Error(`${command} ${args.join(' ')} exited with ${String(result.status)}`)
 }
 
-/** Build the macOS artifact while exposing release secrets only to Electron Builder. */
-export function releaseMac(): void {
+/**
+ * Build the macOS artifact while exposing release secrets only to Electron Builder.
+ * @param argv - Optional target architecture argument.
+ */
+export function releaseMac(argv: readonly string[] = []): void {
+  const architecture = resolveMacReleaseArchitecture(argv, process.arch)
   const releaseEnvironment = adaptMacReleaseEnvironment(process.env)
   const result = assertMacReleaseReady({
     env: releaseEnvironment,
@@ -43,11 +69,16 @@ export function releaseMac(): void {
     `macOS release preflight passed: ${result.identity}; signing via ${result.signing}; notarization via ${result.notarization}`,
   )
   const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-  const buildEnvironment = sanitizedEnvironment(releaseEnvironment)
+  const buildEnvironment = sanitizedEnvironment({
+    ...releaseEnvironment,
+    DSH_DESKTOP_TARGET_PLATFORM: 'darwin',
+    DSH_DESKTOP_TARGET_ARCH: architecture,
+  })
   run('pnpm', ['--workspace-root', 'run', 'build'], desktopRoot, buildEnvironment)
   run('node', ['--import', 'tsx', 'scripts/stage-runtime.ts'], desktopRoot, buildEnvironment)
   run('pnpm', [
     'exec', 'electron-builder', '--mac', 'dmg', 'zip',
+    `--${architecture}`,
     '--config.forceCodeSigning=true', '--config.mac.notarize=true',
   ], desktopRoot, releaseEnvironment)
 }
@@ -55,7 +86,7 @@ export function releaseMac(): void {
 const invokedPath = process.argv[1]
 if (invokedPath !== undefined && resolve(invokedPath) === fileURLToPath(import.meta.url)) {
   try {
-    releaseMac()
+    releaseMac(process.argv.slice(2))
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error))
     process.exitCode = 1

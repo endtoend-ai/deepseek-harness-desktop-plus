@@ -23,7 +23,7 @@
 
 <p align="center">把 DeepSeek Harness 的本地 Web 工作区、Host 运行管理和桌面窗口整合为开箱即用的开发环境，让开发者可以获取源码、直接修改并在本地继续构建。</p>
 
-<p align="center"><a href="#快速开始"><strong>获取源码并启动开发</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>桌面端下载（安装包开发中）</strong></a> · <a href="#快速开始"><strong>获取源码并启动开发</strong></a></p>
 
 <p align="center">
   <img src="assets/deepseek-harness-desktop-cn.png" alt="DeepSeek Harness Desktop 项目界面" width="100%">
@@ -51,7 +51,7 @@
 
 DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作区，并由桌面主进程启动和管理本地 `dsh web` 服务。这个仓库提供完整源码开发环境，使用者可以从 GitHub 克隆或下载代码，在本地安装依赖、编辑源码、启动桌面应用并继续开发。
 
-本 README 只提供源码获取与开发说明，不提供第三方下载站或未经确认的安装包信息。
+桌面安装包只通过本仓库的 GitHub Releases 发布，不使用第三方下载站。首个经过平台验收的版本发布前，用户仍需从源码启动开发环境。
 
 ## 核心功能
 
@@ -74,6 +74,14 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 - **随手可用**：输入框左侧提供“视觉增强”快捷开关，悬浮即可查看用途和当前状态。
 - **真实验证后开启**：首次启用需要使用一张真实图片验证百炼 API Key；凭证只保存在本机受保护的凭证文件中。
 - **覆盖开发场景**：可理解产品截图、报错界面、设计稿、数据图表、照片和图片文字，也可以按路径读取当前工作区图片。
+
+## 下载桌面端
+
+> 项目仍在开发，GitHub Releases 暂无公开安装包。首个经过平台验收的版本完成后，下载页将提供 macOS Apple Silicon `.dmg` 和 Windows x64 `.exe`，无需安装 Node.js 或 pnpm。
+
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>前往 GitHub Releases 下载中心</strong></a></p>
+
+发布流程只接受与 Desktop 版本完全一致的 `desktop-v*` 标签。macOS 与 Windows 安装包分别完成平台签名验证后，GitHub 才会同时公开安装文件和 `SHA256SUMS`；构建或验证失败不会产生公开的半成品 Release。
 
 ## 快速开始
 
