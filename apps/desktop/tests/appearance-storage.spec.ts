@@ -56,6 +56,14 @@ describe('desktop appearance storage', () => {
     expect(parseAppearance(legacyCustom).builtinTheme).toBeNull()
   })
 
+  it('accepts the image-free official theme without changing the whale first-run default', () => {
+    expect(parseAppearance({ ...DEFAULT_APPEARANCE, builtinTheme: 'official' })).toMatchObject({
+      builtinTheme: 'official',
+      imageDataUrl: null,
+    })
+    expect(DEFAULT_APPEARANCE.builtinTheme).toBe('whale-maid')
+  })
+
   it('removes the custom document on reset', async () => {
     const fixture = await storage()
     await fixture.storage.save(DEFAULT_APPEARANCE)

@@ -22,6 +22,10 @@ const THEME_COPY: Readonly<Record<BuiltinAppearanceTheme, {
   readonly name: string
   readonly description: string
 }>> = Object.freeze({
+  official: Object.freeze({
+    name: '官方原版',
+    description: '不使用背景图片，恢复 DeepSeek Harness 原生界面。',
+  }),
   'whale-maid': Object.freeze({
     name: '大肥鱼拟人',
     description: '蓝白鲸灵助手与明亮宫殿，中央留白适配对话区。',
@@ -49,6 +53,7 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
   const [fileLabel, setFileLabel] = useState(appearanceLabel(snapshot.settings))
   const [localMessage, setLocalMessage] = useState<string | undefined>(undefined)
   const busy = snapshot.status === 'saving'
+  const originalSelected = selectedUrl === undefined && draftTheme === 'official'
 
   useEffect(() => {
     if (draftDirty) return
@@ -64,8 +69,10 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
   }, [selectedUrl])
 
   const previewStyle = useMemo(() => ({
-    backgroundImage: `linear-gradient(90deg, rgba(4, 12, 22, ${String(0.18 + glassStrength / 220)}) 0%, rgba(7, 20, 34, 0.08) 50%, rgba(4, 12, 22, 0.30) 100%), url("${previewUrl}")`,
-    backgroundPosition: `center, center ${String(focusY)}%`,
+    backgroundImage: previewUrl === null
+      ? 'linear-gradient(145deg, var(--dsw-alias-bg-layer-1), var(--dsw-alias-bg-base))'
+      : `linear-gradient(90deg, rgba(4, 12, 22, ${String(0.18 + glassStrength / 220)}) 0%, rgba(7, 20, 34, 0.08) 50%, rgba(4, 12, 22, 0.30) 100%), url("${previewUrl}")`,
+    backgroundPosition: previewUrl === null ? 'center' : `center, center ${String(focusY)}%`,
   }), [focusY, glassStrength, previewUrl])
 
   const selectFile = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -159,7 +166,11 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
                 disabled={busy}
                 onClick={() => { selectBuiltinTheme(themeId) }}
               >
-                <span className={css.themeThumbnail} style={{ backgroundImage: `url("${theme.imageUrl}")` }}>
+                <span
+                  className={`${css.themeThumbnail}${theme.imageUrl === null ? ` ${css.originalThemeThumbnail}` : ''}`}
+                  style={{ backgroundImage: theme.imageUrl === null ? 'none' : `url("${theme.imageUrl}")` }}
+                >
+                  {theme.imageUrl === null && <span className={css.originalThemeLabel}>原版界面</span>}
                   {selected && <span className={css.themeSelected}>当前选择</span>}
                 </span>
                 <span className={css.themeDetails}>
@@ -193,11 +204,11 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
       </div>
       <label className={css.rangeRow}>
         <span><b>主体焦点</b><output>{focusY}%</output></span>
-        <input type="range" min="0" max="100" value={focusY} onChange={(event) => { setFocusY(Number(event.target.value)) }} />
+        <input type="range" min="0" max="100" value={focusY} disabled={busy || originalSelected} onChange={(event) => { setFocusY(Number(event.target.value)) }} />
       </label>
       <label className={css.rangeRow}>
         <span><b>界面玻璃层</b><output>{glassStrength}%</output></span>
-        <input type="range" min="35" max="92" value={glassStrength} onChange={(event) => { setGlassStrength(Number(event.target.value)) }} />
+        <input type="range" min="35" max="92" value={glassStrength} disabled={busy || originalSelected} onChange={(event) => { setGlassStrength(Number(event.target.value)) }} />
       </label>
       {(localMessage ?? snapshot.message) !== undefined && (
         <p className={snapshot.status === 'error' ? css.error : css.notice}>{localMessage ?? snapshot.message}</p>

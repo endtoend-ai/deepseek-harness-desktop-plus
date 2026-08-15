@@ -40,7 +40,7 @@
 | **桌面开发工作区** | ✅ 已支持 | 在本地打开项目、管理会话与工作区，调用 Harness 的模型、工具、Skills 和插件能力，并直接修改完整源码。 |
 | **视觉增强** | ✅ 已支持 | 为 DeepSeek 文本工作流补齐图像理解：读取对话附件和工作区图片，再把可追溯的识别结果交给 Agent。 |
 | **中文 DeepSeek 控制** | ✅ 已支持 | 使用中文权限选项和适配 DeepSeek 的思考模式，在输入区直接完成会话级选择。 |
-| **内置皮肤与自由换肤** | ✅ 已支持 | 默认使用“大肥鱼拟人”皮肤，可切换“云端猫咪”，也可选择本地图片并自动适配界面配色。 |
+| **内置皮肤与自由换肤** | ✅ 已支持 | 默认使用“大肥鱼拟人”皮肤，可切换“官方原版”或“云端猫咪”，也可选择本地图片并自动适配界面配色。 |
 | **独立 MCP、Skills 与工具管理** | 🗓️ 规划中 | 后续提供不依赖 Bundle 包装的 MCP Server、Skills 与工具发现和连接管理，按项目自由组合 Agent 能力。 |
 | **Agent 预设与多 Agent 协作** | 🗓️ 规划中 | 自定义 Agent 与子 Agent，把编码、测试、调研和审查任务交给不同角色协同完成。 |
 | **任务规划、后台运行与会话恢复** | 🗓️ 规划中 | 管理计划和待办，让长任务在后台继续运行，并随时查看进度或接续历史会话。 |
@@ -62,7 +62,7 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 - **Web 工作区**：保留 DeepSeek Harness 的会话、工作区、模型、工具、Skills 和插件运行能力。
 - **公开插件中心**：在线搜索 npm 公共 `dsh-plugin` 生态，在安装前校验确定版本、产物完整性、Bundle 声明和本机兼容性，并在已安装区域管理启用、停用与卸载。
 - **对话区视觉增强**：一键启用百炼 Qwen3.8 图像理解，支持截图、照片、图表、OCR 和工作区图片，不替换当前 DeepSeek 主模型。
-- **桌面外观设置**：内置“大肥鱼拟人”和“云端猫咪”两套皮肤，也支持本地背景图片、主体焦点和界面玻璃层调节。
+- **桌面外观设置**：内置“官方原版”“大肥鱼拟人”和“云端猫咪”三套外观，也支持本地背景图片、主体焦点和界面玻璃层调节。
 - **完整开发源码**：仓库同时包含桌面应用、Web 界面、CLI、功能包、原生辅助模块、Python SDK、示例和构建脚本。
 
 ## 内置皮肤与自由换肤
@@ -112,6 +112,15 @@ DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 > GitHub Releases 提供经过真实 Electron 验收的 macOS Apple Silicon 开发预览 ZIP，无需安装 Node.js 或 pnpm。当前预览包没有 Apple Developer 签名与公证，仅用于开发测试；正式版本仍将提供已签名的 macOS `.dmg` 和 Windows x64 `.exe`。
 
 <p align="center"><a href="https://github.com/fufankeji/deepseek-harness-desktop/releases"><strong>前往 GitHub Releases 下载中心</strong></a></p>
+
+下载并解压预览 ZIP 后，建议先把 `DeepSeek Harness.app` 拖入“应用程序”目录。由于当前预览包尚未经过 Apple 公证，首次打开前需要在“终端”执行：
+
+```sh
+xattr -dr com.apple.quarantine "/Applications/DeepSeek Harness.app"
+open "/Applications/DeepSeek Harness.app"
+```
+
+如果应用没有放在“应用程序”目录，请把命令中的路径替换为实际路径。该命令只应用于从本仓库 GitHub Releases 下载并核验过 SHA-256 的预览包；不要用于来源不明的应用。首次成功打开后，可以像普通应用一样从 Finder 或程序坞启动。
 
 开发预览版使用独立 Pre-release 标签并附带 SHA-256 校验文件，不触发正式安装器发布。正式流程只接受与 Desktop 版本完全一致的 `desktop-v*` 标签；macOS 与 Windows 安装包分别完成平台签名验证后，GitHub 才会同时公开安装文件和 `SHA256SUMS`。
 

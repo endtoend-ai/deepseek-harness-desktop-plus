@@ -5,7 +5,7 @@ import type { AppearancePalette, BuiltinAppearanceTheme } from './bridge.ts'
 /** One named skin shipped as a static Desktop Web asset. */
 export interface BundledAppearanceTheme {
   readonly id: BuiltinAppearanceTheme
-  readonly imageUrl: string
+  readonly imageUrl: string | null
   readonly palette: AppearancePalette
   readonly focusY: number
   readonly glassStrength: number
@@ -16,6 +16,13 @@ export const DEFAULT_BUILTIN_APPEARANCE_THEME: BuiltinAppearanceTheme = 'whale-m
 
 /** Fixed themes shipped with the Desktop web frontend. */
 export const BUNDLED_APPEARANCE_THEMES = Object.freeze({
+  official: Object.freeze({
+    id: 'official',
+    imageUrl: null,
+    palette: Object.freeze(['#2563EB', '#1F2937', '#D1D5DB', '#60A5FA'] as const),
+    focusY: 50,
+    glassStrength: 72,
+  }),
   'whale-maid': Object.freeze({
     id: 'whale-maid',
     imageUrl: '/dsh-desktop/default-background.webp',
@@ -35,11 +42,11 @@ export const BUNDLED_APPEARANCE_THEMES = Object.freeze({
 /**
  * Resolve either a custom image or one bundled theme into a renderer URL.
  * @param settings - Validated built-in identity and optional custom-image data.
- * @returns A bundled asset URL or the persisted custom-image data URL.
+ * @returns A bundled asset URL, the persisted custom-image data URL, or null for the original UI.
  */
 export function resolveAppearanceBackground(
   settings: Pick<import('./bridge.ts').AppearanceSettings, 'builtinTheme' | 'imageDataUrl'>,
-): string {
+): string | null {
   if (settings.imageDataUrl !== null) return settings.imageDataUrl
   return BUNDLED_APPEARANCE_THEMES[
     settings.builtinTheme ?? DEFAULT_BUILTIN_APPEARANCE_THEME

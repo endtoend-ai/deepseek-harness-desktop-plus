@@ -111,10 +111,19 @@ export class AppearanceController {
 
   private apply(settings: AppearanceSettings): void {
     const image = resolveAppearanceBackground(settings)
+    this.disposeTokens?.()
+    this.disposeTokens = undefined
+    if (image === null) {
+      const body = document.body
+      if (this.previousMarker === null) body.removeAttribute('data-dsh-desktop-skin')
+      else body.setAttribute('data-dsh-desktop-skin', this.previousMarker)
+      restoreProperty(body, '--dsh-desktop-background-image', this.previousImage)
+      restoreProperty(body, '--dsh-desktop-background-position', this.previousPosition)
+      return
+    }
     document.body.setAttribute('data-dsh-desktop-skin', 'active')
     document.body.style.setProperty('--dsh-desktop-background-image', `url("${image}")`)
     document.body.style.setProperty('--dsh-desktop-background-position', `${String(settings.focusY)}%`)
-    this.disposeTokens?.()
     this.disposeTokens = this.theme.overrideTokens('dsh-desktop-background', themeTokens(settings))
   }
 

@@ -47,7 +47,7 @@ export interface DesktopUpdateState {
 export type DesktopAppearancePalette = readonly [string, string, string, string]
 
 /** Stable identifiers for themes bundled with the Desktop frontend. */
-export type DesktopBuiltinAppearanceTheme = 'whale-maid' | 'cloud-cat'
+export type DesktopBuiltinAppearanceTheme = 'official' | 'whale-maid' | 'cloud-cat'
 
 /** Persisted appearance settings. A null image selects one bundled theme. */
 export interface DesktopAppearanceSettings {

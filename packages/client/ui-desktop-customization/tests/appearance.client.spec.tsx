@@ -65,4 +65,30 @@ describe('Desktop appearance themes', () => {
     dispose()
     expect(fixture.disposeTokens).toHaveBeenCalled()
   })
+
+  it('persists the official original theme and removes the image skin', async () => {
+    const fixture = bench()
+    const dispose = fixture.controller.start()
+    render(<AppearanceSection controller={fixture.controller} />)
+    await act(async () => {})
+
+    const official = screen.getByRole('button', { name: /官方原版/ })
+    fireEvent.click(official)
+    expect(official.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: '保存并应用' }))
+
+    await waitFor(() => {
+      expect(fixture.save).toHaveBeenCalledWith({
+        builtinTheme: 'official',
+        imageDataUrl: null,
+        focusY: 50,
+        glassStrength: 72,
+        palette: BUNDLED_APPEARANCE_THEMES.official.palette,
+      })
+    })
+    expect(document.body.hasAttribute('data-dsh-desktop-skin')).toBe(false)
+    expect(document.body.style.getPropertyValue('--dsh-desktop-background-image')).toBe('')
+
+    dispose()
+  })
 })
