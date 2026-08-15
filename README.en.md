@@ -2,115 +2,115 @@
 
 [中文](README.md) | English
 
-An installable desktop application for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), with a bundled runtime, native window and tray integration, local service management, appearance customization, and packaged-app updates.
-
-**Developer preview:** The current source version is `0.1.0-rc.5`, and interfaces, packaging, and plugin behavior may change before a stable release.
+A desktop project developed from the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) source code for developers who want to download, modify, run, and extend the application locally.
 
 <p align="center">
-  <img src="assets/desktop-preview.png" alt="DeepSeek Harness Desktop interface" width="100%">
+  <img src="assets/desktop-preview.png" alt="DeepSeek Harness Desktop project interface" width="100%">
 </p>
 
-## Why this project
+## Project overview
 
-The upstream DeepSeek Harness starts a local Web UI from the command line. DeepSeek Harness Desktop packages that experience as an Electron application: an installed build starts and supervises its own local Harness Host, opens the UI in a native window, and remains available from the system tray without requiring the user to install Node.js or run terminal commands.
+DeepSeek Harness Desktop uses Electron to host the DeepSeek Harness Web workspace. The desktop main process starts and manages a local `dsh web` service. This repository provides the complete development source so users can clone or download it, install dependencies, edit the code, launch the desktop app, and continue development.
 
-## Features
+This README documents source access and development only. It does not provide a third-party download site or unconfirmed installer information.
 
-- **Ready-to-use desktop packaging** — installed builds include the Harness runtime and Web UI.
-- **Local Host lifecycle** — the Electron main process starts `dsh web` on an OS-assigned loopback port, waits for readiness, and shuts it down cleanly when the app exits.
-- **Native desktop behavior** — single-instance launch, system tray restore and quit, platform-specific window chrome, and external links opened in the system browser.
-- **Full Harness workspace** — sessions, workspaces, agent presets, model settings, tools, skills, and the Cordis-based plugin runtime remain available through the upstream Web UI.
-- **Desktop customization** — choose a local background, adjust its focus and glass strength, or restore the bundled default. The selected image is processed locally and stored under Electron's private user-data directory.
-- **Optional image understanding** — users can enable Bailian Qwen3.8 vision with their own DashScope credential so text-only agents can inspect supported workspace images.
-- **In-app updates** — packaged macOS and Windows builds can check, download, and install releases from the configured desktop update channel.
-- **Current plugin controls** — Settings includes plugin configuration and a searchable, read-only view of the active Loader inventory.
+## Core features
 
-## Plugin center status
+- **Electron desktop app**: application window, system tray, single-instance behavior, external-link handling, and a restricted preload bridge.
+- **Local Harness Host**: the desktop main process starts `dsh web`, waits for the local service to become ready, and stops the Host process when the app exits.
+- **Web workspace**: DeepSeek Harness sessions, workspaces, models, tools, Skills, and plugin runtime remain available.
+- **Desktop appearance settings**: local background images and related display settings; the screenshot on this page shows the project interface.
+- **Complete development source**: desktop app, Web interface, CLI, capability packages, native helpers, Python SDK, examples, and build scripts are kept in the repository.
 
-The repository already keeps the Harness plugin architecture intact. The desktop marketplace and mutation controls are the next product milestone; they are not presented as complete in the current preview.
+## Quick start
 
-| Available now | In development |
-| --- | --- |
-| Cordis plugins, Profiles, and Bundles | Curated popular-plugin catalog |
-| Plugin configuration in Settings | One-click install, enable, disable, update, and uninstall |
-| Searchable read-only runtime inventory | Compatibility checks, controlled Host restart, and rollback |
+### Get the source
 
-The first marketplace version is intended to install reviewed, version-pinned artifacts rather than accept arbitrary npm names, Git URLs, or local paths.
+Clone the repository with Git:
 
-<a id="run"></a>
+```sh
+git clone https://github.com/fufankeji/deepseek-harness-app.git
+cd deepseek-harness-app
+```
 
-## Download
-
-Preview builds are available from [deepseekdesktop.com](https://deepseekdesktop.com).
-
-| Platform | Current status |
-| --- | --- |
-| macOS Apple Silicon | Preview build; signed and notarized DMG/ZIP release path is implemented |
-| Windows 10/11 x64 | Preview NSIS installer; production Authenticode signing is pending |
-| macOS Intel | Planned |
-| Linux | Source and unpacked-app path only; no installer release yet |
-
-After installation, follow the in-app onboarding to configure a supported model provider. Model requests leave the device for the provider selected by the user; optional Qwen vision requests use Alibaba Cloud Bailian.
-
-## Run from source
+You can also choose **Code → Download ZIP** on the GitHub repository page, extract the archive, and open the project directory.
 
 ### Requirements
 
 - Node.js `^22.19.0 || >=24.0.0`
 - pnpm `11.7.0`
 
+### External services
+
+Downloading the source, installing dependencies, and launching the desktop development environment do not require an API key. Configure the selected model provider and credentials in the application settings only when making model requests, and never commit credentials to Git.
+
+<a id="run"></a><a id="run-from-source"></a>
+
+### Install and run
+
+Install the workspace dependencies:
+
 ```sh
-git clone https://github.com/fufankeji/deepseek-harness-app.git
-cd deepseek-harness-app
 pnpm install
+```
+
+Build the required modules and launch the desktop development environment:
+
+```sh
 pnpm run dev:desktop
 ```
 
-`dev:desktop` builds the workspace, Web frontend, and Electron main process before launching the application.
+The development launcher rebuilds when relevant source or build inputs change. To force a complete rebuild, run:
 
-### Useful commands
-
-| Command | Purpose |
-| --- | --- |
-| `pnpm run dev:desktop` | Build and launch the desktop app from source |
-| `pnpm run package:desktop` | Create an unpacked app for the current platform |
-| `pnpm run dist:mac:desktop` | Build the signed and notarized macOS DMG and update ZIP; release credentials are required |
-| `pnpm run dist:win:desktop` | Build the Windows x64 NSIS installer and update metadata |
-| `pnpm run typecheck` | Run the repository TypeScript checks |
-| `pnpm run test` | Run the keyless Vitest unit suite |
-
-## Architecture
-
-```text
-Electron main process
-├── window, tray, update, and appearance owners
-├── fixed sandboxed preload bridge
-└── HostSupervisor
-    └── dsh web on 127.0.0.1:<dynamic-port>
-        ├── Cordis plugin runtime
-        └── React Web UI loaded by the desktop window
+```sh
+pnpm run dev:desktop:rebuild
 ```
-
-The desktop window accepts navigation only from the current loopback Host origin. The renderer uses `contextIsolation: true`, `nodeIntegration: false`, and Electron sandboxing; the preload exposes fixed appearance and update methods instead of generic IPC access.
 
 ## Repository layout
 
-| Path | Responsibility |
+```text
+deepseek-harness-app/
+├── apps/
+│   ├── desktop/       # Electron main process, preload, Host lifecycle, and desktop build scripts
+│   ├── web/           # DeepSeek Harness Web entry and desktop composition
+│   └── cli/           # dsh CLI, runtime configuration, and Agent Presets
+├── packages/          # Agent, model, tool, session, plugin, and client capability packages
+├── native/            # Native sandbox helpers
+├── python/            # Python SDK and related runtime
+├── examples/          # Runnable examples and configurations
+├── scripts/           # Build, validation, generation, and publishing scripts
+├── website/           # Documentation site source
+├── vendor/            # Pinned Cordis foundation source
+└── assets/            # Project images used by the README
+```
+
+## Common development commands
+
+| Command | Purpose |
 | --- | --- |
-| `apps/desktop/` | Electron main process, preload, lifecycle, packaging, and update publishing |
-| `apps/web/` | Browser application entry and desktop-aware Web composition |
-| `apps/cli/` | `dsh` CLI, Profiles, and plugin commands |
-| `packages/` | Harness Host, client, agent, tool, session, plugin, and SDK packages |
-| `native/` | Native sandbox helper source |
-| `python/` | Python SDK and bundled runtime |
-| `vendor/` | Pinned Cordis foundation source and license records |
+| `pnpm run dev:desktop` | Build required modules and launch the Electron desktop app |
+| `pnpm run dev:desktop:rebuild` | Force a complete rebuild before launching the desktop app |
+| `pnpm run build` | Build the Host, client, Web, and desktop app |
+| `pnpm run package:desktop` | Create an unpacked desktop app for the current platform |
+| `pnpm run typecheck` | Run TypeScript type checks |
+| `pnpm run test` | Run the Vitest unit suite |
+
+## Suggested reading order
+
+1. `apps/desktop/src/main.ts`: desktop entry, window, tray, and local Host composition.
+2. `apps/desktop/src/host-supervisor.ts`: `dsh web` startup, readiness detection, and shutdown.
+3. `apps/desktop/src/preload.ts`: fixed desktop interfaces exposed to the renderer.
+4. `apps/web/`: the Web workspace loaded by the desktop window.
+5. `apps/cli/` and `packages/`: CLI composition and Harness capabilities.
+
+## Plugin center roadmap
+
+The plugin center is a future development direction and is not presented as a completed feature. Planned scope includes browsing popular plugins, selecting plugin combinations, and one-click installation and removal. Implementation will be added through later source iterations.
 
 ## Relationship to DeepSeek Harness
 
-This repository is built from [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness). The Harness core, Cordis plugin system, and Web UI originate upstream; this project owns the Electron shell, local Host supervision, desktop customization, platform packaging, and desktop release channel.
-
-This is an independent community project and is not an official DeepSeek product. DeepSeek and related names belong to their respective owners.
+This project continues desktop development from the Harness core, Cordis plugin system, and Web interface in [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness). This repository maintains the Electron desktop entry, local Host management, desktop interactions, and supporting development scripts.
 
 ## License
 
-The project is distributed under the [MIT License](LICENSE). Third-party components retain their own notices in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+This project uses the [MIT License](LICENSE). Third-party license information is available in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

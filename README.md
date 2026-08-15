@@ -2,117 +2,115 @@
 
 中文 | [English](README.en.md)
 
-一款面向 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的可安装桌面应用，内置运行时、原生窗口与托盘、本地服务管理、外观定制和安装包在线更新能力。
-
-**开发者预览：** 当前源码版本为 `0.1.0-rc.5`；稳定版发布前，接口、打包方式和插件行为仍可能调整。
+基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 源码持续开发的桌面端项目，面向需要下载源码、修改功能并在本地运行的开发者。
 
 <p align="center">
-  <img src="assets/desktop-preview.png" alt="DeepSeek Harness Desktop 界面" width="100%">
+  <img src="assets/desktop-preview.png" alt="DeepSeek Harness Desktop 项目界面" width="100%">
 </p>
 
-## 为什么做这个项目
+## 项目简介
 
-上游 DeepSeek Harness 通过命令行启动本地 Web UI。DeepSeek Harness Desktop 将这套体验封装为 Electron 应用：安装包会自行启动并监管本地 Harness Host，在原生窗口中打开界面，并通过系统托盘保持运行，用户无需安装 Node.js，也无需执行终端命令。
+DeepSeek Harness Desktop 使用 Electron 承载 DeepSeek Harness 的 Web 工作区，并由桌面主进程启动和管理本地 `dsh web` 服务。这个仓库提供完整源码开发环境，使用者可以从 GitHub 克隆或下载代码，在本地安装依赖、编辑源码、启动桌面应用并继续开发。
 
-## 主要功能
+本 README 只提供源码获取与开发说明，不提供第三方下载站或未经确认的安装包信息。
 
-- **开箱即用的桌面封装** — 安装包内置 Harness 运行时和 Web UI。
-- **本地 Host 生命周期管理** — Electron 主进程在系统分配的回环端口启动 `dsh web`，等待服务就绪，并在应用退出时安全关闭它。
-- **原生桌面行为** — 支持单实例启动、系统托盘恢复与退出、各平台窗口样式，以及使用系统浏览器打开外部链接。
-- **完整 Harness 工作区** — 通过上游 Web UI 保留会话、工作区、Agent Preset、模型设置、工具、Skills 和基于 Cordis 的插件运行时。
-- **桌面外观定制** — 可选择本地背景、调整焦点与玻璃效果强度，或恢复内置默认背景；图片在本地处理，并保存在 Electron 私有用户数据目录。
-- **可选图片理解** — 用户可使用自己的 DashScope 凭证开启百炼 Qwen3.8 视觉能力，让文本型 Agent 读取工作区内支持的图片。
-- **应用内更新** — macOS 和 Windows 安装包可通过当前桌面更新渠道检查、下载并安装新版本。
-- **现有插件控制** — 设置页已经提供插件配置，以及可搜索、只读的 Loader 运行清单。
+## 核心功能
 
-## 插件中心进度
+- **Electron 桌面端**：提供应用窗口、系统托盘、单实例运行、外部链接处理和安全的 preload 通信接口。
+- **本地 Harness Host**：桌面主进程启动 `dsh web`，等待本地服务就绪，并在应用退出时关闭 Host 进程。
+- **Web 工作区**：保留 DeepSeek Harness 的会话、工作区、模型、工具、Skills 和插件运行能力。
+- **桌面外观设置**：支持本地背景图片及相关显示效果设置，界面效果以本页项目截图为准。
+- **完整开发源码**：仓库同时包含桌面应用、Web 界面、CLI、功能包、原生辅助模块、Python SDK、示例和构建脚本。
 
-仓库已经完整保留 Harness 插件架构。桌面插件市场及插件变更控制是下一阶段产品目标，当前预览版不会把它们写成已完成功能。
+## 快速开始
 
-| 当前已有 | 开发中 |
-| --- | --- |
-| Cordis 插件、Profile 与 Bundle | 经审核的热门插件目录 |
-| 设置页插件配置 | 一键安装、启用、停用、更新与卸载 |
-| 可搜索的只读运行清单 | 兼容性检查、受控 Host 重启与失败回滚 |
+### 获取源码
 
-首版插件市场计划只安装经过审核并锁定版本的产物，不开放任意 npm 包名、Git URL 或本地路径输入。
+使用 Git 克隆仓库：
 
-<a id="run"></a>
+```sh
+git clone https://github.com/fufankeji/deepseek-harness-app.git
+cd deepseek-harness-app
+```
 
-## 下载
-
-前往 [deepseekdesktop.com](https://deepseekdesktop.com) 获取预览版。
-
-| 平台 | 当前状态 |
-| --- | --- |
-| macOS Apple Silicon | 已有预览包；已实现签名、公证及 DMG/ZIP 发布链路 |
-| Windows 10/11 x64 | 已有 NSIS 预览安装包；生产级 Authenticode 签名待完成 |
-| macOS Intel | 计划支持 |
-| Linux | 仅支持源码与未封装应用，暂无安装包发布 |
-
-安装后按应用内引导配置受支持的模型服务。模型请求会发送到用户选择的服务商；可选的 Qwen 视觉请求使用阿里云百炼。
-
-<a id="run-from-source"></a>
-
-## 从源码运行
+也可以在 GitHub 仓库页面选择 **Code → Download ZIP**，下载并解压源码后进入项目目录。
 
 ### 环境要求
 
 - Node.js `^22.19.0 || >=24.0.0`
 - pnpm `11.7.0`
 
+### 外部服务准备
+
+下载源码、安装依赖和启动桌面开发环境不需要预先填写 API 密钥。需要在应用中实际调用模型时，再在设置中配置所选模型服务与凭证；凭证不要提交到 Git。
+
+<a id="run"></a><a id="run-from-source"></a>
+
+### 安装与启动
+
+安装工作区依赖：
+
 ```sh
-git clone https://github.com/fufankeji/deepseek-harness-app.git
-cd deepseek-harness-app
 pnpm install
+```
+
+构建所需模块并启动桌面开发环境：
+
+```sh
 pnpm run dev:desktop
 ```
 
-`dev:desktop` 会先构建工作区、Web 前端和 Electron 主进程，再启动应用。
+开发启动器会在相关源码或构建输入变化时重新构建；需要强制完整重建时运行：
 
-### 常用命令
+```sh
+pnpm run dev:desktop:rebuild
+```
+
+## 目录结构
+
+```text
+deepseek-harness-app/
+├── apps/
+│   ├── desktop/       # Electron 主进程、preload、Host 生命周期与桌面构建脚本
+│   ├── web/           # DeepSeek Harness Web 界面入口与桌面端组合
+│   └── cli/           # dsh CLI、运行配置与 Agent Preset
+├── packages/          # Agent、模型、工具、会话、插件和客户端能力包
+├── native/            # 原生沙箱辅助模块
+├── python/            # Python SDK 与相关运行时
+├── examples/          # 可运行示例与配置
+├── scripts/           # 构建、检查、生成和发布脚本
+├── website/           # 项目文档站源码
+├── vendor/            # 固定版本的 Cordis 基础源码
+└── assets/            # README 使用的项目图片
+```
+
+## 常用开发命令
 
 | 命令 | 用途 |
 | --- | --- |
-| `pnpm run dev:desktop` | 从源码构建并启动桌面应用 |
-| `pnpm run package:desktop` | 为当前平台生成未封装应用 |
-| `pnpm run dist:mac:desktop` | 构建已签名、公证的 macOS DMG 与更新 ZIP；需要发布凭证 |
-| `pnpm run dist:win:desktop` | 构建 Windows x64 NSIS 安装包与更新元数据 |
-| `pnpm run typecheck` | 运行仓库 TypeScript 检查 |
-| `pnpm run test` | 运行无需密钥的 Vitest 单元测试 |
+| `pnpm run dev:desktop` | 构建必要模块并启动 Electron 桌面应用 |
+| `pnpm run dev:desktop:rebuild` | 强制完整重建后启动桌面应用 |
+| `pnpm run build` | 构建 Host、客户端、Web 与桌面端 |
+| `pnpm run package:desktop` | 为当前平台生成未封装桌面应用 |
+| `pnpm run typecheck` | 运行 TypeScript 类型检查 |
+| `pnpm run test` | 运行 Vitest 单元测试 |
 
-## 架构
+## 建议阅读顺序
 
-```text
-Electron main process
-├── window, tray, update, and appearance owners
-├── fixed sandboxed preload bridge
-└── HostSupervisor
-    └── dsh web on 127.0.0.1:<dynamic-port>
-        ├── Cordis plugin runtime
-        └── React Web UI loaded by the desktop window
-```
+1. `apps/desktop/src/main.ts`：桌面应用入口、窗口、托盘和本地 Host 组合。
+2. `apps/desktop/src/host-supervisor.ts`：`dsh web` 的启动、就绪检测与退出管理。
+3. `apps/desktop/src/preload.ts`：Renderer 可访问的固定桌面接口。
+4. `apps/web/`：桌面窗口加载的 Web 工作区。
+5. `apps/cli/` 与 `packages/`：CLI 组合以及各项 Harness 能力实现。
 
-桌面窗口只接受当前本地 Host 来源的页面导航。Renderer 启用 `contextIsolation: true`、`nodeIntegration: false` 和 Electron sandbox；preload 只暴露固定的外观与更新方法，不提供通用 IPC 通道。
+## 插件中心规划
 
-## 仓库结构
-
-| 路径 | 职责 |
-| --- | --- |
-| `apps/desktop/` | Electron 主进程、preload、生命周期、打包与更新发布 |
-| `apps/web/` | 浏览器应用入口与桌面 Web 组合 |
-| `apps/cli/` | `dsh` CLI、Profile 与插件命令 |
-| `packages/` | Harness Host、客户端、Agent、工具、会话、插件与 SDK 包 |
-| `native/` | 原生沙箱辅助程序源码 |
-| `python/` | Python SDK 与内置运行时 |
-| `vendor/` | 固定版本的 Cordis 基础源码及许可证记录 |
+插件中心是后续开发方向，当前不作为已完成功能。计划范围包括热门插件浏览、插件自由选配，以及一键安装和卸载；具体实现会随后续源码迭代逐步加入。
 
 ## 与 DeepSeek Harness 的关系
 
-本仓库基于 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 构建。Harness 核心、Cordis 插件系统和 Web UI 来自上游；本项目负责 Electron 桌面外壳、本地 Host 监管、桌面定制、平台打包与桌面更新渠道。
-
-本项目是独立社区项目，并非 DeepSeek 官方产品。DeepSeek 及相关名称归各自权利人所有。
+本项目基于 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 的 Harness 核心、Cordis 插件体系和 Web 界面继续进行桌面端开发。本仓库维护 Electron 桌面入口、本地 Host 管理、桌面交互与配套开发脚本。
 
 ## 许可证
 
-本项目基于 [MIT License](LICENSE) 发布。第三方组件的许可证声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+本项目使用 [MIT License](LICENSE)。第三方组件的许可证信息见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
