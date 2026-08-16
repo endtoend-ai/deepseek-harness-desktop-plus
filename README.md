@@ -31,10 +31,10 @@
 </p>
 
 <p align="center">
-  <a href="https://pictes.oss-cn-beijing.aliyuncs.com/products/deepseek-harness-studio/showcase/deepseek-harness-studio-cinematic-demo-1fb9b4da.mp4"><img src="https://pictes.oss-cn-beijing.aliyuncs.com/products/deepseek-harness-studio/showcase/deepseek-harness-studio-cinematic-demo-poster-e98f615a.png" alt="播放 DeepSeek Harness Studio 电影级产品演示" width="100%"></a>
-  <br>
-  <a href="https://pictes.oss-cn-beijing.aliyuncs.com/products/deepseek-harness-studio/showcase/deepseek-harness-studio-cinematic-demo-1fb9b4da.mp4"><strong>▶ 点击播放 50 秒电影级产品演示</strong></a>
+  <strong>点击快速查看功能演示</strong>
 </p>
+
+https://github.com/user-attachments/assets/0717f7c7-a872-4d2b-acc2-3a1c4874c732
 
 ## 先看功能：当前能力与近期路线图
 
