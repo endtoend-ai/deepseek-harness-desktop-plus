@@ -32,6 +32,10 @@ import {
 
 const bridge: DesktopBridge = Object.freeze({
   platform: process.platform,
+  workspace: Object.freeze({
+    pickDirectory: () =>
+      ipcRenderer.invoke(DESKTOP_CHANNELS.workspacePickDirectory) as Promise<string | null>,
+  }),
   appearance: Object.freeze({
     get: () => ipcRenderer.invoke(DESKTOP_CHANNELS.appearanceGet) as Promise<DesktopAppearanceSettings>,
     save: (settings: DesktopAppearanceSettings) =>

@@ -24,6 +24,8 @@ Closing the window hides it. Use the tray menu to restore the window or quit the
 
 The desktop app accepts only the readiness URL emitted by `dsh web` for `127.0.0.1` or `localhost`. Navigation stays on that origin; HTTP and HTTPS links open in the system browser.
 
+Workspace selection in Electron uses a fixed preload method and `dialog.showOpenDialog` in the main process. Only the current owned renderer may invoke it; cancellation returns no path. Ordinary local Web deployments retain the Host-native picker adapter.
+
 Native chrome follows the host platform. macOS uses a frameless inset title bar, traffic lights, and sidebar vibrancy; its collapsed sidebar is 90px wide, with centered controls whose top edge aligns with the expanded logo row below the traffic lights. Windows retains its system frame, shadow, resize and Snap behavior, and Windows 11 rounded corners while a hidden title bar places the native caption buttons in the Session header's first row; the Windows sidebar has no traffic-light inset. The empty part of that row remains draggable, its controls remain clickable, and a resident drag band covers the same row when no Session header is visible. Windows acrylic and macOS vibrancy reach only the sidebar, while conversation and details stay opaque. Linux keeps a frameless window and an opaque sidebar fallback.
 
 ### Plugin Center trusted lifecycle
@@ -44,7 +46,7 @@ The local packaging command performs the complete repository build, stages the H
 pnpm run package:desktop
 ```
 
-Packaged applications run the staged `@deepseek-ai/dsh` CLI in a separate process through Electron's Node mode. The application therefore retains the supervised-Host lifecycle without shipping a second Node executable. An `afterPack` check rejects the package before signing when the staged CLI entry or Web frontend entry is absent. Both macOS and Windows use the exact tracked `apps/desktop/build/icon.png` source; the repository does not preprocess or commit platform-specific icon variants.
+Packaged applications run the staged `@deepseek-ai/dsh` CLI in a separate process through Electron's Node mode. The application therefore retains the supervised-Host lifecycle without shipping a second Node executable. An `afterPack` check rejects the package before signing when the staged CLI entry or Web frontend entry is absent. Both macOS and Windows derive their platform icons from the tracked transparent, rounded `apps/desktop/build/icon.png`; the repository does not commit separate platform-specific variants.
 
 ### Signed macOS DMG and ZIP
 

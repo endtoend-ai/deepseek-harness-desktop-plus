@@ -61,6 +61,10 @@ export interface DesktopAppearanceSettings {
 /** Renderer-safe API exposed through contextBridge. */
 export interface DesktopBridge {
   readonly platform: NodeJS.Platform
+  readonly workspace: {
+    /** Open the operating system's single-directory picker. */
+    pickDirectory(): Promise<string | null>
+  }
   readonly appearance: {
     get(): Promise<DesktopAppearanceSettings>
     save(settings: DesktopAppearanceSettings): Promise<DesktopAppearanceSettings>
@@ -105,6 +109,7 @@ export interface DesktopBridge {
 
 /** Closed channel set; the preload never accepts a caller-provided channel. */
 export const DESKTOP_CHANNELS = {
+  workspacePickDirectory: 'dsh-desktop:workspace:pick-directory',
   appearanceGet: 'dsh-desktop:appearance:get',
   appearanceSave: 'dsh-desktop:appearance:save',
   appearanceReset: 'dsh-desktop:appearance:reset',

@@ -5,14 +5,15 @@ import {
   decodeCompatibilityRequest,
   type CompatibilityFingerprint,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
-import { assertCatalogRequestOwner } from '../src/plugin-center/bridge-policy.ts'
+import { DESKTOP_CHANNELS } from '../src/desktop-bridge-contract.ts'
+import { assertDesktopRequestOwner } from '../src/plugin-center/bridge-policy.ts'
 import { BUNDLED_CATALOG } from '../src/plugin-center/catalog-fixture.ts'
 import { PluginCompatibilityService } from '../src/plugin-center/preflight-service.ts'
 
 describe('plugin catalog reads', () => {
   it('accepts only bounded intent from the current renderer generation', () => {
     expect(() => {
-      assertCatalogRequestOwner(
+      assertDesktopRequestOwner(
         { senderId: 7, senderFrameUrl: 'http://127.0.0.1:43120/settings?view=plugins' },
         { webContentsId: 7, origin: 'http://127.0.0.1:43120' },
       )
@@ -30,8 +31,12 @@ describe('plugin catalog reads', () => {
     [{ senderId: 7, senderFrameUrl: 'not a URL' }, { webContentsId: 7, origin: 'http://127.0.0.1:43120' }],
   ])('rejects an unowned or stale renderer', (identity, owner) => {
     expect(() => {
-      assertCatalogRequestOwner(identity, owner)
-    }).toThrow(/plugin catalog request/u)
+      assertDesktopRequestOwner(identity, owner)
+    }).toThrow(/Desktop bridge request/u)
+  })
+
+  it('reserves a fixed channel for the native workspace chooser', () => {
+    expect(DESKTOP_CHANNELS.workspacePickDirectory).toBe('dsh-desktop:workspace:pick-directory')
   })
 
   it('rejects endpoints, package sources, and unbounded queries', () => {

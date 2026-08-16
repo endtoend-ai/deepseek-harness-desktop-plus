@@ -29,7 +29,7 @@ import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import { AppearanceStorage } from './appearance-storage.ts'
 import { DESKTOP_CHANNELS, type DesktopAppearanceSettings } from './desktop-bridge-contract.ts'
 import { createHostSupervisor, spawnDshWeb, type HostSupervisor } from './host-supervisor.ts'
-import { assertCatalogRequestOwner } from './plugin-center/bridge-policy.ts'
+import { assertDesktopRequestOwner } from './plugin-center/bridge-policy.ts'
 import { CatalogCache } from './plugin-center/catalog-cache.ts'
 import {
   type CatalogPreflightSelection,
@@ -363,8 +363,8 @@ function registerDesktopBridge(): PluginCenterBackend {
     tray = undefined
     updateController.install()
   })
-  const assertCatalogSender = (event: Electron.IpcMainInvokeEvent): void => {
-    assertCatalogRequestOwner({
+  const assertDesktopSender = (event: Electron.IpcMainInvokeEvent): void => {
+    assertDesktopRequestOwner({
       senderId: event.sender.id,
       senderFrameUrl: event.senderFrame?.url,
     }, {
@@ -372,6 +372,15 @@ function registerDesktopBridge(): PluginCenterBackend {
       origin: currentHostOrigin(),
     })
   }
+  ipcMain.handle(DESKTOP_CHANNELS.workspacePickDirectory, async (event) => {
+    assertDesktopSender(event)
+    const owner = mainWindow
+    if (owner === undefined || owner.isDestroyed()) throw new Error('Desktop window is unavailable')
+    const result = await dialog.showOpenDialog(owner, {
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    return result.canceled ? null : (result.filePaths[0] ?? null)
+  })
   const assertRecoverySender = (event: Electron.IpcMainInvokeEvent): void => {
     const url = event.senderFrame?.url ?? ''
     const origin = currentHostOrigin()
@@ -381,24 +390,24 @@ function registerDesktopBridge(): PluginCenterBackend {
     }
   }
   ipcMain.handle(DESKTOP_CHANNELS.catalogList, (event, value: unknown) => {
-    assertCatalogSender(event)
+    assertDesktopSender(event)
     return catalog.list(decodeCatalogListQuery(value))
   })
   ipcMain.handle(DESKTOP_CHANNELS.catalogRefresh, async (event, value: unknown) => {
-    assertCatalogSender(event)
+    assertDesktopSender(event)
     const query = decodeCatalogListQuery(value)
     return await catalog.refresh(query)
   })
   ipcMain.handle(DESKTOP_CHANNELS.catalogDetail, (event, value: unknown) => {
-    assertCatalogSender(event)
+    assertDesktopSender(event)
     return catalog.detail(decodeCatalogDetailQuery(value))
   })
   ipcMain.handle(DESKTOP_CHANNELS.catalogCheckCompatibility, (event, value: unknown) => {
-    assertCatalogSender(event)
+    assertDesktopSender(event)
     return compatibility.check(value)
   })
   ipcMain.handle(DESKTOP_CHANNELS.installedPluginsList, async (event) => {
-    assertCatalogSender(event)
+    assertDesktopSender(event)
     const authority = await catalog.installedAuthority()
     const fingerprint = readFingerprint({
       candidate: null,
@@ -421,11 +430,11 @@ function registerDesktopBridge(): PluginCenterBackend {
     })
   })
   ipcMain.handle(DESKTOP_CHANNELS.pluginOperationGet, (event) => {
-    assertCatalogSender(event)
+    assertDesktopSender(event)
     return pluginOperationController?.getOperation() ?? null
   })
   ipcMain.handle(DESKTOP_CHANNELS.pluginOperationStart, async (event, value: unknown) => {
-    assertCatalogSender(event)
+    assertDesktopSender(event)
     if (pluginRecoveryStartupBlocked) throw new Error('plugin recovery must finish before another operation can start')
     const controller = pluginOperationController
     if (controller === undefined) throw new Error('plugin operation controller is unavailable')
@@ -434,19 +443,19 @@ function registerDesktopBridge(): PluginCenterBackend {
       : await controller.start(value)
   })
   ipcMain.handle(DESKTOP_CHANNELS.pluginOwnedDataGetOffer, async (event) => {
-    assertCatalogSender(event)
+    assertDesktopSender(event)
     const remover = pluginOwnedDataRemover
     if (remover === undefined) throw new Error('plugin-owned data remover is unavailable')
     return await remover.currentOffer()
   })
   ipcMain.handle(DESKTOP_CHANNELS.pluginOwnedDataRemove, async (event, value: unknown) => {
-    assertCatalogSender(event)
+    assertDesktopSender(event)
     const remover = pluginOwnedDataRemover
     if (remover === undefined) throw new Error('plugin-owned data remover is unavailable')
     return await remover.remove(value)
   })
   ipcMain.handle(DESKTOP_CHANNELS.pluginOwnedDataRetain, async (event, value: unknown) => {
-    assertCatalogSender(event)
+    assertDesktopSender(event)
     const remover = pluginOwnedDataRemover
     if (remover === undefined) throw new Error('plugin-owned data remover is unavailable')
     return await remover.retain(value)

@@ -92,11 +92,12 @@ describe('desktop packaging configuration', () => {
     expect(builderPatch).toContain('"-k", keychainPassword, keychainFile')
   })
 
-  it('keeps the supplied image byte-for-byte and shares it across macOS and Windows', () => {
+  it('keeps the rounded RGBA icon byte-for-byte and shares it across macOS and Windows', () => {
     const icon = readFileSync(resolve(desktopRoot, 'build/icon.png'))
 
+    expect(icon[25]).toBe(6)
     expect(createHash('sha256').update(icon).digest('hex'))
-      .toBe('ec9cfe5ee2c931f23ba458d834a4ac75b2d50d1dcc5d94112e60c5c894455003')
+      .toBe('68616368acc6b96a14b8975ad6a1c5755187129e26b032e60c69252f8826c197')
     expect(desktopPackage.build.mac.icon).toBe('build/icon.png')
     expect(desktopPackage.build.win.icon).toBe('build/icon.png')
   })

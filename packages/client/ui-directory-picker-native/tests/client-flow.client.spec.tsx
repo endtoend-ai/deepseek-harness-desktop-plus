@@ -9,7 +9,10 @@ import { apply, inject } from '../src/client/index.ts'
 import { NativeDirectoryFlow } from '../src/client/flow.ts'
 import { apply as nodeApply } from '../src/index.ts'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  delete (window as unknown as { dshDesktop?: unknown }).dshDesktop
+})
 
 const HOLES = ['conversation.hero.workspace.directoryFlow', 'sidebar.workspaces.directoryFlow'] as const
 
@@ -147,6 +150,23 @@ describe('directory-picker-native client half', () => {
     const injected = (entry.inject as () => { pick: () => Promise<string | null> })()
     await expect(injected.pick()).resolves.toBe('/tmp/picked')
     expect(b.pickDirectory).toHaveBeenCalledOnce()
+  })
+
+  it('uses the Electron bridge instead of the Host native adapter in Desktop', async () => {
+    const b = await bench()
+    const pickDirectory = vi.fn(async (): Promise<string | null> => '/Users/test/desktop-project')
+    Object.defineProperty(window, 'dshDesktop', {
+      configurable: true,
+      value: { workspace: { pickDirectory } },
+    })
+    b.declare()
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    const entry = b.slots.entries(HOLES[0])[0]!
+    const injected = (entry.inject as () => { pick: () => Promise<string | null> })()
+
+    await expect(injected.pick()).resolves.toBe('/Users/test/desktop-project')
+    expect(pickDirectory).toHaveBeenCalledOnce()
+    expect(b.pickDirectory).not.toHaveBeenCalled()
   })
 
   it('runs one pick per open edge and reports the path to the latest onPicked', async () => {
