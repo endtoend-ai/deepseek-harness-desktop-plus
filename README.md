@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
 </p>
 
-<p align="center"><strong>中文</strong> · <a href="README.en.md">English</a></p>
+<p align="center"><a href="https://www.beyondata.com/"><strong>官方网站</strong></a> · <strong>中文</strong> · <a href="README.en.md">English</a></p>
 
 <p align="center"><strong>赋范空间出品 · DeepSeek Harness 的零代码桌面增强</strong></p>
 

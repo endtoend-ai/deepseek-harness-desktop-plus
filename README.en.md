@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
 </p>
 
-<p align="center"><a href="README.md">中文</a> · <strong>English</strong></p>
+<p align="center"><a href="https://www.beyondata.com/"><strong>Official Website</strong></a> · <a href="README.md">中文</a> · <strong>English</strong></p>
 
 <p align="center"><strong>Built by Beyondata · Zero-code desktop enhancements for DeepSeek Harness</strong></p>
 
