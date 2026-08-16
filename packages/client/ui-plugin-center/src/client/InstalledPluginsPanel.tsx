@@ -111,7 +111,13 @@ export function InstalledPluginsPanel({ state, mutationsEnabled, onRetry, onSett
       {state.result.items.map((item) => {
         const compatibilityReason = installedCompatibilityReason(item.compatibilityReason, t)
         return (
-          <li key={item.packageName} className={css.installedRow} data-source={item.source}>
+          <li
+            key={item.packageName}
+            className={css.installedRow}
+            data-source={item.source}
+            data-installed-plugin={item.pluginId ?? item.packageName}
+            data-installed-package={item.packageName}
+          >
             <InstalledMark item={item} />
             <div className={css.installedRowBody}>
               <div className={css.installedRowTitle}>

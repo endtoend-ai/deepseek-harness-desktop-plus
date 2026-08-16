@@ -13,7 +13,9 @@ import type { PluginCenterTabProps } from './PluginCenterTab.tsx'
 import { compatibilityReasonKey } from './compatibility-copy.ts'
 import { PluginInstallConfirmation } from './PluginInstallDialogs.tsx'
 import type { PluginCenterLocaleKey } from './locales.ts'
-import { PLUGIN_OPERATION_PHASE_KEYS, isTrustedInstallPhase } from './operation-phases.ts'
+import {
+  PLUGIN_OPERATION_PHASE_KEYS, isMutationBlockingOperationPhase, isTrustedInstallPhase,
+} from './operation-phases.ts'
 import css from './PluginCenterTab.module.css'
 
 /** Async exact-version detail state. */
@@ -119,13 +121,13 @@ function CompatibilityAction({ entry, state, mutationsEnabled, operation, onInst
   readonly t: PluginCenterTabProps['t']
 }) {
   const allowed = state.status === 'ready' && state.result.allowed
-  const matches = operation !== null
+  const matches = operation?.action === 'install'
     && operation.pluginId === entry.pluginId
     && operation.version === entry.version
   const matchingOperationPhase = matches ? operation.phase : null
   const committed = matchingOperationPhase === 'committed'
   const failed = matchingOperationPhase === 'failed'
-  const operationBlocksInstall = operation !== null && operation.phase !== 'committed'
+  const operationBlocksInstall = operation !== null && isMutationBlockingOperationPhase(operation.phase)
   const matchingPhase = matchingOperationPhase !== null && isTrustedInstallPhase(matchingOperationPhase)
     ? matchingOperationPhase
     : null
@@ -282,7 +284,7 @@ export function PluginDetailPage({
 }) {
   const [confirmationOpen, setConfirmationOpen] = useState(false)
   const [acknowledged, setAcknowledged] = useState(false)
-  const operationBlocksInstall = operation !== null && operation.phase !== 'committed'
+  const operationBlocksInstall = operation !== null && isMutationBlockingOperationPhase(operation.phase)
   const installAllowed = compatibility?.status === 'ready' && compatibility.result.allowed
 
   useEffect(() => {

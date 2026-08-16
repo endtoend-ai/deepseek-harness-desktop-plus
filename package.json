@@ -150,7 +150,14 @@
     "dev:web": "tsx scripts/dev-web.ts --poll",
     "dev:desktop:web": "tsx scripts/dev-plugin-center.ts",
     "dev:plugin-center": "tsx scripts/dev-plugin-center.ts",
-    "postinstall": "node scripts/install-lefthook.mjs"
+    "postinstall": "node scripts/install-lefthook.mjs",
+    "record:smoke": "node scripts/record/runner.mjs scripts/record/scripts/hero-scroll.json",
+    "record:validate": "node scripts/record/validate-recording-contract.mjs --plan scripts/record/recording-plan.json",
+    "record:raw": "cross-env RECORD_RAW=1 node scripts/record/runner.mjs",
+    "record:pet:raw": "node scripts/record/desktop-pet-recorder.mjs scripts/record/scripts/feat-pet-lifecycle.json",
+    "record:validate-cadence": "node scripts/record/validate-recording-cadence.mjs",
+    "record:prod": "node scripts/record/runner.mjs",
+    "record:post-process": "node scripts/record/post-process.mjs"
   },
   "devDependencies": {
     "@agentclientprotocol/sdk": "0.25.1",
@@ -165,6 +172,7 @@
     "@types/spdx-expression-parse": "^4.0.0",
     "@vitest/coverage-v8": "^4.1.8",
     "@yarnpkg/cli-dist": "4.17.1",
+    "cross-env": "10.1.0",
     "eslint-plugin-sonarjs": "^4.1.0",
     "execa": "^10.0.0",
     "fast-check": "^4.8.0",
@@ -181,6 +189,7 @@
     "micromark-extension-gfm": "^3.0.0",
     "oxlint": "1.76.0",
     "oxlint-tsgolint": "7.0.2001",
+    "playwright": "1.61.1",
     "publint": "^0.3.21",
     "smol-toml": "^1.7.1",
     "spdx-expression-parse": "^5.0.0",

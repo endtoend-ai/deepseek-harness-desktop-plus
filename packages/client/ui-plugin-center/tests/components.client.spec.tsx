@@ -184,6 +184,38 @@ describe('catalog states', () => {
     }).length).toBeGreaterThan(0)
   })
 
+  it('releases catalog and detail installation after an earlier operation rolls back', async () => {
+    render(<PluginCenterTab {...props({
+      mutationsEnabled: true,
+      listInstalled: async () => withoutInstalledPlugin('fixture.workspace-tools'),
+      getOperation: async () => operation('rolled-back'),
+    })} />)
+
+    const quickInstall = (await screen.findAllByRole('button', { name: en.install }))[0]!
+    expect(quickInstall.hasAttribute('disabled')).toBe(false)
+
+    fireEvent.click((await screen.findAllByRole('button', {
+      name: `${en.details}：Workspace tools`,
+    }))[0]!)
+    const detailPage = await screen.findByRole('main')
+    expect(within(detailPage).getByRole('button', { name: en.install }).hasAttribute('disabled')).toBe(false)
+  })
+
+  it('does not present a committed uninstall as a completed install in exact details', async () => {
+    render(<PluginCenterTab {...props({
+      mutationsEnabled: true,
+      listInstalled: async () => withoutInstalledPlugin('fixture.workspace-tools'),
+      getOperation: async () => ({ ...operation('committed'), action: 'uninstall' }),
+    })} />)
+
+    fireEvent.click((await screen.findAllByRole('button', {
+      name: `${en.details}：Workspace tools`,
+    }))[0]!)
+    const detailPage = await screen.findByRole('main')
+    const installButton = within(detailPage).getByRole('button', { name: en.install })
+    expect(installButton.hasAttribute('disabled')).toBe(false)
+  })
+
   it('opens exact details when a catalog quick install is denied', async () => {
     const denied = compatibilityDecision({
       allowed: false,
@@ -371,7 +403,7 @@ describe('exact version detail', () => {
     expect(screen.getAllByText(en.phaseVerifyingRuntime).length).toBeGreaterThan(0)
     expect(screen.getByText(en.progressVerifying)).toBeTruthy()
     await act(async () => { publish?.(operation('committed')) })
-    expect(screen.getByText(en.operationCommitted)).toBeTruthy()
+    expect(screen.getByText(en.operationCommittedClient)).toBeTruthy()
     expect(screen.getByRole('button', { name: en.installed }).hasAttribute('disabled')).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: en.done }))
     expect(screen.queryByRole('heading', { name: en.installationComplete })).toBeNull()

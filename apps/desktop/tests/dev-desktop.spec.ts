@@ -6,6 +6,7 @@ import {
   DESKTOP_BUILD_STATE_RELATIVE_PATH,
   DESKTOP_REQUIRED_OUTPUTS,
   ensureDesktopBuild,
+  resolveDesktopLaunchEnvironment,
 } from '../scripts/dev-desktop.ts'
 
 const temporaryRoots: string[] = []
@@ -90,6 +91,15 @@ describe('desktop development build cache', () => {
     expect(messages).toContain(
       'dev:desktop: inputs changed during the build; rebuilding once against the new snapshot.',
     )
+  })
+})
+
+describe('desktop development launch environment', () => {
+  it('pins the launcher Node executable for Host and package-manager child processes', () => {
+    expect(resolveDesktopLaunchEnvironment({ CUSTOM_VALUE: 'kept' }, '/absolute/node')).toEqual({
+      CUSTOM_VALUE: 'kept',
+      DSH_DESKTOP_NODE_EXECUTABLE: '/absolute/node',
+    })
   })
 })
 

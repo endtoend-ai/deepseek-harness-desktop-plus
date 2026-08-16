@@ -8,6 +8,8 @@ import {
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 
 const GENERATED_LOADER_ENTRY_ID = /^[0-9a-f]{8}$/u
+/** Loader children created for live preset instances; their owner entry remains restart-stable. */
+const RESTART_SCOPED_LOADER_ENTRY_PREFIXES = ['include:agent-presets:'] as const
 
 type RuntimeEntry = PluginRuntimeEvidence['entries'][number]
 
@@ -25,6 +27,16 @@ function record(value: unknown, label: string): Record<string, unknown> {
 
 function sortEntries(entries: readonly RuntimeEntry[]): readonly RuntimeEntry[] {
   return [...entries].sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)))
+}
+
+function isRestartStableEntry(entry: RuntimeEntry): boolean {
+  return !RESTART_SCOPED_LOADER_ENTRY_PREFIXES.some(
+    prefix => entry.entryId.startsWith(prefix),
+  )
+}
+
+function restartStableEntries(entries: readonly RuntimeEntry[]): readonly RuntimeEntry[] {
+  return entries.filter(isRestartStableEntry)
 }
 
 function normalizeEvidence(
@@ -69,18 +81,26 @@ function normalizeEvidence(
 
 function sameEvidence(observed: PluginRuntimeEvidence, expected: unknown): boolean {
   const normalized = normalizeEvidence(expected, true)
-  if (normalized.legacyGeneratedEntries.length === 0) {
-    return JSON.stringify(observed) === JSON.stringify(normalized.evidence)
+  const observedStable = {
+    ...observed,
+    entries: restartStableEntries(observed.entries),
   }
-  const observedGeneratedEntries = observed.entries
+  const expectedStable = {
+    ...normalized.evidence,
+    entries: restartStableEntries(normalized.evidence.entries),
+  }
+  if (normalized.legacyGeneratedEntries.length === 0) {
+    return JSON.stringify(observedStable) === JSON.stringify(expectedStable)
+  }
+  const observedGeneratedEntries = observedStable.entries
     .filter(entry => entry.entryId.startsWith('module:'))
     .map(({ enabled, fiberPhase }) => ({ entryId: '', enabled, fiberPhase }))
   const expectedGeneratedEntries = normalized.legacyGeneratedEntries
     .map(({ enabled, fiberPhase }) => ({ entryId: '', enabled, fiberPhase }))
   return JSON.stringify({
-    ...observed,
-    entries: observed.entries.filter(entry => !entry.entryId.startsWith('module:')),
-  }) === JSON.stringify(normalized.evidence)
+    ...observedStable,
+    entries: observedStable.entries.filter(entry => !entry.entryId.startsWith('module:')),
+  }) === JSON.stringify(expectedStable)
     && JSON.stringify(sortEntries(observedGeneratedEntries))
       === JSON.stringify(sortEntries(expectedGeneratedEntries))
 }
@@ -97,6 +117,7 @@ function requireUnrelatedContinuity(
   candidates: readonly CatalogVersionPreflight[],
 ): void {
   for (const entry of prior.entries) {
+    if (!isRestartStableEntry(entry)) continue
     if (candidateEntry(candidates, entry.entryId)) continue
     if (!observed.entries.some(current => current.entryId === entry.entryId
       && current.enabled === entry.enabled

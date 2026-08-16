@@ -84,12 +84,14 @@ interface ManagementHarness {
   readonly configPath: string
   readonly controller: PluginOperationController
   readonly invocations: PackageManagerInvocation[]
+  readonly reloads: readonly string[]
   run(input: { readonly action: 'update' | 'enable' | 'disable' | 'uninstall'; readonly version: string }): Promise<void>
 }
 
 async function harness(
   initiallyEnabled: boolean,
   platform: 'darwin' | 'win32' = 'darwin',
+  includeRestartScopedPresetEntry = false,
 ): Promise<ManagementHarness> {
   const root = join(tmpdir(), `dsh-plugin-management-${process.pid}-${String(roots.length)}`)
   await rm(root, { recursive: true, force: true })
@@ -196,6 +198,9 @@ async function harness(
         value: {
           entries: [
             { entryId: 'unrelated.runtime', enabled: true, fiberPhase: 'active' },
+            ...(includeRestartScopedPresetEntry && generation?.id === 1
+              ? [{ entryId: 'include:agent-presets:tool-bash', enabled: true, fiberPhase: 'active' }]
+              : []),
             ...(active ? [{ entryId: `include:${ENTRY_ID}`, enabled: true, fiberPhase: 'active' }] : []),
           ],
           clientModules: ['@fixture/unrelated-client', ...(active ? [CLIENT_MODULE] : [])],
@@ -206,6 +211,7 @@ async function harness(
   }
   const runtimeVerifier = new PluginRuntimeVerifier(runtimeFetcher, () => `rpc-${String(generation?.id ?? 0)}`)
   const snapshotStore = new ProfileSnapshotStore(profile, join(root, 'snapshots'), clock())
+  const reloads: string[] = []
   const trustedRunner = createTrustedManagementRunner({
     compatibility,
     platform: platform === 'win32' ? 'win32-x64' : 'darwin-arm64',
@@ -235,7 +241,7 @@ async function harness(
     profileDirectory: profile,
     installAnchor: join(root, 'package.json'),
     host,
-    reloadHost: async () => {},
+    reloadHost: async (origin) => { reloads.push(origin) },
     runtimeVerifier,
     postFingerprint: readFingerprint,
   })
@@ -262,6 +268,7 @@ async function harness(
     configPath,
     controller,
     invocations,
+    reloads,
     async run(input) {
       runnerFailure = undefined
       const result = await controller.manage({
@@ -282,6 +289,7 @@ describe('installed Plugin Center management', () => {
   it('disables and enables without deleting the package, then uninstalls while retaining configuration', async () => {
     const value = await harness(true)
     await value.run({ action: 'disable', version: CURRENT_VERSION })
+    expect(value.reloads).toHaveLength(1)
     expect(readProfileManifest('test', value.profile)).toMatchObject({
       dependencies: { [PACKAGE_NAME]: CURRENT_VERSION },
       dsh: { profile: { bundles: [], disabledBundles: [PACKAGE_NAME] } },
@@ -289,12 +297,14 @@ describe('installed Plugin Center management', () => {
     expect(value.invocations).toEqual([])
 
     await value.run({ action: 'enable', version: CURRENT_VERSION })
+    expect(value.reloads).toHaveLength(2)
     expect(readProfileManifest('test', value.profile)).toMatchObject({
       dependencies: { [PACKAGE_NAME]: CURRENT_VERSION },
       dsh: { profile: { bundles: [PACKAGE_NAME], disabledBundles: [] } },
     })
 
     await value.run({ action: 'uninstall', version: CURRENT_VERSION })
+    expect(value.reloads).toHaveLength(3)
     const after = readProfileManifest('test', value.profile)
     expect(after.dependencies).not.toHaveProperty(PACKAGE_NAME)
     expect(after.dsh?.profile).toMatchObject({ bundles: [], disabledBundles: [] })
@@ -322,5 +332,13 @@ describe('installed Plugin Center management', () => {
     const removed = await harness(true, 'win32')
     await removed.run({ action: 'uninstall', version: CURRENT_VERSION })
     expect(removed.invocations.at(-1)?.args).toContain('remove')
+  })
+
+  it('uninstalls when a live preset instance disappears with the replaced Host', async () => {
+    const value = await harness(true, 'darwin', true)
+
+    await value.run({ action: 'uninstall', version: CURRENT_VERSION })
+
+    expect(readProfileManifest('test', value.profile).dependencies).not.toHaveProperty(PACKAGE_NAME)
   })
 })

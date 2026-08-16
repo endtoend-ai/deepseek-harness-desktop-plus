@@ -52,7 +52,9 @@ import {
   type InstalledViewState,
 } from './InstalledPluginsPanel.tsx'
 import type { PluginCenterLocaleKey } from './locales.ts'
-import { isTerminalOperationPhase, isTrustedInstallPhase } from './operation-phases.ts'
+import {
+  isMutationBlockingOperationPhase, isTerminalOperationPhase, isTrustedInstallPhase,
+} from './operation-phases.ts'
 import css from './PluginCenterTab.module.css'
 
 /** Registration-side fixed Desktop read face. */
@@ -204,12 +206,11 @@ function CatalogCard({
     : null
   const installed = installedItem !== null || entry.installed || matchingOperation?.phase === 'committed'
   const failed = matchingOperation?.phase === 'failed'
-    || matchingOperation?.phase === 'rolled-back'
     || matchingOperation?.phase === 'recovery-failed'
   const matchingOperationInProgress = matchingOperation !== null
-    && matchingOperation.phase !== 'committed'
+    && isMutationBlockingOperationPhase(matchingOperation.phase)
     && !failed
-  const operationBlocksAction = operation !== null && operation.phase !== 'committed'
+  const operationBlocksAction = operation !== null && isMutationBlockingOperationPhase(operation.phase)
   const incompatible = entry.compatibility.status === 'incompatible'
   const label = installed
     ? t('installed')
@@ -442,6 +443,12 @@ export function PluginCenterTab({
     return items
   }, [installed])
 
+  const operationInstalledItem = useMemo(() => {
+    if (operation === null || installed.status !== 'ready') return null
+    return installed.result.items.find(item => item.pluginId === operation.pluginId
+      && item.version === operation.version) ?? null
+  }, [installed, operation])
+
   useEffect(() => {
     if (!available) return
     let current = true
@@ -636,7 +643,7 @@ export function PluginCenterTab({
       || entry.scope !== 'public'
       || entry.installed
       || entry.compatibility.status === 'incompatible'
-      || (operation !== null && operation.phase !== 'committed')
+      || (operation !== null && isMutationBlockingOperationPhase(operation.phase))
     ) return
     const request = catalogInstallRequest.current + 1
     catalogInstallRequest.current = request
@@ -1063,6 +1070,7 @@ export function PluginCenterTab({
       <PluginOperationDialog
         open={operationDialogOpen}
         operation={operation}
+        installedItem={operationInstalledItem}
         onClose={() => { setOperationDialogOpen(false) }}
         t={t}
       />

@@ -23,6 +23,7 @@ describe('PluginRuntimeVerifier', () => {
       entries: [
         { entryId: 'include:fixture.workspace-tools', enabled: true, fiberPhase: 'active' },
         { entryId: 'unrelated.entry', enabled: true, fiberPhase: 'active' },
+        { entryId: 'include:agent-presets:tool-bash', enabled: true, fiberPhase: 'active' },
       ],
       clientModules: ['@deepseek-ai/dsh-plugin-center-fixture', '@fixture/unrelated-client'],
       skillIds: ['unrelated-skill'],
@@ -38,6 +39,35 @@ describe('PluginRuntimeVerifier', () => {
       async () => response(false),
       () => 'runtime-contract',
     ).verifyDeactivation('http://127.0.0.1:4102', candidate, prior)).rejects.toThrow('unrelated Loader entry')
+  })
+
+  it('recovers across Host restarts without requiring live preset-instance entries', async () => {
+    const fetcher: typeof fetch = async () => new Response(JSON.stringify({
+      type: 'server-response',
+      rpcId: 'runtime-contract',
+      result: {
+        ok: true,
+        value: {
+          entries: [{ entryId: 'include:base', enabled: true, fiberPhase: 'active' }],
+          clientModules: ['@deepseek-ai/dsh-web-client'],
+          skillIds: ['base.skill'],
+        },
+      },
+    }), { status: 200, headers: { 'content-type': 'application/json' } })
+
+    await expect(new PluginRuntimeVerifier(fetcher, () => 'runtime-contract').verifyEvidence(
+      'http://127.0.0.1:4102',
+      {
+        entries: [
+          { entryId: 'include:agent-presets:tool-bash', enabled: true, fiberPhase: 'active' },
+          { entryId: 'include:base', enabled: true, fiberPhase: 'active' },
+        ],
+        clientModules: ['@deepseek-ai/dsh-web-client'],
+        skillIds: ['base.skill'],
+      },
+    )).resolves.toMatchObject({
+      entries: [{ entryId: 'include:base' }],
+    })
   })
 
   it('uses the generated Remote payload envelope accepted by the real Host', async () => {

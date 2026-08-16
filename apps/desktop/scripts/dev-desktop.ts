@@ -274,7 +274,29 @@ async function launchElectron(desktopRoot: string): Promise<number> {
   if (typeof electronExecutable !== 'string') {
     throw new TypeError('dev:desktop: the Electron package did not resolve to an executable path.')
   }
-  return runProcess(electronExecutable, ['.'], desktopRoot, true)
+  return runProcess(
+    electronExecutable,
+    ['.'],
+    desktopRoot,
+    true,
+    resolveDesktopLaunchEnvironment(process.env, process.execPath),
+  )
+}
+
+/**
+ * Preserve the Node runtime that owns the development launcher for trusted child processes.
+ * @param inheritedEnvironment - Environment inherited by the launcher.
+ * @param nodeExecutable - Absolute Node executable running the launcher.
+ * @returns the Electron environment with an explicit Desktop Node runtime.
+ */
+export function resolveDesktopLaunchEnvironment(
+  inheritedEnvironment: NodeJS.ProcessEnv,
+  nodeExecutable: string,
+): NodeJS.ProcessEnv {
+  return {
+    ...inheritedEnvironment,
+    DSH_DESKTOP_NODE_EXECUTABLE: nodeExecutable,
+  }
 }
 
 function runProcess(
@@ -282,9 +304,10 @@ function runProcess(
   args: readonly string[],
   cwd: string,
   returnExitCode = false,
+  env: NodeJS.ProcessEnv = process.env,
 ): Promise<number> {
   return new Promise((resolvePromise, reject) => {
-    const child = spawn(command, [...args], { cwd, stdio: 'inherit' })
+    const child = spawn(command, [...args], { cwd, env, stdio: 'inherit' })
     child.once('error', reject)
     child.once('exit', (code, signal) => {
       if (code === 0) {

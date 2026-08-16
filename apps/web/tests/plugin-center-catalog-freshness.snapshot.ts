@@ -295,6 +295,45 @@ function compatibility() {
   }
 }
 
+function installedResult() {
+  const installed = currentOperation?.phase === 'committed'
+  return {
+    profileName: 'web',
+    profileRevision: installed ? 8 : 7,
+    catalogFreshness: currentFreshness,
+    items: installed ? [{
+      pluginId: PLUGIN.pluginId,
+      packageName: '@fixture/workspace-tools',
+      version: PLUGIN.version,
+      displayName: PLUGIN.displayName,
+      icon: null,
+      brandColor: PLUGIN.brandColor,
+      catalogKind: PLUGIN.catalogKind,
+      source: 'catalog',
+      protected: false,
+      enabled: true,
+      bundleOrder: 1,
+      disabledOrder: null,
+      runtimeStatus: 'running',
+      runtime: {
+        entries: [{ entryId: 'fixture.workspace-tools', enabled: true, fiberPhase: 'active' }],
+        clientModules: ['@fixture/client'],
+        skillIds: [],
+      },
+      expectedEntries: ['fixture.workspace-tools'],
+      expectedClientModules: ['@fixture/client'],
+      expectedSkillIds: [],
+      compatibility: 'compatible',
+      compatibilityReason: null,
+      update: null,
+      pendingAction: null,
+      supportedActions: ['disable', 'uninstall'],
+      configurationEntryIds: ['fixture.workspace-tools'],
+      ownedData: [],
+    }] : [],
+  }
+}
+
 installAssembledBootEnv({
   setup: () => {
     currentFreshness = 'fresh'
@@ -322,6 +361,9 @@ installAssembledBootEnv({
           detail: async () => detail(),
           checkCompatibility: async () => compatibility(),
         },
+        installedPlugins: {
+          list: async () => installedResult(),
+        },
         pluginOperations: {
           get mutationsEnabled() { return mutationsEnabled },
           install: async (request: { idempotencyKey: string }) => {
@@ -329,11 +371,17 @@ installAssembledBootEnv({
             publishOperation(started)
             return { kind: 'started', operation: started }
           },
+          manage: async () => { throw new Error('management is not used by this replay') },
           getOperation: async () => currentOperation,
           onState: (listener: (operation: PluginOperation) => void) => {
             operationListeners.add(listener)
             return () => { operationListeners.delete(listener) }
           },
+        },
+        pluginOwnedData: {
+          getOffer: async () => null,
+          remove: async () => { throw new Error('owned-data removal is not used by this replay') },
+          retain: async () => { throw new Error('owned-data retention is not used by this replay') },
         },
       },
     })
@@ -352,6 +400,15 @@ it('plugin center first-level page preserves search, detail, stale cache, retry,
 
   expect(await screen.findByTitle(/Catalog updated · Online catalog/)).toBeTruthy()
   expect((await screen.findAllByText('Workspace tools')).length).toBe(3)
+  firstRefresh.resolve(undefined)
+  expect((await screen.findAllByText(/Catalog may be stale/)).length).toBeGreaterThan(0)
+  expect((await screen.findAllByText('Workspace tools')).length).toBe(3)
+  fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+  await waitFor(() => {
+    expect(screen.getByTitle(/Catalog updated · Online catalog/)).toBeTruthy()
+  })
+  expect(refreshCount).toBe(2)
+
   const search = screen.getByRole('searchbox', { name: 'Search plugins' })
   fireEvent.change(search, { target: { value: 'Workspace' } })
   expect(await screen.findByRole('heading', { name: 'Search results' })).toBeTruthy()
@@ -361,22 +418,13 @@ it('plugin center first-level page preserves search, detail, stale cache, retry,
   const details = screen.getByRole('main')
   expect(within(details).getByText('Complete built-bundle fixture detail.')).toBeTruthy()
   expect(within(details).getByText('Installation is compatible now')).toBeTruthy()
-  expect(within(details).getByText(/broad application authority/)).toBeTruthy()
+  expect(within(details).getByText(/broad application-process authority/)).toBeTruthy()
   expect(within(details).getByRole('button', { name: 'Install' }).hasAttribute('disabled')).toBe(true)
   fireEvent.click(screen.getByRole('button', { name: 'Back to plugin catalog' }))
 
   fireEvent.change(search, { target: { value: '' } })
   fireEvent.click(screen.getByRole('tab', { name: 'Skills' }))
   expect((await screen.findAllByText('Harness basics')).length).toBe(3)
-
-  firstRefresh.resolve(undefined)
-  expect((await screen.findAllByText(/Catalog may be stale/)).length).toBeGreaterThan(0)
-  expect((await screen.findAllByText('Harness basics')).length).toBe(3)
-  fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
-  await waitFor(() => {
-    expect(screen.getByTitle(/Catalog updated · Online catalog/)).toBeTruthy()
-  })
-  expect(refreshCount).toBe(2)
 
   fireEvent.click(screen.getAllByRole('button', { name: 'New session' })[1]!)
   await waitFor(() => {
@@ -416,6 +464,11 @@ it('desktop plugin install activation streams progress, commits after runtime pr
   const install = await screen.findByRole('button', { name: 'Install' })
   expect(install.hasAttribute('disabled')).toBe(false)
   fireEvent.click(install)
+  const confirmation = await screen.findByRole('dialog', { name: 'Install plugin · Workspace tools' })
+  fireEvent.click(within(confirmation).getByRole('checkbox', {
+    name: 'I trust this exact version and agree to grant the runtime authority above.',
+  }))
+  fireEvent.click(within(confirmation).getByRole('button', { name: 'Confirm install' }))
   expect(await screen.findByRole('heading', { name: 'Installation progress' })).toBeTruthy()
   expect(screen.getAllByText('Compatibility preflight').length).toBeGreaterThan(0)
 
@@ -424,7 +477,9 @@ it('desktop plugin install activation streams progress, commits after runtime pr
     expect(screen.getAllByText('Verify Host and client capabilities').length).toBeGreaterThan(0)
   })
   publishOperation(operation('committed', currentOperation!.idempotencyKey))
-  expect(await screen.findByText('Both Host and client runtime evidence passed, so the installation is committed.'))
+  expect(await screen.findByText(
+    'The plugin environment and client UI reloaded, and its declared runtime capabilities passed verification.',
+  ))
     .toBeTruthy()
   expect(screen.getByRole('button', { name: 'Installed' }).hasAttribute('disabled')).toBe(true)
 
@@ -432,6 +487,5 @@ it('desktop plugin install activation streams progress, commits after runtime pr
   await waitFor(() => { expect(screen.queryByRole('heading', { name: 'Installation progress' })).toBeNull() })
   fireEvent.click(await screen.findByRole('button', { name: 'Plugin Center' }))
   fireEvent.click((await screen.findAllByRole('button', { name: 'View details：Workspace tools' }))[0]!)
-  expect(await screen.findByText('Both Host and client runtime evidence passed, so the installation is committed.'))
-    .toBeTruthy()
+  expect((await screen.findByRole('button', { name: 'Installed' })).hasAttribute('disabled')).toBe(true)
 })

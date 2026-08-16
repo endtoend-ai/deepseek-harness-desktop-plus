@@ -84,3 +84,14 @@ export function isTrustedInstallPhase(phase: PluginOperationPhase): phase is Tru
 export function isTerminalOperationPhase(phase: PluginOperationPhase): boolean {
   return phase === 'committed' || phase === 'failed' || phase === 'rolled-back' || phase === 'recovery-failed'
 }
+
+/**
+ * Report whether an operation must keep later plugin mutations gated.
+ * A completed rollback restored the previous environment and releases the gate;
+ * failed recovery states stay gated until recovery succeeds.
+ * @param phase - Current Desktop operation phase.
+ * @returns True while another mutation is active or still needs recovery.
+ */
+export function isMutationBlockingOperationPhase(phase: PluginOperationPhase): boolean {
+  return phase !== 'committed' && phase !== 'rolled-back'
+}

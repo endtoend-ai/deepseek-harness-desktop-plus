@@ -68,6 +68,8 @@ describe('retained management paths', () => {
     expect(within(row('Harness system')).getByText(en.installedSourceSystem)).toBeTruthy()
     expect(within(row('Harness system')).getByText(en.protectedPlugin)).toBeTruthy()
     expect(within(row('Workspace tools')).getByText(en.installedSourceCatalog)).toBeTruthy()
+    expect(row('Workspace tools').getAttribute('data-installed-plugin')).toBe('fixture.workspace-tools')
+    expect(row('Workspace tools').getAttribute('data-installed-package')).toBe('@fixture/workspace-tools')
     expect(row('Workspace tools').querySelector(
       'img[src="https://avatars.githubusercontent.com/fixture?s=128"]',
     )).not.toBeNull()
@@ -117,7 +119,7 @@ describe('retained management paths', () => {
         pluginId: 'fixture.workspace-tools', action: 'update', version: '1.1.0',
       }))
     })
-    expect(await screen.findByRole('heading', { name: en.managementComplete })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: en.updateComplete })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: en.done }))
 
     fireEvent.click(within(row('Workspace tools')).getByRole('button', { name: en.uninstallPlugin }))
@@ -149,7 +151,7 @@ describe('retained management paths', () => {
     const uninstall = screen.getByRole('dialog', { name: `${en.confirmUninstallTitle} · Workspace tools` })
     fireEvent.click(within(uninstall).getByRole('checkbox', { name: en.confirmUninstallAcknowledge }))
     fireEvent.click(within(uninstall).getByRole('button', { name: en.uninstallPlugin }))
-    expect(await screen.findByRole('heading', { name: en.managementComplete })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: en.uninstallComplete })).toBeTruthy()
     expect(removeOwnedData).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: en.done }))
 
@@ -208,6 +210,62 @@ describe('retained management paths', () => {
       expect(screen.queryByRole('dialog', {
         name: `${en.ownedDataRemovalTitle} · @fixture/dsh-workspace-tools`,
       })).toBeNull()
+    })
+  })
+
+  it('refreshes after uninstall and allows the same plugin to be installed again', async () => {
+    let removed = false
+    const listInstalled = vi.fn<PluginCenterTabProps['listInstalled']>(async () => {
+      const result = installedListResult()
+      return {
+        ...result,
+        items: result.items.flatMap(item => item.pluginId === 'fixture.workspace-tools'
+          ? removed ? [] : [{ ...item, ownedData: [] }]
+          : [item]),
+      }
+    })
+    const manage = vi.fn<PluginCenterTabProps['manage']>(async (request) => {
+      removed = true
+      return {
+        kind: 'started',
+        operation: {
+          ...operation('committed'),
+          action: request.action,
+          version: request.version,
+          idempotencyKey: request.idempotencyKey,
+        },
+      }
+    })
+    const install = vi.fn<PluginCenterTabProps['install']>(async request => ({
+      kind: 'started',
+      operation: { ...operation(), idempotencyKey: request.idempotencyKey },
+    }))
+    render(<PluginCenterTab {...props({ listInstalled, manage, install })} />)
+
+    fireEvent.click(await screen.findByRole('button', { name: en.manageInstalled }))
+    await waitFor(() => { expect(row('Workspace tools')).toBeTruthy() })
+    fireEvent.click(within(row('Workspace tools')).getByRole('button', { name: en.uninstallPlugin }))
+    const confirmation = screen.getByRole('dialog', { name: `${en.confirmUninstallTitle} · Workspace tools` })
+    fireEvent.click(within(confirmation).getByRole('checkbox', { name: en.confirmUninstallAcknowledge }))
+    fireEvent.click(within(confirmation).getByRole('button', { name: en.uninstallPlugin }))
+
+    expect(await screen.findByRole('heading', { name: en.uninstallComplete })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: en.done }))
+    const quickInstall = (await screen.findAllByRole('button', { name: en.install }))[0]!
+    fireEvent.click(quickInstall)
+    const installConfirmation = await screen.findByRole('dialog', {
+      name: `${en.confirmInstallTitle} · Workspace tools`,
+    })
+    fireEvent.click(within(installConfirmation).getByRole('checkbox', { name: en.confirmInstallAcknowledge }))
+    fireEvent.click(within(installConfirmation).getByRole('button', { name: en.confirmInstall }))
+
+    await waitFor(() => {
+      expect(manage).toHaveBeenCalledWith(expect.objectContaining({
+        pluginId: 'fixture.workspace-tools', action: 'uninstall', version: '1.0.0',
+      }))
+      expect(install).toHaveBeenCalledWith(expect.objectContaining({
+        pluginId: 'fixture.workspace-tools', version: '1.0.0',
+      }))
     })
   })
 })

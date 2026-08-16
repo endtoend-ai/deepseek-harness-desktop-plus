@@ -10,6 +10,7 @@ import {
   Button, IconCheckOutline16, IconWarningOutline16, Modal, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PluginCenterTabProps } from './PluginCenterTab.tsx'
+import type { PluginCenterLocaleKey } from './locales.ts'
 import {
   PLUGIN_OPERATION_GROUPS,
   PLUGIN_OPERATION_PHASE_KEYS,
@@ -51,6 +52,20 @@ const MANAGEMENT_ACTION_KEYS = {
   disable: 'disablePlugin',
   uninstall: 'uninstallPlugin',
 } as const
+
+const MANAGEMENT_COMPLETE_KEYS = {
+  update: 'updateComplete',
+  enable: 'enableComplete',
+  disable: 'disableComplete',
+  uninstall: 'uninstallComplete',
+} as const satisfies Record<PluginManagementAction, PluginCenterLocaleKey>
+
+const MANAGEMENT_COMMITTED_KEYS = {
+  update: 'updateCommitted',
+  enable: 'enableCommitted',
+  disable: 'disableCommitted',
+  uninstall: 'uninstallCommitted',
+} as const satisfies Record<PluginManagementAction, PluginCenterLocaleKey>
 
 function progressState(
   phase: TrustedInstallPhase,
@@ -323,11 +338,13 @@ export function PluginOwnedDataRemovalConfirmation({
 export function PluginOperationDialog({
   open,
   operation,
+  installedItem,
   onClose,
   t,
 }: {
   readonly open: boolean
   readonly operation: PluginOperationSnapshot | null
+  readonly installedItem: InstalledPluginProjection | null
   readonly onClose: () => void
   readonly t: Translator
 }) {
@@ -337,10 +354,14 @@ export function PluginOperationDialog({
   const terminal = isTerminalOperationPhase(phase)
   const failed = phase === 'failed'
   const committed = phase === 'committed'
-  const management = operation.action !== 'install'
-  const title = management
+  const managementAction = operation.action === 'install' ? null : operation.action
+  const clientUiLoaded = installedItem !== null
+    && installedItem.pluginId === operation.pluginId
+    && installedItem.version === operation.version
+    && installedItem.runtime.clientModules.length > 0
+  const title = managementAction !== null
     ? committed
-      ? t('managementComplete')
+      ? t(MANAGEMENT_COMPLETE_KEYS[managementAction])
       : failed
         ? t('managementFailed')
         : t('managementProgress')
@@ -373,14 +394,14 @@ export function PluginOperationDialog({
           <div>
             <span className={css.installTarget}>{operation.pluginId}@{operation.version}</span>
             <h2>{title}</h2>
-            <p>{management
+            <p>{managementAction !== null
               ? committed
-                ? t('managementCommitted')
+                ? t(MANAGEMENT_COMMITTED_KEYS[managementAction])
                 : failed
                   ? t('managementOperationFailed')
                   : t('managementInProgress')
               : committed
-                ? t('operationCommitted')
+                ? t(clientUiLoaded ? 'operationCommittedClient' : 'operationCommitted')
                 : failed
                   ? t('operationFailed')
                   : t(PLUGIN_OPERATION_PHASE_KEYS[phase])}</p>
@@ -405,7 +426,9 @@ export function PluginOperationDialog({
                         ? <StateDot state="ongoing" size={10} />
                         : null}
                   </span>
-                  <span>{t(management && group.label === 'progressInstalling' ? 'progressChanging' : group.label)}</span>
+                  <span>{t(managementAction !== null && group.label === 'progressInstalling'
+                    ? 'progressChanging'
+                    : group.label)}</span>
                 </li>
               )
             })}

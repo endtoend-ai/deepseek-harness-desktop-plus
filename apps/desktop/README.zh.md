@@ -18,6 +18,8 @@ pnpm run dev:desktop
 pnpm run dev:desktop:rebuild
 ```
 
+启动器也会把自身使用的 Node 绝对路径传给 Electron，因此开发态 Host 启动与包恢复不会依赖交互式 shell 的 `PATH`。
+
 关闭窗口会隐藏窗口。通过托盘菜单恢复窗口或退出应用。显式退出会等待 Host 进程停止，并在 Host 的有界宽限期结束后升级终止行为。
 
 桌面应用只接受 `dsh web` 为 `127.0.0.1` 或 `localhost` 输出的就绪 URL。页面导航限制在该来源；HTTP 和 HTTPS 链接交给系统浏览器打开。
@@ -28,7 +30,7 @@ pnpm run dev:desktop:rebuild
 
 Desktop 持有插件中心发现、兼容与包变更权威。公开发现会在 npm 搜索带 `dsh-plugin` 标签的包；DeepSeek Harness 文档把该标签定义为生态发现约定，但标签不代表官方背书。目录只保留声明 `dsh.bundle` 的确定版本；获得安装权威前，Desktop 会下载其不可变 npm tarball，并校验 registry 完整性、SHA-256、压缩包边界、包身份、Bundle patch 与激活身份。沙箱渲染器只能调用固定目录和操作方法，安装意图只包含插件 id、确定版本与幂等键。
 
-同一个串行事务持有安装、启用、停用、确定更新和卸载。它在变更前快照 Profile，保留明确的活动或停用 Bundle 意图，在替换或删除包前停止 Host，并且只在目标 Profile 与已声明 Host、客户端和 Skill 证据一致后提交。卸载默认保留配置与插件自有数据；提交后的独立桥接只能删除插件存储根下的确定声明路径。普通 Host 启动前，Desktop 会停用与当前应用版本不兼容的已校验外部 Bundle，同时保留包和可解释原因。生产 preload 已通过带恢复能力的控制器开放这些操作。
+同一个串行事务持有安装、启用、停用、确定更新和卸载。它在变更前快照 Profile，保留明确的活动或停用 Bundle 意图，在替换或删除包前停止 Host，并且只在目标 Profile 与已声明 Host、客户端和 Skill 证据一致后提交。连续性核对只排除属于实时预设实例、无法跨 Host 换代保持的 `include:agent-presets:*` Loader 子项；已声明目标证据、其 `agent-presets` 所有者条目、其他全部无关 Loader 条目、客户端模块和 Skill 仍为必需证据。卸载默认保留配置与插件自有数据；提交后的独立桥接只能删除插件存储根下的确定声明路径。普通 Host 启动前，Desktop 会停用与当前应用版本不兼容的已校验外部 Bundle，同时保留包和可解释原因。生产 preload 已通过带恢复能力的控制器开放这些操作。
 
 未提交日志在普通 Host 启动前进入恢复。变更副作用会持久记录前后边界，因此 Host 停止、Profile 或包变更、Host 启动和页面重连前后的中断都进入同一恢复路径。恢复控制器校验旧快照、重建旧包状态并核对旧 Host、客户端和 Skill 证据；失败时只打开受保护恢复页，允许同事务重试和脱敏诊断导出。损坏或未来版本日志不会被猜测执行。公开变更仍需等待 Windows x64 包体崩溃验收。
 
