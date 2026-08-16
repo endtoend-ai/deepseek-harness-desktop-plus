@@ -482,8 +482,9 @@ function groupedDump(
  * @param ctx - context carrying an initialized Loader service.
  * @param absoluteConfigPath - absolute YAML or JSON configuration path.
  * @param patches - initial app and user patches, applied in order.
- * @param bareModuleBaseUrl - optional installed-host base for bare package
- * names; relative names continue to resolve beside the configuration file.
+ * @param bareModuleBaseUrl - optional installed-host base checked before the
+ * configuration directory for bare package names; relative names continue to
+ * resolve beside the configuration file.
  * @returns the created root Include entry, or `undefined` when a surface
  * disposed the whole tree (taking the Loader service with it) while the
  * transactional create was still settling entry lifecycle.
@@ -498,13 +499,28 @@ export async function mountRootInclude(
     ? Include
     : class HostResolvedRootInclude extends Include {
       override import(name: string, getOuterStack?: () => string[]): unknown {
-        const specifier = isAbsolute(name) ? pathToFileURL(name).href : name
-        if (name.startsWith('.') || name.startsWith('cordis:')) return super.import(specifier, getOuterStack)
+        if (isAbsolute(name)) return super.import(pathToFileURL(name).href, getOuterStack)
+        if (name.startsWith('.') || name.startsWith('cordis:')) return super.import(name, getOuterStack)
         const internal = this.ctx.loader.internal
         /* v8 ignore next -- Node supplies the internal loader; this preserves the
            original diagnostic for hypothetical embedders without it. */
-        if (internal === undefined) return super.import(specifier, getOuterStack)
-        return internal.import(specifier, bareModuleBaseUrl, {})
+        if (internal === undefined) return super.import(name, getOuterStack)
+        try {
+          switch (internal.version) {
+            /* v8 ignore next -- the Node 22/23 loader uses the v1 argument order. */
+            case 'v1': internal.resolveSync(name, bareModuleBaseUrl, {}); break
+            case 'v2': internal.resolveSync(bareModuleBaseUrl, { specifier: name, attributes: {} }); break
+          }
+        } catch (error) {
+          const packageName = name.startsWith('@') ? name.split('/').slice(0, 2).join('/') : name.split('/')[0]
+          const missingPackage = error instanceof Error
+            && 'code' in error
+            && (error.code === 'ERR_MODULE_NOT_FOUND' || error.code === 'MODULE_NOT_FOUND')
+            && error.message.includes(`Cannot find package '${packageName}'`)
+          if (missingPackage) return super.import(name, getOuterStack)
+          throw error
+        }
+        return internal.import(name, bareModuleBaseUrl, {})
       }
     }
   // `cordis:group` alongside it: a group row is how a composition gives one
@@ -732,8 +748,9 @@ export async function assertEntriesActivated(ctx: Context, binName: string): Pro
 /**
  * Boot the Loader against `absoluteConfigPath` and return only after the whole
  * tree settles. Relative entry names resolve against the config directory;
- * bare package names resolve there by default or against an explicit
- * `bareModuleBaseUrl` for closed packaged runtimes. The bootstrap include
+ * bare package names resolve there by default. Closed packaged runtimes pass
+ * `bareModuleBaseUrl` to check the installed host first and fall back to the
+ * config directory only for packages the host does not contain. The bootstrap include
  * is statically imported and mounted as the `cordis:include` builtin, loading
  * through the ambient module pipeline (vite/tsx/plain ESM). The package build
  * embeds Include while leaving Loader external, so the built include tree and
@@ -750,9 +767,8 @@ export async function assertEntriesActivated(ctx: Context, binName: string): Pro
  * @param patches - optional overlay patches applied over the included tree
  * (see {@link loadOptionalPatches}); an empty list mounts none.
  * @param prepare - optional host setup run after Loader installation and before any config-tree entry mounts.
- * @param bareModuleBaseUrl - optional installed-host base for bare package
- * names; use it when the host, rather than the configuration project, owns the
- * complete plugin set.
+ * @param bareModuleBaseUrl - optional installed-host base checked before the
+ * configuration directory for bare package names.
  * @returns the root context once every entry has started, or as soon as a
  * surface disposed the tree while startup was still in flight.
  * @throws a labelled error after disposing the partial context — `host

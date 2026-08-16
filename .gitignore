@@ -35,6 +35,7 @@ apps/desktop/runtime-host/
 apps/desktop/dist/
 .artifacts/
 /artifacts/
+/assets-src/
 .playwright-mcp/
 .orig
 .worktrees/

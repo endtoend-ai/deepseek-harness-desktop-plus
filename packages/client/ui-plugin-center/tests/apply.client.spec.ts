@@ -25,7 +25,7 @@ async function bench(withBridge: boolean) {
   const layout = { openPrimaryPage: vi.fn(), closePrimaryPage: vi.fn() }
   const settingsNavigation = { open: vi.fn(), subscribe: vi.fn(() => () => {}) }
   const conversation = { send: vi.fn(async () => {}) }
-  const agentContext = { get: vi.fn(() => conversation), conversation }
+  const agentContext = { get: vi.fn(() => conversation) }
   const sessions = {
     list: { getSnapshot: vi.fn<() => { current?: string }>(() => ({})) },
     scope: vi.fn(() => agentContext),
@@ -38,6 +38,7 @@ async function bench(withBridge: boolean) {
   ctx.provide('sessions', sessions as never)
   ctx.provide('workspaces', workspaces as never)
   ctx.provide('connection', connection as never)
+  ctx.provide('conversation', conversation as never)
   const list = vi.fn<PluginCenterTabInjected['list']>(async query => listResult(query))
   const refresh = vi.fn<PluginCenterTabInjected['refresh']>(async query => listResult(query))
   const detail = vi.fn(async () => ({
@@ -96,7 +97,7 @@ describe('ui-plugin-center browser plugin', () => {
     await b.ctx.plugin({ inject: [...inject], apply }).await()
 
     expect(inject).toEqual([
-      'slots', 'layout', 'locale', 'settingsNavigation', 'sessions', 'workspaces', 'connection',
+      'slots', 'layout', 'locale', 'settingsNavigation', 'sessions', 'workspaces', 'connection', 'conversation',
     ])
     const navs = b.slots.entries('sidebar.primary.action')
     const pages = b.slots.entries('main.page')
@@ -189,6 +190,7 @@ describe('ui-plugin-center browser plugin', () => {
       result: { ok: true, value: { credentials: { DEEPSEEK_API_KEY: { configured: true } } } },
     })
     await expect(discoveryFace.findWithAgent('帮我找 PDF 插件')).resolves.toBe('sent')
+    expect(b.sessions.scope).toHaveBeenLastCalledWith('session-1')
     expect(b.conversation.send).toHaveBeenCalledWith('/find-plugins 帮我找 PDF 插件')
     expect(b.layout.closePrimaryPage).toHaveBeenLastCalledWith('plugin-discovery')
     await b.ctx.fiber.dispose()

@@ -62,6 +62,7 @@ Desktop installers are published only through this repository's GitHub Releases 
 - **Local Harness Host**: the desktop main process starts `dsh web`, waits for the local service to become ready, and stops the Host process when the app exits.
 - **Web workspace**: DeepSeek Harness sessions, workspaces, models, tools, Skills, and plugin runtime remain available.
 - **Plugin Discovery and recommendations**: read the online catalog and use featured, recently updated, ecosystem-popular, scenario filters, and search to find plugins worth trying.
+- **Agent-assisted plugin search**: describe a need in natural language and let the Agent search the public `dsh-plugin` catalog, rank relevant candidates, and explain each recommendation.
 - **Public Plugin Center**: search the public npm `dsh-plugin` ecosystem, verify the exact version, artifact integrity, Bundle declaration, and local compatibility before installation, then enable, disable, or uninstall entries from the Installed view.
 - **Composer vision enhancement**: enable Bailian Qwen3.8 image understanding in one click for screenshots, photos, charts, OCR, and workspace images without replacing the current DeepSeek model.
 - **Desktop appearance settings**: built-in Whale Maid and Cloud Cat skins, plus local backgrounds, subject focus, and interface glass controls.
@@ -82,6 +83,19 @@ Not sure where to find plugins, which ones were updated recently, or what the ec
 - **Filter by scenario**: browse Agents and workflows, Web UI, browser and search, vision and media, memory and context, models and services, developer tools, or integrations and notifications.
 - **Search for the answer directly**: search by plugin name, capability keyword, or publisher, then inspect its icon, summary, version, and update time.
 - **Act as soon as you discover it**: start the trusted installation flow for a new plugin, or jump to Plugin Center management for an installed one.
+
+### Do not know the exact package name? Let the Agent shortlist it
+
+When all you know is “I want a desktop pet,” you do not need to guess an npm package name first. Enter the need in **Plugin Discovery** and the app sends it to the current Agent as a `/find-plugins` request. The Agent loads the built-in Skill, performs a read-only search of the public `dsh-plugin` catalog, and returns the closest candidates with versions, publishers, update dates, and matching reasons in the current conversation.
+
+<p align="center">
+  <img src="assets/plugin-agent-finder-desktop.webp" alt="Agent runs find-plugins in the real desktop client and returns five desktop-pet recommendations" width="100%">
+  <br><sub>Real Desktop acceptance run: the conversation asks for a desktop-pet plugin; the Agent loads <code>find-plugins</code>, searches the public catalog, and lists five relevant candidates from eight results.</sub>
+</p>
+
+- **No catalog vocabulary required**: describe the outcome, use case, or problem in ordinary language.
+- **Evidence stays inspectable**: each result includes the exact package name, version, publisher, update date, and a matching reason.
+- **Search and installation remain separate decisions**: recommendations are public-catalog metadata only; after choosing a package, use **Plugin Center** for compatibility checks and installation confirmation.
 
 ### Plugin Center: install, enable, disable, and remove online
 

@@ -562,10 +562,23 @@ describe('boot', () => {
     const dir = tmp()
     const harness = tmp()
     const absolutePlugin = join(dir, 'absolute.mjs')
+    const profileOnly = join(dir, 'node_modules', 'profile-only')
     const shadow = join(dir, 'node_modules', '@deepseek-ai', 'dsh-system-prompt')
     const harnessPlugin = join(harness, 'node_modules', '@deepseek-ai', 'dsh-system-prompt')
+    mkdirSync(profileOnly, { recursive: true })
     mkdirSync(shadow, { recursive: true })
     mkdirSync(harnessPlugin, { recursive: true })
+    writeFileSync(join(profileOnly, 'package.json'), JSON.stringify({
+      name: 'profile-only',
+      type: 'module',
+      exports: './index.mjs',
+    }))
+    writeFileSync(join(profileOnly, 'index.mjs'), [
+      'export function apply(ctx) {',
+      '  ctx.provide("profileOnlyPluginLoaded", true)',
+      '}',
+      '',
+    ].join('\n'))
     writeFileSync(join(shadow, 'package.json'), JSON.stringify({
       name: '@deepseek-ai/dsh-system-prompt',
       type: 'module',
@@ -595,6 +608,8 @@ describe('boot', () => {
       "  name: '@deepseek-ai/dsh-system-prompt'",
       '- id: relative',
       "  name: './relative.mjs'",
+      '- id: profile-only',
+      '  name: profile-only',
     ]
     const configOwnedPath = join(dir, 'config-owned.cordis.yml')
     writeFileSync(configOwnedPath, [...entries, ''].join('\n'))
@@ -610,6 +625,7 @@ describe('boot', () => {
       expect(configOwned.get('shadowPluginLoaded')).toBe(true)
       expect(configOwned.get('systemPrompt')).toBeUndefined()
       expect(configOwned.get('relativePluginLoaded')).toBe(true)
+      expect(configOwned.get('profileOnlyPluginLoaded')).toBe(true)
     } finally {
       await configOwned.fiber.dispose()
     }
@@ -619,6 +635,7 @@ describe('boot', () => {
       expect(ctx.get('harnessPluginLoaded')).toBe(true)
       expect(ctx.get('shadowPluginLoaded')).toBeUndefined()
       expect(ctx.get('relativePluginLoaded')).toBe(true)
+      expect(ctx.get('profileOnlyPluginLoaded')).toBe(true)
       expect(ctx.get('absolutePluginLoaded')).toBe(true)
     } finally {
       await ctx.fiber.dispose()

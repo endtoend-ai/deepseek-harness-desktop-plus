@@ -29,7 +29,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 export const NS = 'pluginCenter'
 /** Services used by the slot contribution. */
 export const inject = [
-  'slots', 'layout', 'locale', 'settingsNavigation', 'sessions', 'workspaces', 'connection',
+  'slots', 'layout', 'locale', 'settingsNavigation', 'sessions', 'workspaces', 'connection', 'conversation',
 ]
 
 const PLUGIN_CENTER_PAGE_ID = 'plugin-center'
@@ -104,10 +104,9 @@ export function apply(ctx: ClientContext): void {
         return 'needs-model'
       }
       const agentContext = ctx.sessions.scope(sessionId)
-      if (agentContext === undefined || agentContext.get('conversation') === undefined) {
-        throw new Error('Agent session unavailable')
-      }
-      await agentContext.conversation.send(`/find-plugins ${requirement}`)
+      const conversation = agentContext?.get('conversation')
+      if (conversation === undefined) throw new Error('Agent session unavailable')
+      await conversation.send(`/find-plugins ${requirement}`)
       ctx.layout.closePrimaryPage(PLUGIN_DISCOVERY_PAGE_ID)
       return 'sent'
     },
