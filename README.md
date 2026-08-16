@@ -30,6 +30,12 @@
   <img src="assets/plugin-discovery-hero.jpg" alt="DeepSeek Harness Studio 视觉增强、插件商店、零代码一键启用、插件自动推送与 AI 智能推荐" width="100%">
 </p>
 
+<p align="center">
+  <a href="https://pictes.oss-cn-beijing.aliyuncs.com/products/deepseek-harness-studio/showcase/deepseek-harness-studio-cinematic-demo-1fb9b4da.mp4"><img src="https://pictes.oss-cn-beijing.aliyuncs.com/products/deepseek-harness-studio/showcase/deepseek-harness-studio-cinematic-demo-poster-e98f615a.png" alt="播放 DeepSeek Harness Studio 电影级产品演示" width="100%"></a>
+  <br>
+  <a href="https://pictes.oss-cn-beijing.aliyuncs.com/products/deepseek-harness-studio/showcase/deepseek-harness-studio-cinematic-demo-1fb9b4da.mp4"><strong>▶ 点击播放 50 秒电影级产品演示</strong></a>
+</p>
+
 ## 先看功能：当前能力与近期路线图
 
 > 状态说明：✅ 已支持；🗓️ 规划中。桌面开发工作区、公开插件中心和中文 DeepSeek 控制已经可用；规划能力会在真实功能可运行后更新状态。
