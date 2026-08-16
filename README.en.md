@@ -18,16 +18,16 @@
 
 <p align="center"><a href="README.md">中文</a> · <strong>English</strong></p>
 
-<p align="center"><strong>Built by Beyondata · A modern desktop development experience for the DeepSeek Harness ecosystem</strong></p>
+<p align="center"><strong>Built by Beyondata · Zero-code desktop enhancements for DeepSeek Harness</strong></p>
 
-<p align="center"><strong>Not sure what to install? Discover featured, recently updated, and ecosystem-popular plugins every day · Search, verify, install, and manage</strong></p>
+<p align="center"><strong>Vision enhancement + Plugin Store · Install, enable, and use plugins in one click</strong></p>
 
-<p align="center">DeepSeek Harness Studio combines the local Web workspace, Host lifecycle management, and a native desktop window into a development environment that developers can download as source, modify directly, and continue building locally.</p>
+<p align="center">Automatically discover and surface new ecosystem plugins, with AI recommendations for useful capabilities; search, verify, install, enable, disable, and uninstall without the command line.</p>
 
 <p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases"><strong>Download the macOS arm64 development preview</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.5/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe"><strong>Download the Windows x64 development preview</strong></a></p>
 
 <p align="center">
-  <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Studio whale-maid default skin" width="100%">
+  <img src="assets/plugin-discovery-hero.jpg" alt="DeepSeek Harness Studio vision enhancement, Plugin Store, zero-code activation, automatic plugin delivery, and AI recommendations" width="100%">
 </p>
 
 ## At a glance: available features and near-term roadmap

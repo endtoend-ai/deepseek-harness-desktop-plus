@@ -18,16 +18,16 @@
 
 <p align="center"><strong>中文</strong> · <a href="README.en.md">English</a></p>
 
-<p align="center"><strong>赋范空间出品 · 为 DeepSeek Harness 生态打造的现代化桌面开发体验</strong></p>
+<p align="center"><strong>赋范空间出品 · DeepSeek Harness 的零代码桌面增强</strong></p>
 
-<p align="center"><strong>不知道该装什么？每天发现精选、最近更新与生态热门插件 · 搜索、校验、一键安装与管理</strong></p>
+<p align="center"><strong>视觉增强 + 插件商店 · 0 代码一键安装、启用和使用</strong></p>
 
-<p align="center">DeepSeek Harness Studio 把本地 Web 工作区、Host 运行管理和桌面窗口整合为开箱即用的开发环境，让开发者可以获取源码、直接修改并在本地继续构建。</p>
+<p align="center">自动发现并推送生态新插件，AI 智能推荐值得安装的能力；无需命令行即可完成搜索、校验、安装、启停与卸载。</p>
 
 <p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.5/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.5-Setup.exe"><strong>下载 Windows x64 开发预览版</strong></a></p>
 
 <p align="center">
-  <img src="assets/theme-whale-maid-ui.png" alt="DeepSeek Harness Studio 大肥鱼拟人默认皮肤" width="100%">
+  <img src="assets/plugin-discovery-hero.jpg" alt="DeepSeek Harness Studio 视觉增强、插件商店、零代码一键启用、插件自动推送与 AI 智能推荐" width="100%">
 </p>
 
 ## 先看功能：当前能力与近期路线图
