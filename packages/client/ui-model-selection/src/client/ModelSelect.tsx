@@ -31,6 +31,9 @@ type ModelTranslate = PropsLocale<'model'>['t']
 /** Which root row currently owns the visible side card. */
 type Submenu = 'model' | 'effort'
 
+/** Grace period for crossing the visual gap between the root and side menus. */
+const SUBMENU_LEAVE_DELAY_MS = 240
+
 /** One dynamic effort row; undefined means preserve the provider default. */
 interface EffortChoice {
   key: string
@@ -83,6 +86,7 @@ export function ModelSelect(
   const rootRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const submenuCloseTimer = useRef<ReturnType<typeof setTimeout>>()
   const id = useId()
 
   const choices = useMemo(() => state.groups.flatMap(group =>
@@ -156,6 +160,10 @@ export function ModelSelect(
     return () => { document.removeEventListener('mousedown', closeOutside) }
   }, [open])
 
+  useEffect(() => () => {
+    if (submenuCloseTimer.current !== undefined) clearTimeout(submenuCloseTimer.current)
+  }, [])
+
   if (!available) return null
 
   const show = (): void => {
@@ -165,9 +173,33 @@ export function ModelSelect(
   }
 
   const close = (restoreFocus = false): void => {
+    if (submenuCloseTimer.current !== undefined) {
+      clearTimeout(submenuCloseTimer.current)
+      submenuCloseTimer.current = undefined
+    }
     setOpen(false)
     setSubmenu(null)
     if (restoreFocus) queueMicrotask(() => { triggerRef.current?.focus() })
+  }
+
+
+  const keepSubmenuOpen = (): void => {
+    if (submenuCloseTimer.current === undefined) return
+    clearTimeout(submenuCloseTimer.current)
+    submenuCloseTimer.current = undefined
+  }
+
+  const openSubmenu = (next: Submenu): void => {
+    keepSubmenuOpen()
+    setSubmenu(next)
+  }
+
+  const scheduleSubmenuClose = (): void => {
+    keepSubmenuOpen()
+    submenuCloseTimer.current = setTimeout(() => {
+      submenuCloseTimer.current = undefined
+      setSubmenu(null)
+    }, SUBMENU_LEAVE_DELAY_MS)
   }
 
   const moveFocus = (offset: number): void => {
@@ -285,7 +317,8 @@ export function ModelSelect(
       {open && (
         <div
           className={css.menuRegion}
-          onMouseLeave={() => { setSubmenu(null) }}
+          onMouseEnter={keepSubmenuOpen}
+          onMouseLeave={scheduleSubmenuClose}
         >
           <div
             id={`${id}-menu`}
@@ -302,9 +335,9 @@ export function ModelSelect(
               aria-haspopup="menu"
               aria-expanded={submenu === 'model'}
               aria-controls={submenu === 'model' ? `${id}-model-menu` : undefined}
-              onMouseEnter={() => { setSubmenu('model') }}
-              onFocus={() => { setSubmenu('model') }}
-              onClick={() => { setSubmenu('model') }}
+              onMouseEnter={() => { openSubmenu('model') }}
+              onFocus={() => { openSubmenu('model') }}
+              onClick={() => { openSubmenu('model') }}
             >
               <span className={css.cellLabel}>{t('menu.model')}</span>
               <span className={css.cellValue}>{modelLabel}</span>
@@ -319,9 +352,9 @@ export function ModelSelect(
                 aria-haspopup="menu"
                 aria-expanded={submenu === 'effort'}
                 aria-controls={submenu === 'effort' ? `${id}-effort-menu` : undefined}
-                onMouseEnter={() => { setSubmenu('effort') }}
-                onFocus={() => { setSubmenu('effort') }}
-                onClick={() => { setSubmenu('effort') }}
+                onMouseEnter={() => { openSubmenu('effort') }}
+                onFocus={() => { openSubmenu('effort') }}
+                onClick={() => { openSubmenu('effort') }}
               >
                 <span className={css.cellLabel}>{effortMenuLabel}</span>
                 <span className={css.cellValue}>{effortLabel}</span>
@@ -337,6 +370,7 @@ export function ModelSelect(
               role="menu"
               aria-label={t('menu.model')}
               aria-busy={state.status === 'loading' || busy}
+              onMouseEnter={keepSubmenuOpen}
             >
               {state.status === 'loading' && (
                 <div className={css.status}>{t('status.loading')}</div>
@@ -402,6 +436,7 @@ export function ModelSelect(
               role="menu"
               aria-label={effortMenuLabel}
               aria-busy={busy}
+              onMouseEnter={keepSubmenuOpen}
             >
               {state.error !== null && lastActionRef.current === 'load' && (
                 <div className={css.error}>

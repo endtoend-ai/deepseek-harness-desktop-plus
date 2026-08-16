@@ -50,7 +50,10 @@ export function apply(ctx: ClientContext): void {
         if (ns === VISION_SETTINGS_NAMESPACE) vision.refreshIfLoaded()
       }),
       ctx.remote.$on('credentials/updated', (ref) => {
-        if (ref === 'DASHSCOPE_API_KEY') vision.refreshIfLoaded()
+        if (ref === 'DSH_VISION_BAILIAN_API_KEY'
+          || ref === 'DASHSCOPE_API_KEY'
+          || ref === 'DSH_VISION_OPENROUTER_API_KEY'
+          || ref === 'OPENROUTER_API_KEY') vision.refreshIfLoaded()
       }),
       ctx.on('connection/reset', () => { vision.refreshIfLoaded() }),
     ]

@@ -34,9 +34,11 @@
 .hero>div:last-child { display:flex; flex-direction:column; gap:3px; }
 .hero strong { font-size:14px; line-height:22px; }
 .hero span { color:var(--dsw-alias-label-secondary); font-size:12px; line-height:18px; }
+.fieldGrid { display:grid; grid-template-columns:1fr 1.5fr; gap:12px; }
 .field { display:flex; flex-direction:column; gap:7px; font-size:13px; font-weight:550; }
-.field input { box-sizing:border-box; width:100%; height:42px; padding:0 13px; border:1px solid var(--dsw-alias-border-l2); border-radius:10px; color:var(--dsw-alias-label-primary); background:var(--dsw-alias-bg-layer-1); font:inherit; outline:none; }
-.field input:focus { border-color:var(--dsw-alias-brand-primary); box-shadow:0 0 0 3px color-mix(in srgb,var(--dsw-alias-brand-primary) 12%,transparent); }
+.field input,.field select { box-sizing:border-box; width:100%; height:42px; padding:0 13px; border:1px solid var(--dsw-alias-border-l2); border-radius:10px; color:var(--dsw-alias-label-primary); background:var(--dsw-alias-bg-layer-1); font:inherit; outline:none; }
+.field input:focus,.field select:focus { border-color:var(--dsw-alias-brand-primary); box-shadow:0 0 0 3px color-mix(in srgb,var(--dsw-alias-brand-primary) 12%,transparent); }
+.field input:read-only { color:var(--dsw-alias-label-secondary); }
 .help { margin:-9px 0 0; color:var(--dsw-alias-label-secondary); font-size:12px; }
 .help a { color:var(--dsw-alias-brand-primary); text-decoration:none; }
 .testCard { display:flex; min-height:150px; overflow:hidden; border:1px solid var(--dsw-alias-border-l2); border-radius:14px; background:var(--dsw-alias-bg-layer-1); }
@@ -58,4 +60,4 @@
 .primary { border:0; color:var(--dsw-alias-label-primary-foreground); background:var(--dsw-alias-button-primary-fill); }
 .secondary { border:1px solid var(--dsw-alias-border-l2); color:var(--dsw-alias-label-primary); background:var(--dsw-alias-bg-layer-1); }
 .primary:disabled,.secondary:disabled { cursor:default; opacity:.55; }
-@media (max-width:620px) { .testCard { flex-direction:column; } .imageWrap { width:100%; height:180px; } .row { align-items:flex-start; } .shortcutLabel { display:none; } .shortcut,.shortcutOn { width:28px; justify-content:center; padding:0; } .shortcutDot { display:none; } }
+@media (max-width:620px) { .fieldGrid { grid-template-columns:1fr; } .testCard { flex-direction:column; } .imageWrap { width:100%; height:180px; } .row { align-items:flex-start; } .shortcutLabel { display:none; } .shortcut,.shortcutOn { width:28px; justify-content:center; padding:0; } .shortcutDot { display:none; } }

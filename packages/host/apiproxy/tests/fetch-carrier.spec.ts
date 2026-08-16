@@ -284,13 +284,20 @@ function fakeApi(overrides: Partial<{ muxFrames: MuxFrame[]; hostFrames: HostFra
     },
     vision: {
       async status(request) {
-        return { rpcId: request.rpcId, result: { ok: true, value: { enabled: false, configured: false, model: 'qwen3.8-max' as const, apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key' } } }
+        return { rpcId: request.rpcId, result: { ok: true, value: {
+          enabled: false, configured: false, provider: 'bailian', model: 'qwen3.8-max',
+          apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key',
+          providers: [
+            { id: 'bailian', name: '阿里云百炼', configured: false, defaultModel: 'qwen3.8-max', apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key', modelEditable: false },
+            { id: 'openrouter', name: 'OpenRouter', configured: false, defaultModel: 'openai/gpt-4.1-mini', apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true },
+          ],
+        } } }
       },
       async test(request) {
-        return { rpcId: request.rpcId, result: { ok: true, value: { model: 'qwen3.8-max' as const, description: 'fixture image' } } }
+        return { rpcId: request.rpcId, result: { ok: true, value: { provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' } } }
       },
       async enable(request) {
-        return { rpcId: request.rpcId, result: { ok: true, value: { model: 'qwen3.8-max' as const, description: 'fixture image' } } }
+        return { rpcId: request.rpcId, result: { ok: true, value: { provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' } } }
       },
     },
     events: {

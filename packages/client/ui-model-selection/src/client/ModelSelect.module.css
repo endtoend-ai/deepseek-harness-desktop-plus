@@ -107,6 +107,17 @@
   width: min(220px, calc(100vw - 32px));
 }
 
+/* Keep the eight-pixel visual gutter pointer-safe. Without this bridge the
+   root receives mouseleave before the pointer can reach the side card. */
+.submenu::before {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  bottom: 0;
+  width: 8px;
+  content: '';
+}
+
 .status,
 .empty {
   padding: 10px;

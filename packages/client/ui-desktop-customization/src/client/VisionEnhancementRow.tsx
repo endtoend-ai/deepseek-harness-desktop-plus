@@ -29,6 +29,7 @@ export function VisionEnhancementRow({
   }, [state.enabled, state.status])
 
   const busy = state.status === 'idle' || state.status === 'loading' || state.status === 'saving'
+  const providerName = state.providers.find(provider => provider.id === state.provider)?.name ?? state.provider
   const activate = (): void => {
     setFailure(undefined)
     if (!state.enabled) {
@@ -48,7 +49,7 @@ export function VisionEnhancementRow({
           <div className={css.titleLine}>
             <span className={css.spark}>视</span>
             <span className={css.title}>视觉能力增强</span>
-            <span className={css.model}>Qwen3.8</span>
+            <span className={css.model}>{providerName} · {state.model}</span>
           </div>
           <div className={css.desc} role={state.error === null ? undefined : 'alert'}>
             {state.error ?? '让所有 Agent 都能理解截图、照片、图表和图片文字。'}
@@ -69,7 +70,9 @@ export function VisionEnhancementRow({
       </div>
       <VisionEnhancementDialog
         open={open}
-        configured={state.configured}
+        provider={state.provider}
+        providers={state.providers}
+        model={state.model}
         failure={failure}
         enable={enable}
         onClose={() => { setOpen(false) }}

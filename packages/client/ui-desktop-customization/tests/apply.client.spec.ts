@@ -28,9 +28,16 @@ async function bench() {
   ctx.provide('connection', {
     api: {
       vision: {
-        status: () => Promise.resolve({ result: { ok: true, value: { enabled: false, configured: false, model: 'qwen3.8-max', apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key' } } }),
-        test: () => Promise.resolve({ result: { ok: true, value: { model: 'qwen3.8-max', description: 'fixture image' } } }),
-        enable: () => Promise.resolve({ result: { ok: true, value: { model: 'qwen3.8-max', description: 'fixture image' } } }),
+        status: () => Promise.resolve({ result: { ok: true, value: {
+          enabled: false, configured: false, provider: 'bailian', model: 'qwen3.8-max',
+          apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key',
+          providers: [
+            { id: 'bailian', name: '阿里云百炼', configured: false, defaultModel: 'qwen3.8-max', apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key', modelEditable: false },
+            { id: 'openrouter', name: 'OpenRouter', configured: false, defaultModel: 'openai/gpt-4.1-mini', apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true },
+          ],
+        } } }),
+        test: () => Promise.resolve({ result: { ok: true, value: { provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' } } }),
+        enable: () => Promise.resolve({ result: { ok: true, value: { provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' } } }),
       },
     },
   } as never)

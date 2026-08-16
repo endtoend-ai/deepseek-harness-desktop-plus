@@ -1,6 +1,8 @@
 /** Shared browser state for the Desktop visual-enhancement controls. */
 
-import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
+import type {
+  ConnectionHandle, VisionProvider, VisionProviderView,
+} from '@deepseek-ai/dsh-api-remotes/client'
 import {
   createSnapshotStore, type SnapshotStore,
 } from '@deepseek-ai/dsh-client-runtime/client'
@@ -12,6 +14,10 @@ export const VISION_SETTINGS_NAMESPACE = 'vision-enhancement'
 export interface VisionEnableProbe {
   /** Optional credential stored by the Host before verification. */
   apiKey?: string
+  /** Visual provider selected for this verification. */
+  provider?: VisionProvider
+  /** Provider model id selected for this verification. */
+  model?: string
   /** Validated image media type. */
   mediaType: 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif'
   /** Canonical Base64 image payload. */
@@ -28,8 +34,12 @@ export interface VisionEnhancementState {
   status: 'idle' | 'loading' | 'ready' | 'saving' | 'error'
   /** Host-authoritative enabled value. */
   enabled: boolean
-  /** Whether the Host has a stored Bailian credential. */
+  /** Whether the Host can resolve a credential for the active provider. */
   configured: boolean
+  /** Active visual provider. */
+  provider: VisionProvider
+  /** Available providers with value-free credential status. */
+  providers: readonly VisionProviderView[]
   /** Visual provider model reported by the Host. */
   model: string
   /** Latest status or mutation failure. */
@@ -49,6 +59,17 @@ export class VisionEnhancementController {
     status: 'idle',
     enabled: false,
     configured: false,
+    provider: 'bailian',
+    providers: [
+      {
+        id: 'bailian', name: '阿里云百炼', configured: false, defaultModel: 'qwen3.8-max',
+        apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key', modelEditable: false,
+      },
+      {
+        id: 'openrouter', name: 'OpenRouter', configured: false, defaultModel: 'openai/gpt-4.1-mini',
+        apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true,
+      },
+    ],
     model: 'qwen3.8-max',
     error: null,
   })
@@ -94,6 +115,8 @@ export class VisionEnhancementController {
           state.status = 'ready'
           state.enabled = value.enabled
           state.configured = value.configured
+          state.provider = value.provider
+          state.providers = value.providers
           state.model = value.model
           state.error = null
         })
@@ -157,6 +180,10 @@ export class VisionEnhancementController {
           state.status = 'ready'
           state.enabled = true
           state.configured = true
+          state.provider = value.provider
+          state.providers = state.providers.map(provider => provider.id === value.provider
+            ? { ...provider, configured: true }
+            : provider)
           state.model = value.model
           state.error = null
         })

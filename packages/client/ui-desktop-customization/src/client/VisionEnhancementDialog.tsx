@@ -1,13 +1,14 @@
-/** Guided Bailian configuration shared by the Settings row and composer shortcut. */
+/** Guided visual-provider configuration shared by the Settings row and composer shortcut. */
 
 import { useEffect, useState } from 'react'
 import type { ChangeEvent, ReactNode } from 'react'
 import { Modal } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { VisionEnableProbe } from './vision-enhancement-controller.ts'
+import type {
+  VisionEnableProbe, VisionEnhancementState,
+} from './vision-enhancement-controller.ts'
 import css from './VisionEnhancementRow.module.css'
 
 const DEFAULT_IMAGE = '/dsh-desktop/default-background.webp'
-const API_KEY_URL = 'https://help.aliyun.com/zh/model-studio/get-api-key'
 const ACCEPTED = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
 
 interface PreparedImage {
@@ -52,7 +53,9 @@ async function defaultImage(): Promise<PreparedImage> {
 /** Props for the shared atomic enable dialog. */
 interface VisionEnhancementDialogProps {
   open: boolean
-  configured: boolean
+  provider: VisionEnhancementState['provider']
+  providers: VisionEnhancementState['providers']
+  model: string
   failure?: string | undefined
   onClose: () => void
   enable: (input: VisionEnableProbe, signal?: AbortSignal) => Promise<string>
@@ -60,13 +63,27 @@ interface VisionEnhancementDialogProps {
 
 /** Verify a real image before enabling the shared visual capability. */
 export function VisionEnhancementDialog({
-  open, configured, failure: outerFailure, onClose, enable,
+  open, provider: activeProvider, providers, model: activeModel,
+  failure: outerFailure, onClose, enable,
 }: VisionEnhancementDialogProps): ReactNode {
   const [apiKey, setApiKey] = useState('')
+  const [provider, setProvider] = useState(activeProvider)
+  const [model, setModel] = useState(activeModel)
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState<string>()
   const [result, setResult] = useState<string>()
   const [image, setImage] = useState<PreparedImage>()
+
+  const selectedProvider = providers.find(candidate => candidate.id === provider) ?? providers[0]
+
+  useEffect(() => {
+    if (open) return
+    setProvider(activeProvider)
+    setModel(activeModel)
+    setApiKey('')
+    setFailure(undefined)
+    setResult(undefined)
+  }, [activeModel, activeProvider, open])
 
   useEffect(() => {
     if (!open || image !== undefined) return
@@ -79,13 +96,20 @@ export function VisionEnhancementDialog({
 
   const verify = async (): Promise<void> => {
     if (image === undefined) { setFailure('验证图片还没有准备好。'); return }
-    if (!configured && apiKey.trim() === '') { setFailure('请输入百炼 API Key。'); return }
+    if (selectedProvider === undefined) { setFailure('没有可用的视觉提供方。'); return }
+    if (model.trim() === '') { setFailure('请输入视觉模型。'); return }
+    if (!selectedProvider.configured && apiKey.trim() === '') {
+      setFailure(`请输入 ${selectedProvider.name} API Key。`)
+      return
+    }
     setBusy(true)
     setFailure(undefined)
     setResult(undefined)
     try {
       const description = await enable({
         ...(apiKey.trim() === '' ? {} : { apiKey: apiKey.trim() }),
+        provider,
+        model: model.trim(),
         mediaType: image.mediaType,
         data: image.data,
         name: image.name,
@@ -109,25 +133,53 @@ export function VisionEnhancementDialog({
     event.target.value = ''
   }
 
+  const pickProvider = (event: ChangeEvent<HTMLSelectElement>): void => {
+    const next = event.target.value as VisionEnhancementState['provider']
+    const nextProvider = providers.find(candidate => candidate.id === next)
+    if (nextProvider === undefined) return
+    setProvider(next)
+    setModel(next === activeProvider ? activeModel : nextProvider.defaultModel)
+    setApiKey('')
+    setFailure(undefined)
+    setResult(undefined)
+  }
+
   return (
     <Modal open={open} title="开启视觉能力增强" onClose={() => { if (!busy) onClose() }} className={css['modal'] as string}>
       <div className={css.modalBody}>
         <div className={css.hero}>
-          <div className={css.heroIcon}>Q</div>
-          <div><strong>百炼 Qwen3.8 视觉能力</strong><span>验证通过后，能力会自动挂载到四个内置 Agent，以及未来新增的 Agent Preset。</span></div>
+          <div className={css.heroIcon}>{provider === 'openrouter' ? 'O' : 'Q'}</div>
+          <div><strong>{selectedProvider?.name ?? '视觉提供方'} · {model}</strong><span>验证通过后，能力会自动挂载到四个内置 Agent，以及未来新增的 Agent Preset。</span></div>
+        </div>
+        <div className={css.fieldGrid}>
+          <label className={css.field}>
+            <span>视觉提供方</span>
+            <select value={provider} onChange={pickProvider} disabled={busy}>
+              {providers.map(candidate => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
+            </select>
+          </label>
+          <label className={css.field}>
+            <span>视觉模型</span>
+            <input
+              value={model}
+              readOnly={selectedProvider?.modelEditable !== true}
+              onChange={(event) => { setModel(event.target.value) }}
+              disabled={busy}
+            />
+          </label>
         </div>
         <label className={css.field}>
-          <span>百炼 API Key</span>
+          <span>{selectedProvider?.name ?? '视觉提供方'} API Key</span>
           <input
             type="password"
             autoComplete="off"
             value={apiKey}
-            placeholder={configured ? '已保存，可留空直接重新验证' : '请输入 DASHSCOPE_API_KEY'}
+            placeholder={selectedProvider?.configured === true ? '已保存，可留空直接重新验证' : '请输入 API Key'}
             onChange={(event) => { setApiKey(event.target.value) }}
             disabled={busy}
           />
         </label>
-        <p className={css.help}>还没有 Key？<a href={API_KEY_URL} target="_blank" rel="noreferrer">进入阿里云百炼官网获取 API Key</a></p>
+        {selectedProvider !== undefined && <p className={css.help}>还没有 Key？<a href={selectedProvider.apiKeyUrl} target="_blank" rel="noreferrer">前往 {selectedProvider.name} 获取 API Key</a></p>}
         <div className={css.testCard}>
           <div className={css.imageWrap}>{image === undefined ? <span>正在准备默认小猫图片…</span> : <img src={image.url} alt="视觉验证图片" />}</div>
           <div className={css.testInfo}>
@@ -138,10 +190,10 @@ export function VisionEnhancementDialog({
         </div>
         {result !== undefined && <div className={css.success}><strong>识别成功，视觉能力已开启</strong><p>{result}</p></div>}
         {(failure ?? outerFailure) !== undefined && <div className={css.error} role="alert">{failure ?? outerFailure}</div>}
-        <p className={css.privacy}>验证图片会发送至阿里云百炼进行识别；API Key 仅保存在本机受保护的凭证文件中，不会写入对话或项目代码。</p>
+        <p className={css.privacy}>验证图片会发送至 {selectedProvider?.name ?? '所选视觉提供方'} 进行识别；API Key 仅保存在本机受保护的凭证文件中，不会写入对话或项目代码。</p>
         <div className={css.actions}>
           <button type="button" className={css.secondary} disabled={busy} onClick={onClose}>{result === undefined ? '取消' : '完成'}</button>
-          {result === undefined && <button type="button" className={css.primary} disabled={busy || image === undefined} onClick={() => { void verify() }}>{busy ? '正在调用百炼验证…' : '验证并开启'}</button>}
+          {result === undefined && <button type="button" className={css.primary} disabled={busy || image === undefined || selectedProvider === undefined} onClick={() => { void verify() }}>{busy ? `正在调用 ${selectedProvider?.name ?? '视觉服务'} 验证…` : '验证并开启'}</button>}
         </div>
       </div>
     </Modal>

@@ -129,9 +129,16 @@ function scriptedApi(overrides: {
       ...overrides.llm,
     },
     vision: {
-      status: r => ok(r, { enabled: false, configured: false, model: 'qwen3.8-max' as const, apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key' }),
-      test: r => ok(r, { model: 'qwen3.8-max' as const, description: 'fixture image' }),
-      enable: r => ok(r, { model: 'qwen3.8-max' as const, description: 'fixture image' }),
+      status: r => ok(r, {
+        enabled: false, configured: false, provider: 'bailian', model: 'qwen3.8-max',
+        apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key',
+        providers: [
+          { id: 'bailian', name: '阿里云百炼', configured: false, defaultModel: 'qwen3.8-max', apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key', modelEditable: false },
+          { id: 'openrouter', name: 'OpenRouter', configured: false, defaultModel: 'openai/gpt-4.1-mini', apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true },
+        ],
+      }),
+      test: r => ok(r, { provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' }),
+      enable: r => ok(r, { provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' }),
     },
     events: { mux: () => empty<MuxFrame>(), host: () => empty<HostFrame>(), ...overrides.events },
     respond: overrides.respond ?? (() => Promise.resolve({ accepted: false as const, reason: 'not-pending' as const })),

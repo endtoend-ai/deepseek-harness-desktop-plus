@@ -2965,16 +2965,23 @@ function createFixtureWorld(options: FixtureOptions): FixtureWorld {
     vision: {
       status: request => ok(request, {
         enabled: false,
-        configured: fixtureCredentials.has('DASHSCOPE_API_KEY'),
-        model: 'qwen3.8-max' as const,
+        configured: fixtureCredentials.has('DSH_VISION_BAILIAN_API_KEY') || fixtureCredentials.has('DASHSCOPE_API_KEY'),
+        provider: 'bailian',
+        model: 'qwen3.8-max',
         apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key',
+        providers: [
+          { id: 'bailian', name: '阿里云百炼', configured: fixtureCredentials.has('DSH_VISION_BAILIAN_API_KEY') || fixtureCredentials.has('DASHSCOPE_API_KEY'), defaultModel: 'qwen3.8-max', apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key', modelEditable: false },
+          { id: 'openrouter', name: 'OpenRouter', configured: fixtureCredentials.has('DSH_VISION_OPENROUTER_API_KEY') || fixtureCredentials.has('OPENROUTER_API_KEY'), defaultModel: 'openai/gpt-4.1-mini', apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true },
+        ],
       }),
       test: request => ok(request, {
-        model: 'qwen3.8-max' as const,
+        provider: 'bailian',
+        model: 'qwen3.8-max',
         description: `Fixture 已识别 ${request.payload.name ?? '图片'}。`,
       }),
       enable: request => ok(request, {
-        model: 'qwen3.8-max' as const,
+        provider: request.payload.provider ?? 'bailian',
+        model: request.payload.model ?? 'qwen3.8-max',
         description: `Fixture 已识别 ${request.payload.name ?? '图片'}。`,
       }),
     },

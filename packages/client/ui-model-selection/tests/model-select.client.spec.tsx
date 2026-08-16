@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ModelSelection } from '@deepseek-ai/dsh-api-remotes/client'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
@@ -45,7 +45,10 @@ function state(overrides: Partial<ModelDirectoryState> = {}): ModelDirectoryStat
   }
 }
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 describe('ModelSelect reasoning effort', () => {
   it('renders adapter metadata and submits the effort as part of the session selection', async () => {
@@ -89,6 +92,70 @@ describe('ModelSelect reasoning effort', () => {
       })
       expect(trigger.getAttribute('aria-label')).toBe('选择模型，当前 DeepSeek-V4-Flash，思考模式 最大思考')
     })
+  })
+
+  it('keeps the side menu selectable while the pointer crosses its visual gutter', () => {
+    vi.useFakeTimers()
+    render(<ModelSelect
+      locked={false}
+      available
+      directory={createSnapshotStore<ModelDirectoryState>(state())}
+      load={vi.fn()}
+      select={vi.fn().mockResolvedValue(true)}
+      t={t}
+    />)
+
+    fireEvent.click(screen.getByRole('button', { name: /选择模型，当前/ }))
+    fireEvent.mouseEnter(screen.getByRole('menuitem', { name: /模型/ }))
+    const sideMenu = screen.getByRole('menu', { name: '模型' })
+    const region = screen.getByRole('menu', { name: 'DeepSeek 模型设置' }).parentElement
+    expect(region).not.toBeNull()
+    fireEvent.mouseLeave(region as HTMLElement)
+    fireEvent.mouseEnter(sideMenu)
+    act(() => { vi.advanceTimersByTime(300) })
+    expect(screen.getByRole('menu', { name: '模型' })).toBeTruthy()
+  })
+
+  it('switches to another model and back through the same stable menu path', async () => {
+    const groups = [{
+      id: 'deepseek-official',
+      name: 'DeepSeek',
+      models: [
+        { id: 'deepseek-v4-flash', name: 'DeepSeek-V4-Flash', reasoning },
+        { id: 'deepseek-v4-pro', name: 'DeepSeek-V4-Pro' },
+      ],
+    }]
+    const directory = createSnapshotStore<ModelDirectoryState>(state({ groups }))
+    const select = vi.fn(async (selection: ModelSelection) => {
+      directory.set(state({ groups, current: selection }))
+      return true
+    })
+    render(<ModelSelect
+      locked={false}
+      available
+      directory={directory}
+      load={vi.fn()}
+      select={select}
+      t={t}
+    />)
+
+    fireEvent.click(screen.getByRole('button', { name: /选择模型，当前/ }))
+    fireEvent.click(screen.getByRole('menuitem', { name: /模型/ }))
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'DeepSeek-V4-Pro' }))
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '选择模型，当前 DeepSeek-V4-Pro' })).toBeTruthy()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '选择模型，当前 DeepSeek-V4-Pro' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: /模型/ }))
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'DeepSeek-V4-Flash' }))
+    await waitFor(() => {
+      expect(screen.getByRole('button', {
+        name: '选择模型，当前 DeepSeek-V4-Flash，思考模式 深度思考',
+      })).toBeTruthy()
+    })
+    expect(select).toHaveBeenNthCalledWith(1, { provider: 'deepseek-official', model: 'deepseek-v4-pro' })
+    expect(select).toHaveBeenNthCalledWith(2, { provider: 'deepseek-official', model: 'deepseek-v4-flash' })
   })
 
   it('offers provider default only when the adapter does not configure a model default', () => {

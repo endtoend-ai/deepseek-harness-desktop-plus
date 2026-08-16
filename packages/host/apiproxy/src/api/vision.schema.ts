@@ -1,17 +1,28 @@
-/** Zod schemas for the Bailian vision-enhancement API. */
+/** Zod schemas for the provider-selectable vision-enhancement API. */
 
 import { z } from 'zod'
 import type { RequestPayload, ResponseValue } from './rpc-map.ts'
 import type { Wire } from './rpc.schema.ts'
 
 const imageMediaTypeSchema = z.enum(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+const visionProviderSchema = z.enum(['bailian', 'openrouter'])
+const visionProviderValueSchema = z.object({
+  id: visionProviderSchema,
+  name: z.string().min(1),
+  configured: z.boolean(),
+  defaultModel: z.string().min(1),
+  apiKeyUrl: z.url(),
+  modelEditable: z.boolean(),
+})
 
 export const visionStatusRequestSchema = z.object({}) satisfies z.ZodType<Wire<RequestPayload<'vision.status'>>>
 export const visionStatusValueSchema = z.object({
   enabled: z.boolean(),
   configured: z.boolean(),
-  model: z.literal('qwen3.8-max'),
+  provider: visionProviderSchema,
+  model: z.string().min(1),
   apiKeyUrl: z.url(),
+  providers: z.array(visionProviderValueSchema).length(2),
 }) satisfies z.ZodType<Wire<ResponseValue<'vision.status'>>>
 
 export const visionTestRequestSchema = z.object({
@@ -23,10 +34,13 @@ export const visionTestRequestSchema = z.object({
 
 export const visionEnableRequestSchema = visionTestRequestSchema.extend({
   apiKey: z.string().min(1).max(16_384).optional(),
+  provider: visionProviderSchema.optional(),
+  model: z.string().trim().min(1).max(255).optional(),
 }) satisfies z.ZodType<Wire<RequestPayload<'vision.enable'>>>
 
 export const visionTestValueSchema = z.object({
-  model: z.literal('qwen3.8-max'),
+  provider: visionProviderSchema,
+  model: z.string().min(1),
   description: z.string().min(1),
 }) satisfies z.ZodType<Wire<ResponseValue<'vision.test'>>>
 

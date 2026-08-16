@@ -581,13 +581,20 @@ describe('settings domain', () => {
   it('refuses direct vision enable writes while preserving disable and the atomic Host gate', async () => {
     const ctx = await harness()
     ctx.settings.register(VISION_SETTINGS_NAMESPACE, z.object({ enabled: z.boolean().default(false) }), { base: { enabled: false } })
-    const enable = vi.fn(() => Promise.resolve({ model: 'qwen3.8-max' as const, description: '一只小猫。' }))
+    const enable = vi.fn(() => Promise.resolve({ provider: 'bailian' as const, model: 'qwen3.8-max', description: '一只小猫。' }))
     const api = createApiProxy(ctx, {
       ...DEFAULTS,
       visionEnhancement: {
         isEnabled: () => false,
-        status: () => Promise.resolve({ enabled: false, configured: true, model: 'qwen3.8-max', apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key' }),
-        test: () => Promise.resolve({ model: 'qwen3.8-max', description: '一只小猫。' }),
+        status: () => Promise.resolve({
+          enabled: false, configured: true, provider: 'bailian', model: 'qwen3.8-max',
+          apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key',
+          providers: [
+            { id: 'bailian', name: '阿里云百炼', configured: true, defaultModel: 'qwen3.8-max', apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key', modelEditable: false },
+            { id: 'openrouter', name: 'OpenRouter', configured: false, defaultModel: 'openai/gpt-4.1-mini', apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true },
+          ],
+        }),
+        test: () => Promise.resolve({ provider: 'bailian', model: 'qwen3.8-max', description: '一只小猫。' }),
         enable,
       },
     })

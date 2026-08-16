@@ -40,6 +40,7 @@ function statusText(state: VisionEnhancementState): string {
 }
 
 function hoverContent(state: VisionEnhancementState): ReactNode {
+  const providerName = state.providers.find(provider => provider.id === state.provider)?.name ?? state.provider
   return (
     <div className={css.shortcutHover}>
       <div className={css.shortcutHoverTitle}>
@@ -48,7 +49,7 @@ function hoverContent(state: VisionEnhancementState): ReactNode {
           {state.enabled ? '已开启' : state.configured ? '已关闭' : '待配置'}
         </span>
       </div>
-      <p>使用百炼 Qwen3.8 读取对话或工作区中的截图、照片、图表和图片文字，并把识别结果提供给 Agent。</p>
+      <p>使用 {providerName} · {state.model} 读取对话或工作区中的截图、照片、图表和图片文字，并把识别结果提供给 Agent。</p>
       <div className={css.shortcutHoverHint}>{state.error ?? statusText(state)}</div>
     </div>
   )
@@ -100,7 +101,9 @@ export function VisionEnhancementShortcut({
       />
       <VisionEnhancementDialog
         open={dialogOpen}
-        configured={state.configured}
+        provider={state.provider}
+        providers={state.providers}
+        model={state.model}
         failure={failure}
         enable={enable}
         onClose={() => { setDialogOpen(false) }}
