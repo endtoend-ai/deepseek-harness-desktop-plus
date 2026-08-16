@@ -257,7 +257,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Attach verified Windows assets to the existing release
+      - name: Attach verified Windows installer to the existing release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -265,29 +265,17 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $dist = Join-Path $env:GITHUB_WORKSPACE 'apps\desktop\dist'
           $installers = @(Get-ChildItem $dist -File -Filter '*Setup.exe')
-          $blockmaps = @(Get-ChildItem $dist -File -Filter '*Setup.exe.blockmap')
           if ($installers.Count -ne 1) { throw "Expected one installer; found $($installers.Count)." }
-          if ($blockmaps.Count -gt 1) { throw "Expected at most one blockmap; found $($blockmaps.Count)." }
-          $files = @(
-            $installers[0].FullName,
-            (Join-Path $dist 'SHA256SUMS-windows-x64-preview.txt'),
-            (Join-Path $dist 'WINDOWS_PREVIEW_VERIFICATION.txt')
-          )
-          if ($blockmaps.Count -eq 1) { $files += $blockmaps[0].FullName }
+          $installer = $installers[0].FullName
 
           $release = gh release view $env:RELEASE_TAG `
             --repo $env:GITHUB_REPOSITORY `
             --json assets | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { throw "Release $env:RELEASE_TAG cannot be read." }
-          foreach ($file in $files) {
-            $name = [System.IO.Path]::GetFileName($file)
-            if ($release.assets.name -contains $name) {
-              throw "Release asset $name already exists; refusing to overwrite it."
-            }
+          $name = [System.IO.Path]::GetFileName($installer)
+          if ($release.assets.name -contains $name) {
+            throw "Release asset $name already exists; refusing to overwrite it."
           }
 
-          $arguments = @('release', 'upload', $env:RELEASE_TAG)
-          $arguments += $files
-          $arguments += @('--repo', $env:GITHUB_REPOSITORY)
-          & gh @arguments
-          if ($LASTEXITCODE -ne 0) { throw 'Uploading verified Windows assets failed.' }
+          gh release upload $env:RELEASE_TAG $installer --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw 'Uploading the verified Windows installer failed.' }

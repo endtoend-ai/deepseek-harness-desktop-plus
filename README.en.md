@@ -145,7 +145,7 @@ The text-based DeepSeek model used by the desktop workflow cannot interpret imag
 
 <p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases"><strong>Download the macOS arm64 preview</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.7/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.7-Setup.exe"><strong>Download the Windows x64 installer</strong></a></p>
 
-Development previews use a separate pre-release tag and include a SHA-256 checksum file without triggering the formal installer workflow. The formal workflow accepts only a `desktop-v*` tag that exactly matches the Desktop version, and publishes the macOS and Windows installers with `SHA256SUMS` only after both platform signatures pass verification.
+Development previews use a separate pre-release tag without triggering the formal installer workflow. Their public download area contains only the macOS ZIP and Windows installer; checksums, blockmaps, and platform-verification records remain in the corresponding GitHub Actions artifact so users do not mistake development files for installers. The formal workflow accepts only a `desktop-v*` tag that exactly matches the Desktop version, and publishes the macOS and Windows installers with `SHA256SUMS` only after both platform signatures pass verification.
 
 ## Quick start
 

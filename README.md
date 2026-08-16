@@ -158,9 +158,9 @@ open "/Applications/DeepSeek Harness.app"
 
 ### Windows x64
 
-下载 `DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.7-Setup.exe` 后直接运行安装程序。对应的 `SHA256SUMS-windows-x64-preview.txt` 和 `WINDOWS_PREVIEW_VERIFICATION.txt` 位于同一 Release，可用于核对安装包完整性和平台验收结果。
+下载 `DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.7-Setup.exe` 后直接运行安装程序。Release 的公开下载区只保留 macOS ZIP 和 Windows 安装程序；校验文件、blockmap 与平台验收记录保留在对应 GitHub Actions 构建中，避免普通用户误下载开发文件。
 
-开发预览版使用独立 Pre-release 标签并附带 SHA-256 校验文件，不触发正式安装器发布。正式流程只接受与 Desktop 版本完全一致的 `desktop-v*` 标签；macOS 与 Windows 安装包分别完成平台签名验证后，GitHub 才会同时公开安装文件和 `SHA256SUMS`。
+开发预览版使用独立 Pre-release 标签，不触发正式安装器发布。正式流程只接受与 Desktop 版本完全一致的 `desktop-v*` 标签；macOS 与 Windows 安装包分别完成平台签名验证后，GitHub 才会同时公开安装文件和 `SHA256SUMS`。
 
 ## 快速开始
 

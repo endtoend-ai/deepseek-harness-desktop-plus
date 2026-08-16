@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
 const workflow = readFileSync(resolve(repositoryRoot, '.github/workflows/desktop-release.yml'), 'utf8')
+const previewWorkflow = readFileSync(resolve(repositoryRoot, '.github/workflows/desktop-windows-preview.yml'), 'utf8')
 const chineseReadme = readFileSync(resolve(repositoryRoot, 'README.md'), 'utf8')
 const englishReadme = readFileSync(resolve(repositoryRoot, 'README.en.md'), 'utf8')
 
@@ -37,5 +38,17 @@ describe('desktop GitHub Release workflow', () => {
     }
     expect(chineseReadme).toContain('下载 Windows x64')
     expect(englishReadme).toContain('Download the Windows x64')
+  })
+
+  it('keeps preview diagnostics in Actions and exposes only the Windows installer', () => {
+    expect(previewWorkflow).toContain('Preserve verified Windows preview as an Actions artifact')
+    expect(previewWorkflow).toContain('apps/desktop/dist/WINDOWS_PREVIEW_VERIFICATION.txt')
+    const releaseStep = previewWorkflow.slice(previewWorkflow.indexOf(
+      '- name: Attach verified Windows installer to the existing release',
+    ))
+    expect(releaseStep).toContain('gh release upload $env:RELEASE_TAG $installer')
+    expect(releaseStep).not.toContain('Setup.exe.blockmap')
+    expect(releaseStep).not.toContain('SHA256SUMS-windows-x64-preview.txt')
+    expect(releaseStep).not.toContain('WINDOWS_PREVIEW_VERIFICATION.txt')
   })
 })
