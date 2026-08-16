@@ -68,7 +68,8 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "https://ml2022.oss-cn-hangzhou.aliyuncs.com/deepseek-harness-desktop/releases"
+        "url": "https://ml2022.oss-cn-hangzhou.aliyuncs.com/deepseek-harness-desktop/releases",
+        "channel": "rc"
       }
     ],
     "toolsets": {

@@ -10,7 +10,7 @@ const UPDATE_URL = 'https://ml2022.oss-cn-hangzhou.aliyuncs.com/deepseek-harness
 function context(
   appOutDir: string,
   electronPlatformName = 'darwin',
-  publish: unknown = [{ provider: 'generic', url: UPDATE_URL }],
+  publish: unknown = [{ provider: 'generic', url: UPDATE_URL, channel: 'rc' }],
 ) {
   return {
     appOutDir,
@@ -61,6 +61,7 @@ describe('packaged desktop runtime verification', () => {
         provider: 'generic',
         url: UPDATE_URL,
         updaterCacheDirName: 'deepseek-harness-updater',
+        channel: 'rc',
       })
     } finally {
       await rm(appOutDir, { recursive: true, force: true })
@@ -76,8 +77,14 @@ describe('packaged desktop runtime verification', () => {
       await expect(afterPack(context(appOutDir, 'darwin', [{
         provider: 'generic',
         url: 'http://updates.example.test',
+        channel: 'rc',
       }])))
         .rejects.toThrow('packaged desktop update provider must use HTTPS')
+      await expect(afterPack(context(appOutDir, 'darwin', [{
+        provider: 'generic',
+        url: UPDATE_URL,
+      }])))
+        .rejects.toThrow('packaged desktop requires an explicit update channel')
     } finally {
       await rm(appOutDir, { recursive: true, force: true })
     }

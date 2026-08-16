@@ -28,7 +28,7 @@ interface GenericUpdateConfiguration {
   readonly provider: 'generic'
   readonly url: string
   readonly updaterCacheDirName: string
-  readonly channel?: string
+  readonly channel: string
 }
 
 /**
@@ -83,14 +83,14 @@ function resolveUpdateConfiguration(context: AfterPackContext): GenericUpdateCon
     throw new Error('packaged desktop update provider must use HTTPS')
   }
   const channel = candidate.channel
-  if (channel !== undefined && channel !== null && typeof channel !== 'string') {
-    throw new Error('packaged desktop update channel must be a string')
+  if (typeof channel !== 'string' || channel.trim() === '') {
+    throw new Error('packaged desktop requires an explicit update channel')
   }
   return {
     provider: 'generic',
     url: url.href.replace(/\/$/, ''),
     updaterCacheDirName: context.packager.appInfo.updaterCacheDirName,
-    ...(typeof channel === 'string' ? { channel } : {}),
+    channel,
   }
 }
 
