@@ -46,7 +46,7 @@ Desktop 持有插件中心发现、兼容与包变更权威。公开发现会在
 pnpm run package:desktop
 ```
 
-打包后的应用通过 Electron 的 Node 模式，在独立进程内运行已暂存的 `@deepseek-ai/dsh` CLI。应用因此保留受 supervisor 管理的 Host 生命周期，无需携带第二个 Node 可执行文件。如果暂存的 CLI 入口或 Web 前端入口缺失，`afterPack` 检查会在签名前拒绝该产物。macOS 和 Windows 都从受跟踪、带透明圆角的 `apps/desktop/build/icon.png` 派生平台图标；仓库不提交独立的平台专用变体。
+打包后的应用通过 Electron 的 Node 模式，在独立进程内运行已暂存的 `@deepseek-ai/dsh` CLI。应用因此保留受 supervisor 管理的 Host 生命周期，无需携带第二个 Node 可执行文件。如果暂存的 CLI 入口、Web 前端入口或通用 HTTPS 更新提供方缺失，`afterPack` 检查会在签名前拒绝该产物。同一钩子会为所有目标写入 `app-update.yml`，包括预览压缩包使用的未封装目录，因此打包应用可以把同版本更新源正确识别为“已是最新”。macOS 和 Windows 都从受跟踪、带透明圆角的 `apps/desktop/build/icon.png` 派生平台图标；仓库不提交独立的平台专用变体。
 
 ### 已签名的 macOS DMG 与 ZIP
 

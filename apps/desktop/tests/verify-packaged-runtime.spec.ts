@@ -1,42 +1,83 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { load } from 'js-yaml'
 import { describe, expect, it } from 'vitest'
 import { afterPack } from '../scripts/verify-packaged-runtime.ts'
 
-function context(appOutDir: string, electronPlatformName = 'darwin') {
+const UPDATE_URL = 'https://ml2022.oss-cn-hangzhou.aliyuncs.com/deepseek-harness-desktop/releases'
+
+function context(
+  appOutDir: string,
+  electronPlatformName = 'darwin',
+  publish: unknown = [{ provider: 'generic', url: UPDATE_URL }],
+) {
   return {
     appOutDir,
     electronPlatformName,
-    packager: { appInfo: { productFilename: 'DeepSeek Harness' } },
+    packager: {
+      appInfo: {
+        productFilename: 'DeepSeek Harness',
+        updaterCacheDirName: 'deepseek-harness-updater',
+      },
+      config: { publish },
+    },
   } as Parameters<typeof afterPack>[0]
 }
 
+async function writeRequiredMacRuntime(appOutDir: string): Promise<void> {
+  const modules = join(appOutDir, 'DeepSeek Harness.app', 'Contents', 'Resources', 'host', 'node_modules')
+  const required = [
+    ['@deepseek-ai', 'dsh', 'lib', 'bin.js'],
+    ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'index.html'],
+    ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'default-background.webp'],
+    ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'cloud-cat-background.webp'],
+    ['@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'beyondata-logo.png'],
+    ['pnpm', 'bin', 'pnpm.cjs'],
+  ]
+  for (const segments of required) {
+    const file = join(modules, ...segments)
+    await mkdir(join(file, '..'), { recursive: true })
+    await writeFile(file, '')
+  }
+  await writeFile(join(modules, 'pnpm/package.json'), JSON.stringify({ version: '11.7.0' }))
+}
+
 describe('packaged desktop runtime verification', () => {
-  it('accepts the packaged Host entrypoints and Desktop image assets', async () => {
+  it('accepts the packaged runtime and writes its update configuration', async () => {
     const appOutDir = await mkdtemp(join(tmpdir(), 'dsh-packaged-runtime-'))
     try {
-      const resources = join(appOutDir, 'DeepSeek Harness.app', 'Contents', 'Resources', 'host', 'node_modules')
-      const cli = join(resources, '@deepseek-ai', 'dsh', 'lib', 'bin.js')
-      const web = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'index.html')
-      const background = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'default-background.webp')
-      const catBackground = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'cloud-cat-background.webp')
-      const logo = join(resources, '@deepseek-ai', 'dsh-web-frontend', 'dist', 'dsh-desktop', 'beyondata-logo.png')
-      const packageManager = join(resources, 'pnpm', 'bin', 'pnpm.cjs')
-      const packageManagerManifest = join(resources, 'pnpm', 'package.json')
-      await mkdir(join(cli, '..'), { recursive: true })
-      await mkdir(join(web, '..'), { recursive: true })
-      await mkdir(join(background, '..'), { recursive: true })
-      await mkdir(join(packageManager, '..'), { recursive: true })
-      await writeFile(cli, '')
-      await writeFile(web, '')
-      await writeFile(background, '')
-      await writeFile(catBackground, '')
-      await writeFile(logo, '')
-      await writeFile(packageManager, '')
-      await writeFile(packageManagerManifest, JSON.stringify({ version: '11.7.0' }))
+      await writeRequiredMacRuntime(appOutDir)
 
       await expect(afterPack(context(appOutDir))).resolves.toBeUndefined()
+      const updateConfiguration = load(await readFile(join(
+        appOutDir,
+        'DeepSeek Harness.app',
+        'Contents',
+        'Resources',
+        'app-update.yml',
+      ), 'utf8'))
+      expect(updateConfiguration).toEqual({
+        provider: 'generic',
+        url: UPDATE_URL,
+        updaterCacheDirName: 'deepseek-harness-updater',
+      })
+    } finally {
+      await rm(appOutDir, { recursive: true, force: true })
+    }
+  })
+
+  it('rejects missing or insecure update providers', async () => {
+    const appOutDir = await mkdtemp(join(tmpdir(), 'dsh-packaged-runtime-update-'))
+    try {
+      await writeRequiredMacRuntime(appOutDir)
+      await expect(afterPack(context(appOutDir, 'darwin', null)))
+        .rejects.toThrow('packaged desktop requires one generic HTTPS update provider')
+      await expect(afterPack(context(appOutDir, 'darwin', [{
+        provider: 'generic',
+        url: 'http://updates.example.test',
+      }])))
+        .rejects.toThrow('packaged desktop update provider must use HTTPS')
     } finally {
       await rm(appOutDir, { recursive: true, force: true })
     }

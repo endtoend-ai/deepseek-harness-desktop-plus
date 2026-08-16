@@ -1,8 +1,9 @@
-/** Reject a packaged desktop shell that omitted the staged Host entrypoints. */
+/** Validate the staged Desktop runtime and materialize its updater configuration. */
 
-import { access, readFile, readdir } from 'node:fs/promises'
+import { access, readFile, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { AfterPackContext } from 'electron-builder'
+import { dump } from 'js-yaml'
 import {
   PACKAGE_MANAGER_ENTRY_SEGMENTS,
   PINNED_PACKAGE_MANAGER_VERSION,
@@ -23,10 +24,18 @@ const REQUIRED_WINDOWS_HOST_FILES = [
   ['node-pty', 'prebuilds', 'win32-x64', 'conpty.node'],
 ] as const
 
+interface GenericUpdateConfiguration {
+  readonly provider: 'generic'
+  readonly url: string
+  readonly updaterCacheDirName: string
+  readonly channel?: string
+}
+
 /**
- * Verify the Host files required before the signed application can start.
+ * Verify the Host files required before the application can start and write the
+ * updater configuration for every target, including unpacked preview builds.
  * @param context - Electron Builder's completed application directory.
- * @returns A promise that rejects when a staged Host entrypoint is absent.
+ * @returns A promise that rejects when the runtime or generic HTTPS update provider is invalid.
  */
 export async function afterPack(context: AfterPackContext): Promise<void> {
   const resources = context.electronPlatformName === 'darwin'
@@ -52,6 +61,41 @@ export async function afterPack(context: AfterPackContext): Promise<void> {
       throw new Error('Windows x64 Sharp native module is missing from the packaged Host runtime')
     }
   }
+  await writeFile(
+    join(resources, 'app-update.yml'),
+    dump(resolveUpdateConfiguration(context), { lineWidth: -1, noRefs: true }),
+  )
+}
+
+function resolveUpdateConfiguration(context: AfterPackContext): GenericUpdateConfiguration {
+  const configured: unknown = context.packager.config.publish
+  const candidate = Array.isArray(configured) ? configured[0] : configured
+  if (!isRecord(candidate) || candidate.provider !== 'generic' || typeof candidate.url !== 'string') {
+    throw new Error('packaged desktop requires one generic HTTPS update provider')
+  }
+  let url: URL
+  try {
+    url = new URL(candidate.url)
+  } catch {
+    throw new Error('packaged desktop update provider URL is invalid')
+  }
+  if (url.protocol !== 'https:') {
+    throw new Error('packaged desktop update provider must use HTTPS')
+  }
+  const channel = candidate.channel
+  if (channel !== undefined && channel !== null && typeof channel !== 'string') {
+    throw new Error('packaged desktop update channel must be a string')
+  }
+  return {
+    provider: 'generic',
+    url: url.href.replace(/\/$/, ''),
+    updaterCacheDirName: context.packager.appInfo.updaterCacheDirName,
+    ...(typeof channel === 'string' ? { channel } : {}),
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 export default afterPack
