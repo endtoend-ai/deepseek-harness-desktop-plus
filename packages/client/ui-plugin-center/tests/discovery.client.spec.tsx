@@ -89,12 +89,28 @@ function props(values: Partial<PluginDiscoveryPageProps> = {}): PluginDiscoveryP
     getOperation: async () => null,
     onOperationState: () => () => {},
     openPluginCenter: () => {},
+    findWithAgent: async () => 'sent',
     t,
     ...values,
   }
 }
 
 describe('Plugin Discovery page', () => {
+  it('hands a natural-language requirement to the Agent plugin finder', async () => {
+    const findWithAgent = vi.fn<PluginDiscoveryPageProps['findWithAgent']>(async () => 'needs-model')
+    render(<PluginDiscoveryPage {...props({ findWithAgent })} />)
+
+    expect(await screen.findByRole('heading', { name: zh.agentFinderTitle })).toBeTruthy()
+    const input = screen.getByRole('textbox', { name: zh.agentFinderPlaceholder })
+    fireEvent.change(input, { target: { value: '帮我自动整理 PDF 并生成摘要' } })
+    fireEvent.click(screen.getByRole('button', { name: zh.agentFinderAction }))
+
+    await waitFor(() => {
+      expect(findWithAgent).toHaveBeenCalledWith('帮我自动整理 PDF 并生成摘要')
+    })
+    expect(await screen.findByText(zh.agentFinderNeedsModel)).toBeTruthy()
+  })
+
   it('arranges real catalog sections as featured, recent, popular, and capability categories', async () => {
     render(<PluginDiscoveryPage {...props()} />)
 

@@ -1,5 +1,5 @@
 import {
-  useEffect, useMemo, useRef, useState, type ReactNode,
+  useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode,
 } from 'react'
 import {
   Button, IconCheckOutline14, IconCloseOutline16, IconRefreshOutline16,
@@ -46,7 +46,11 @@ export interface PluginDiscoveryInjected {
   readonly getOperation: () => Promise<PluginOperationSnapshot | null>
   readonly onOperationState: (listener: (operation: PluginOperationSnapshot) => void) => () => void
   readonly openPluginCenter: () => void
+  readonly findWithAgent: (requirement: string) => Promise<AgentPluginFinderResult>
 }
+
+/** Result of handing one discovery requirement to the current Agent session. */
+export type AgentPluginFinderResult = 'sent' | 'needs-model' | 'session-starting'
 
 /** Full props assembled by the independent Plugin Discovery page renderer. */
 export type PluginDiscoveryPageProps =
@@ -562,10 +566,68 @@ function DetailDrawer({
 
 const SKELETONS = [0, 1, 2, 3, 4, 5] as const
 
+type AgentFinderState = 'idle' | 'submitting' | 'needs-model' | 'session-starting' | 'error'
+
+/** Natural-language handoff into the bundled find-plugins skill. */
+function AgentPluginFinder({ findWithAgent, t }: {
+  readonly findWithAgent: PluginDiscoveryInjected['findWithAgent']
+  readonly t: Translator
+}) {
+  const [requirement, setRequirement] = useState('')
+  const [state, setState] = useState<AgentFinderState>('idle')
+  const submit = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault()
+    const value = requirement.trim()
+    if (value === '' || state === 'submitting') return
+    setState('submitting')
+    void findWithAgent(value).then(
+      (result) => {
+        setState(result === 'sent' ? 'idle' : result)
+      },
+      () => { setState('error') },
+    )
+  }
+  const feedback = state === 'needs-model'
+    ? t('agentFinderNeedsModel')
+    : state === 'session-starting'
+      ? t('agentFinderSessionStarting')
+      : state === 'error'
+        ? t('agentFinderError')
+        : null
+  return (
+    <section className={css.agentFinder} aria-labelledby="agent-plugin-finder-title">
+      <div className={css.agentFinderIcon} aria-hidden="true"><IconSparkle16 size={18} /></div>
+      <div className={css.agentFinderBody}>
+        <div className={css.agentFinderCopy}>
+          <h2 id="agent-plugin-finder-title">{t('agentFinderTitle')}</h2>
+          <p>{t('agentFinderDescription')}</p>
+        </div>
+        <form className={css.agentFinderForm} onSubmit={submit}>
+          <input
+            value={requirement}
+            placeholder={t('agentFinderPlaceholder')}
+            aria-label={t('agentFinderPlaceholder')}
+            maxLength={500}
+            onChange={(event) => {
+              setRequirement(event.currentTarget.value)
+              if (state !== 'submitting') setState('idle')
+            }}
+          />
+          <button type="submit" disabled={requirement.trim() === '' || state === 'submitting'}>
+            <IconSparkle16 size={14} aria-hidden="true" />
+            {t(state === 'submitting' ? 'agentFinderSubmitting' : 'agentFinderAction')}
+          </button>
+        </form>
+        {feedback === null ? null : <p className={css.agentFinderFeedback} role="status">{feedback}</p>}
+      </div>
+    </section>
+  )
+}
+
 /** Searchable editorial discovery page over the existing trusted Desktop catalog. */
 export function PluginDiscoveryPage({
   available, development, list, refresh, detail, checkCompatibility, listInstalled,
-  mutationsEnabled, install, getOperation, onOperationState, openPluginCenter, t,
+  mutationsEnabled, install, getOperation, onOperationState, openPluginCenter, findWithAgent, t,
 }: PluginDiscoveryPageProps): ReactNode {
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<DiscoveryMode>('overview')
@@ -840,6 +902,7 @@ export function PluginDiscoveryPage({
             <h1>{t('discoveryTitle')}</h1>
             <p>{t('discoveryIntro')}</p>
           </header>
+          <AgentPluginFinder findWithAgent={findWithAgent} t={t} />
           <label className={css.search}>
             <IconSearchOutline16 aria-hidden="true" />
             <span className={css.visuallyHidden}>{t('discoverySearch')}</span>

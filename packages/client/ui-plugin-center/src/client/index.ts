@@ -5,6 +5,8 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
 import { resolveCatalogBridge } from './bridge.ts'
 import { PluginCenterNavItem, type PluginCenterNavInjected } from './PluginCenterNavItem.tsx'
 import { PluginCenterTab, type PluginCenterTabInjected } from './PluginCenterTab.tsx'
@@ -26,7 +28,9 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 /** Dictionary namespace owned by this plugin. */
 export const NS = 'pluginCenter'
 /** Services used by the slot contribution. */
-export const inject = ['slots', 'layout', 'locale', 'settingsNavigation']
+export const inject = [
+  'slots', 'layout', 'locale', 'settingsNavigation', 'sessions', 'workspaces', 'connection',
+]
 
 const PLUGIN_CENTER_PAGE_ID = 'plugin-center'
 const PLUGIN_DISCOVERY_PAGE_ID = 'plugin-discovery'
@@ -85,6 +89,28 @@ export function apply(ctx: ClientContext): void {
     getOperation: () => bridge === undefined ? Promise.resolve(null) : bridge.pluginOperations.getOperation(),
     onOperationState: listener => bridge === undefined ? () => {} : bridge.pluginOperations.onState(listener),
     openPluginCenter: () => { ctx.layout.openPrimaryPage(PLUGIN_CENTER_PAGE_ID) },
+    findWithAgent: async (requirement) => {
+      const sessionId = ctx.sessions.list.getSnapshot().current
+      if (sessionId === undefined) {
+        ctx.workspaces.startSession()
+        return 'session-starting'
+      }
+      const connection = ctx.get('connection') as ConnectionHandle | undefined
+      if (connection === undefined) throw new Error('Agent connection unavailable')
+      const described = await connection.api.credentials.describe({ refs: ['DEEPSEEK_API_KEY'] })
+      if (!described.result.ok) throw new Error(described.result.error.message)
+      if (described.result.value.credentials['DEEPSEEK_API_KEY']?.configured !== true) {
+        ctx.settingsNavigation.open({ sectionId: 'models' })
+        return 'needs-model'
+      }
+      const agentContext = ctx.sessions.scope(sessionId)
+      if (agentContext === undefined || agentContext.get('conversation') === undefined) {
+        throw new Error('Agent session unavailable')
+      }
+      await agentContext.conversation.send(`/find-plugins ${requirement}`)
+      ctx.layout.closePrimaryPage(PLUGIN_DISCOVERY_PAGE_ID)
+      return 'sent'
+    },
   })
 
   ctx.slots.inject('sidebar.primary.action', () => ctx.slots.register({

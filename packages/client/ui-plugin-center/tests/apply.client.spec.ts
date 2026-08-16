@@ -24,9 +24,20 @@ async function bench(withBridge: boolean) {
   const locale = new LocaleRuntime(ctx)
   const layout = { openPrimaryPage: vi.fn(), closePrimaryPage: vi.fn() }
   const settingsNavigation = { open: vi.fn(), subscribe: vi.fn(() => () => {}) }
+  const conversation = { send: vi.fn(async () => {}) }
+  const agentContext = { get: vi.fn(() => conversation), conversation }
+  const sessions = {
+    list: { getSnapshot: vi.fn<() => { current?: string }>(() => ({})) },
+    scope: vi.fn(() => agentContext),
+  }
+  const workspaces = { startSession: vi.fn() }
+  const connection = { api: { credentials: { describe: vi.fn() } } }
   ctx.provide('locale', locale)
   ctx.provide('layout', layout as never)
   ctx.provide('settingsNavigation', settingsNavigation as never)
+  ctx.provide('sessions', sessions as never)
+  ctx.provide('workspaces', workspaces as never)
+  ctx.provide('connection', connection as never)
   const list = vi.fn<PluginCenterTabInjected['list']>(async query => listResult(query))
   const refresh = vi.fn<PluginCenterTabInjected['refresh']>(async query => listResult(query))
   const detail = vi.fn(async () => ({
@@ -62,6 +73,7 @@ async function bench(withBridge: boolean) {
   }
   return {
     ctx, slots: ctx.get('slots') as SlotRegistry, locale, layout, settingsNavigation,
+    sessions, workspaces, connection, conversation,
     list, refresh, detail, checkCompatibility, listInstalled, install, manage, getOperation, onState,
     getOwnedDataOffer, removeOwnedData, retainOwnedData,
   }
@@ -83,7 +95,9 @@ describe('ui-plugin-center browser plugin', () => {
     declare(b.slots)
     await b.ctx.plugin({ inject: [...inject], apply }).await()
 
-    expect(inject).toEqual(['slots', 'layout', 'locale', 'settingsNavigation'])
+    expect(inject).toEqual([
+      'slots', 'layout', 'locale', 'settingsNavigation', 'sessions', 'workspaces', 'connection',
+    ])
     const navs = b.slots.entries('sidebar.primary.action')
     const pages = b.slots.entries('main.page')
     const nav = navs.find(entry => entry.options.id === 'plugin-center')!
@@ -161,6 +175,22 @@ describe('ui-plugin-center browser plugin', () => {
     stopDiscovery()
     discoveryFace.openPluginCenter()
     expect(b.layout.openPrimaryPage).toHaveBeenLastCalledWith('plugin-center')
+    await expect(discoveryFace.findWithAgent('帮我找 PDF 插件')).resolves.toBe('session-starting')
+    expect(b.workspaces.startSession).toHaveBeenCalledOnce()
+
+    b.sessions.list.getSnapshot.mockReturnValue({ current: 'session-1' })
+    b.connection.api.credentials.describe.mockResolvedValue({
+      result: { ok: true, value: { credentials: { DEEPSEEK_API_KEY: { configured: false } } } },
+    })
+    await expect(discoveryFace.findWithAgent('帮我找 PDF 插件')).resolves.toBe('needs-model')
+    expect(b.settingsNavigation.open).toHaveBeenLastCalledWith({ sectionId: 'models' })
+
+    b.connection.api.credentials.describe.mockResolvedValue({
+      result: { ok: true, value: { credentials: { DEEPSEEK_API_KEY: { configured: true } } } },
+    })
+    await expect(discoveryFace.findWithAgent('帮我找 PDF 插件')).resolves.toBe('sent')
+    expect(b.conversation.send).toHaveBeenCalledWith('/find-plugins 帮我找 PDF 插件')
+    expect(b.layout.closePrimaryPage).toHaveBeenLastCalledWith('plugin-discovery')
     await b.ctx.fiber.dispose()
   })
 

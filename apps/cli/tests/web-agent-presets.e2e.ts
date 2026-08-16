@@ -365,9 +365,14 @@ describe('the shipped Web composition', () => {
 
       // The standard agent's view merges the global layer with its preset's
       // own local discovery over the session cwd.
-      const scoped = (await ctx.skills.list({ cwd: proj, scope: handle.agent })).map(skill => skill.name)
-      expect(scoped).toContain('dsh-badge')
-      expect(scoped).toContain('project-proof')
+      const scoped = await ctx.skills.list({ cwd: proj, scope: handle.agent })
+      expect(scoped.map(skill => skill.name)).toContain('dsh-badge')
+      expect(scoped.map(skill => skill.name)).toContain('find-plugins')
+      expect(scoped.map(skill => skill.name)).toContain('project-proof')
+      expect(scoped.find(skill => skill.name === 'find-plugins')?.invocation).toEqual({
+        modelInvocable: false,
+        userInvocable: true,
+      })
 
       // The preset's own loader tool resolves the global-layer skill.
       const loaded = await ctx.tools.execute({
