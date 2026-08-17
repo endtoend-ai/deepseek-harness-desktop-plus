@@ -602,6 +602,29 @@ describe('unary round trip (handler ⇄ client, no network)', () => {
   })
 })
 
+describe('Preset archive carrier', () => {
+  it('keeps binary Preset import outside the JSON RPC map and forwards only bounded closed options', async () => {
+    const api = fakeApi()
+    const importer = vi.fn(async (
+      data: Uint8Array,
+      options: { readonly targetId?: string; readonly install: boolean },
+    ) => Response.json({ ok: true, bytes: data.length, ...options }))
+    api.agentPresets.importArchive = importer
+    const response = await toFetchHandler(api).fetch(new Request(
+      'http://127.0.0.1/api/agent-preset.import?targetId=my-preset&install=1',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/vnd.dsh.preset+zip', 'content-length': '4' },
+        body: new Uint8Array([0x50, 0x4b, 0x03, 0x04]),
+      },
+    ))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ ok: true, bytes: 4, targetId: 'my-preset', install: true })
+    expect(importer).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('handler carrier-layer statuses', () => {
   const handler = toFetchHandler(fakeApi())
 

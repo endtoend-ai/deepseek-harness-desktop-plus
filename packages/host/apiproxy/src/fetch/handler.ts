@@ -71,6 +71,7 @@ import {
   subagentListRequestSchema,
   subagentPromptRequestSchema,
 } from '../api/subagents.schema.ts'
+import { PRESET_ARCHIVE_MAX_COMPRESSED, PRESET_ARCHIVE_MIME } from '../preset-archive.ts'
 
 /**
  * Unary dispatch table, keyed by (and compiler-locked to) RpcMethodMap: a map row without a
@@ -272,6 +273,34 @@ export function toFetchHandler(api: ApiProxy): { fetch: typeof fetch } {
         if (req.method === 'GET') return response
         await response.body?.cancel()
         return new Response(null, { status: response.status, headers: response.headers })
+      }
+      if (path === '/api/agent-preset.import' && req.method === 'POST') {
+        const contentType = req.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase()
+        if (contentType !== PRESET_ARCHIVE_MIME && contentType !== 'application/zip'
+          && contentType !== 'application/octet-stream') {
+          return Response.json({ ok: false, error: 'Content type must be a DSH preset package.' }, { status: 415 })
+        }
+        const contentLength = Number(req.headers.get('content-length'))
+        if (Number.isFinite(contentLength) && contentLength > PRESET_ARCHIVE_MAX_COMPRESSED) {
+          return Response.json({ ok: false, error: 'Preset package is larger than 16 MB.' }, { status: 413 })
+        }
+        if (api.agentPresets.importArchive === undefined) {
+          return Response.json({ ok: false, error: 'Preset package import is unavailable.' }, { status: 503 })
+        }
+        let data: Uint8Array
+        try {
+          data = new Uint8Array(await req.arrayBuffer())
+        } catch {
+          return Response.json({ ok: false, error: 'Could not read the preset package.' }, { status: 400 })
+        }
+        if (data.length > PRESET_ARCHIVE_MAX_COMPRESSED) {
+          return Response.json({ ok: false, error: 'Preset package is larger than 16 MB.' }, { status: 413 })
+        }
+        const targetId = url.searchParams.get('targetId') ?? undefined
+        return await api.agentPresets.importArchive(data, {
+          ...targetId === undefined ? {} : { targetId },
+          install: url.searchParams.get('install') === '1',
+        }, req.signal)
       }
 
       if (req.method !== 'POST' || !path.startsWith('/api/')) {

@@ -75,6 +75,8 @@ import {
   type DesktopLifecycle,
 } from './window-lifecycle.ts'
 import { reloadWithHeldFrame, type HeldReloadFrame } from './window-reload-transition.ts'
+import { PresetSquareClient } from './preset-square/client.ts'
+import { ResourcePresetSquareCatalog } from './preset-square/bundled-catalog.ts'
 
 const APP_NAME = 'DeepSeek Harness'
 const WINDOW_WIDTH = 1440
@@ -170,6 +172,12 @@ function recoveryPageUrl(): string {
     ? join(process.resourcesPath, 'desktop-resources/recovery.html')
     : join(DESKTOP_DIR, 'resources/recovery.html')
   return pathToFileURL(path).href
+}
+
+function bundledPresetRoot(): string {
+  return app.isPackaged
+    ? join(process.resourcesPath, 'desktop-resources/preset-square/presets')
+    : join(DESKTOP_DIR, 'resources/preset-square/presets')
 }
 
 function isRecoveryPageUrl(raw: string): boolean {
@@ -361,6 +369,12 @@ function registerDesktopBridge(): PluginCenterBackend {
     Date.now,
     userDataDirectory,
   )
+  const presetSquare = new PresetSquareClient(
+    fetch,
+    Date.now,
+    currentHostOrigin,
+    new ResourcePresetSquareCatalog(bundledPresetRoot()),
+  )
   const paths = hostPaths()
   const systemComponents = deriveProtectedSystemComponents(paths.shippedBundleManifests)
   const readFingerprint = (
@@ -459,6 +473,22 @@ function registerDesktopBridge(): PluginCenterBackend {
   ipcMain.handle(DESKTOP_CHANNELS.catalogCheckCompatibility, (event, value: unknown) => {
     assertDesktopSender(event)
     return compatibility.check(value)
+  })
+  ipcMain.handle(DESKTOP_CHANNELS.presetSquareList, (event, value: unknown) => {
+    assertDesktopSender(event)
+    return presetSquare.list(value)
+  })
+  ipcMain.handle(DESKTOP_CHANNELS.presetSquareDetail, (event, value: unknown) => {
+    assertDesktopSender(event)
+    return presetSquare.detail(value)
+  })
+  ipcMain.handle(DESKTOP_CHANNELS.presetSquarePreviewInstall, (event, value: unknown) => {
+    assertDesktopSender(event)
+    return presetSquare.previewInstall(value)
+  })
+  ipcMain.handle(DESKTOP_CHANNELS.presetSquareInstall, (event, value: unknown) => {
+    assertDesktopSender(event)
+    return presetSquare.install(value)
   })
   ipcMain.handle(DESKTOP_CHANNELS.installedPluginsList, async (event) => {
     assertDesktopSender(event)

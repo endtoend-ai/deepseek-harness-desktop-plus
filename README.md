@@ -11,6 +11,7 @@
   <img src="https://img.shields.io/badge/Desktop-App-2563EB" alt="Desktop App">
   <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
   <img src="https://img.shields.io/badge/Plugin%20Center-online-22C55E" alt="公开插件中心已上线">
+  <img src="https://img.shields.io/badge/Preset%20Square-online-6366F1" alt="Preset 广场已上线">
   <img src="https://img.shields.io/badge/Vision-Qwen3.8-7C3AED" alt="Qwen3.8 视觉增强">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-studio?color=22C55E" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
@@ -38,18 +39,19 @@ https://github.com/user-attachments/assets/0717f7c7-a872-4d2b-acc2-3a1c4874c732
 
 ## 先看功能：当前能力与近期路线图
 
-> 状态说明：✅ 已支持；🗓️ 规划中。桌面开发工作区、公开插件中心和中文 DeepSeek 控制已经可用；规划能力会在真实功能可运行后更新状态。
+> 状态说明：✅ 已支持；🗓️ 规划中。桌面开发工作区、公开插件中心、Preset 广场和中文 DeepSeek 控制已经可用；规划能力会在真实功能可运行后更新状态。
 
 | 能力 | 状态 | 可以做什么 |
 | --- | --- | --- |
 | **插件发现与热门推荐** | ✅ | 自动读取公开目录，按精选、最近更新、生态热门和使用场景呈现值得关注的插件，并支持按名称、功能或作者搜索。 |
 | **公开插件中心** | ✅ | 查看确定版本、能力、权限、兼容性与风险，一键在线安装，并集中管理插件的启用、停用、更新和卸载。 |
+| **Preset 广场与内置工作流** | ✅ | 浏览赋范官方与社区 Agent Preset，查看能力组成后完成一键安装，并从“已安装”直接用于新会话；当前内置六套真实场景工作流。 |
 | **桌面开发工作区** | ✅ | 在本地打开项目、管理会话与工作区，调用 Harness 的模型、工具、Skills 和插件能力，并直接修改完整源码。 |
 | **视觉增强** | ✅ | 为 DeepSeek 文本工作流补齐图像理解：读取对话附件和工作区图片，再把可追溯的识别结果交给 Agent。 |
 | **中文 DeepSeek 控制** | ✅ | 使用中文权限选项和适配 DeepSeek 的思考模式，在输入区直接完成会话级选择。 |
 | **内置皮肤与自由换肤** | ✅ | 默认使用“大肥鱼拟人”皮肤，可切换“官方原版”或“云端猫咪”，也可选择本地图片并自动适配界面配色。 |
 | **独立 MCP、Skills 与工具管理** | 🗓️ | 后续提供不依赖 Bundle 包装的 MCP Server、Skills 与工具发现和连接管理，按项目自由组合 Agent 能力。 |
-| **Agent 预设与多 Agent 协作** | 🗓️ | 自定义 Agent 与子 Agent，把编码、测试、调研和审查任务交给不同角色协同完成。 |
+| **自定义 Agent 与多 Agent 协作** | 🗓️ | 在现有 Preset 安装和使用能力之上，自定义 Agent 与子 Agent，把编码、测试、调研和审查任务交给不同角色协同完成。 |
 | **任务规划、后台运行与会话恢复** | 🗓️ | 管理计划和待办，让长任务在后台继续运行，并随时查看进度或接续历史会话。 |
 | **项目规则、Hooks 与长期记忆** | 🗓️ | 集中管理项目指令、自动化 Hooks 和可持续复用的上下文，让 Agent 按仓库规则稳定工作。 |
 | **Git、Worktree 与代码审查** | 🗓️ | 在隔离工作区并行开发，查看 Diff、提交和审查结果，减少多人或多任务互相干扰。 |
@@ -70,6 +72,7 @@ DeepSeek Harness Studio 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 - **插件发现与推荐**：自动读取在线目录，通过精选、最近更新、生态热门、场景分类和搜索，帮助用户快速找到值得尝试的插件。
 - **Agent 智能找插件**：用一句自然语言描述需求，Agent 自动检索公开 `dsh-plugin` 目录、筛选相关候选并说明推荐理由。
 - **公开插件中心**：在线搜索 npm 公共 `dsh-plugin` 生态，在安装前校验确定版本、产物完整性、Bundle 声明和本机兼容性，并在已安装区域管理启用、停用与卸载。
+- **Preset 广场**：从独立一级页面浏览赋范官方与社区 Agent Preset，查看 Skill、工具和环境要求后安全安装，并从已安装列表直接用于新会话。
 - **对话区视觉增强**：一键启用百炼 Qwen3.8 图像理解，支持截图、照片、图表、OCR 和工作区图片，不替换当前 DeepSeek 主模型。
 - **桌面外观设置**：内置“官方原版”“大肥鱼拟人”和“云端猫咪”三套外观，也支持本地背景图片、主体焦点和界面玻璃层调节。
 - **完整开发源码**：仓库同时包含桌面应用、Web 界面、CLI、功能包、原生辅助模块、Python SDK、示例和构建脚本。
@@ -116,6 +119,125 @@ DeepSeek Harness Studio 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 - **一键安装**：下载确定版本并校验包身份、完整性和 Bundle 声明；确认后自动安装并重启 Harness Host 验证运行状态。
 - **已安装管理**：集中查看系统、公开目录和本地来源，通过三点菜单启用、停用、更新或卸载插件。
 - **安全移除**：卸载默认保留配置与插件数据；需要清理数据时，再由用户单独确认。
+
+## Preset 广场已上线：一键安装完整工作方式
+
+插件通常解决“让 Agent 多一个工具”，Skill 解决“教 Agent 按什么方法做”，而 **Agent Preset** 解决的是更完整的问题：把角色、工作规则、Skills、Plugin/MCP 与 Harness 标准工具组合成一套可以反复使用的工作方式。用户不需要逐项理解和手工配置，安装一个 Preset 后，就能直接用对应角色创建新会话。
+
+| 能力层 | 它是什么 | 主要解决什么 |
+| --- | --- | --- |
+| **Skill** | 可复用的方法、步骤与约束 | 告诉 Agent 一类任务应该“怎么做” |
+| **Plugin / MCP** | 可执行工具或外部服务连接 | 让 Agent 能真实读写系统、调用服务并完成动作 |
+| **Agent Preset** | 角色、Skill、工具与运行规则的组合 | 把零散能力装配成一套开箱即用的数字员工或工作流 |
+
+当前源码已经提供与“插件中心”“插件发现”平级的 **Preset 广场**，并完成发现、详情、安全安装、已安装管理、用于新会话、删除与重新安装的桌面端闭环。
+
+<p align="center">
+  <img src="assets/presets/preset-square-desktop.png" alt="DeepSeek Harness Studio Preset 广场真实桌面界面，展示六套赋范官方内置工作流" width="100%">
+  <br><sub>真实 Desktop 界面：Preset 广场、赋范官方内置目录、搜索与排序，以及安装、查看详情和用于新会话入口。</sub>
+</p>
+
+> **使用路径：** 发现 Preset → 查看能力组成与前置条件 → 一键安装 → 在“已安装”中选择“用于新会话” → 按工作流完成任务 → 随时删除或重新安装。
+
+1. 从左侧导航进入 **Preset 广场**，可搜索用途、名称或作者，并按下载量或更新时间排序。
+2. 打开详情查看它包含的角色、Skill、工具、外部依赖和来源说明。
+3. 点击安装后，Desktop 会校验来源、大小、摘要和归档路径，再写入本地用户 Preset 目录。
+4. 安装完成后无需重启 Host；在 **已安装** 中点击“用于新会话”，即可带着对应 Preset 开始任务。
+5. 用户 Preset 可删除并重新安装；系统 Preset 继续受保护。安装或删除后仍停留在当前页面，不打断浏览过程。
+
+> 安装、删除和用于新会话涉及本机文件与 Host，只在 Desktop 中执行；浏览器开发模式用于快速查看和验收界面，不会修改本机 Preset。
+
+## 赋范官方内置 Preset：六套真实场景工作流
+
+首批内置内容不是“六个插件合集”，而是六套围绕真实交付结果组织的 **Agent Preset + Skills + 工具集成**。合计包含 **6 套 Agent Preset、8 个 Skills、1 个图像生成 Plugin**；飞书数字员工另外接入飞书 MCP 与时间解析 MCP，PPT Office 使用内置动效运行适配器。
+
+> **命名说明：** “赋范官方”表示由赋范桌面端开发团队内置和维护，不代表 DeepSeek Harness 官方。它们安装后仍是普通用户 Preset，可以删除并重新安装。
+
+| 分类 | 内置 Preset | 能力组成 | 直接交付 |
+| --- | --- | --- | --- |
+| 产品与应用开发 | AI WebApp | 1 Preset + 3 Skills | 从需求澄清、规格整理到 TDD 验收的可运行 Web 产品 |
+| 办公与演示 | PPT Office | 1 Preset + 1 Skill + 动效运行适配器 | 8 页、四主题、可交互的单文件 HTML 演示文稿 |
+| 视觉与媒体 | 视频生成 | 1 Preset + 1 Skill | 从一句话调研、分镜到渲染完成的 16:9 MP4 |
+| 内容生产 | 内容工厂 | 1 Preset + 1 Skill + 1 图像生成 Plugin | 从长文分析到 1–10 张风格一致的图文卡片 |
+| 数据分析 | AI 报表 | 1 Preset + 1 Skill | 从本地 Excel 生成可核验的离线交互报告 |
+| 企业协同 | 飞书数字员工 | 1 Preset + 1 Skill + 飞书 MCP + 时间解析 MCP | 从自然语言指令到真实飞书任务与双端回执 |
+
+### 产品与演示：把想法变成可交付成果
+
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="assets/presets/ai-webapp.png" alt="AI WebApp Preset 生成的创作指挥舱"></td>
+    <td width="50%" align="center"><img src="assets/presets/ppt-office.png" alt="PPT Office Preset 生成的动效 HTML 演示文稿"></td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <strong>01 · AI WebApp</strong><br>
+      <strong>解决什么：</strong>需求讨论结束后，仍不知道如何稳定落成一个可运行、可测试的 Web 产品。<br>
+      <strong>功能逻辑：</strong>需求澄清 → 规格整理 → TDD 纵向开发 → 类型检查、构建与浏览器验收。<br>
+      <strong>能力组成：</strong><code>grill-me</code>、<code>to-spec</code>、<code>tdd</code> 3 个 Skills + 专属产品开发 Preset。<br>
+      <strong>示例结果：</strong>可启动、可拖拽、可更新数据的“创作指挥舱”WebApp。
+    </td>
+    <td valign="top">
+      <strong>02 · PPT Office</strong><br>
+      <strong>解决什么：</strong>只有主题和内容大纲时，快速形成结构完整、视觉统一、可离线播放的演示成果。<br>
+      <strong>功能逻辑：</strong>保存原始内容 → 组织 8 页叙事大纲 → 选择主题并生成 → 确定性检查页数、动画与离线性。<br>
+      <strong>能力组成：</strong>1 个动效演示 Skill + 专属导演 Preset + 内置动效运行适配器。<br>
+      <strong>示例结果：</strong>四套主题、逐页语义动画的单文件 HTML；当前明确不生成 <code>.pptx</code>。
+    </td>
+  </tr>
+</table>
+
+### 内容与媒体：把一句话或一篇长文变成成品
+
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="assets/presets/video-generation.jpg" alt="视频生成 Preset 完成的 DeepSeek Harness 产品发布片分镜联系表"></td>
+    <td width="50%" align="center"><img src="assets/presets/content-factory.jpg" alt="内容工厂 Preset 生成的九张系列图文卡片"></td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <strong>03 · 视频生成</strong><br>
+      <strong>解决什么：</strong>只有一句产品想法时，仍能建立从事实调研到正式成片的完整生产链。<br>
+      <strong>功能逻辑：</strong>四维 Web 检索 → 研究与简报 → 设计规范、分镜和视频源码 → HyperFrames 检查 → FFmpeg 渲染与媒体验收。<br>
+      <strong>能力组成：</strong>1 个产品发布片 Skill + 专属视频导演 Preset。<br>
+      <strong>示例结果：</strong>可编辑视频工程、联系表和 16:9 MP4；运行环境需要 FFmpeg 与 ffprobe。
+    </td>
+    <td valign="top">
+      <strong>04 · 内容工厂</strong><br>
+      <strong>解决什么：</strong>把一篇长文稳定拆解成风格统一、可以连续发布的系列视觉内容。<br>
+      <strong>功能逻辑：</strong>分析受众与观点 → 确认风格、布局和配色 → 编写系列大纲与逐图提示 → 生成 1–10 张图片 → 校验尺寸、页数与一致性。<br>
+      <strong>能力组成：</strong>1 个图文 Skill + 专属内容视觉 Preset + Codex ImageGen Bridge Plugin。<br>
+      <strong>示例结果：</strong>9 张连续图文卡片；真实生图前需要本机 Codex CLI 已登录并具备 ImageGen 能力。
+    </td>
+  </tr>
+</table>
+
+### 数据与企业协同：从本地数据到真实业务动作
+
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="assets/presets/ai-report.png" alt="AI 报表 Preset 从 Excel 生成的 Epoch AI 模型趋势交互报告"></td>
+    <td width="50%" align="center"><img src="assets/presets/feishu-digital-employee.png" alt="飞书数字员工从 Harness 指令、MCP 调用、飞书回执到任务落地的四步闭环"></td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <strong>05 · AI 报表</strong><br>
+      <strong>解决什么：</strong>把本地 Excel 从“原始表格”转成结构清晰、可追溯、可直接交付的数据叙事。<br>
+      <strong>功能逻辑：</strong>只读核对工作簿与数据基线 → 清洗聚合 → 选择图表叙事 → 内联 ECharts 生成 → 桌面与移动双端验收。<br>
+      <strong>能力组成：</strong>1 个 Excel 报表 Skill + 专属数据分析 Preset。<br>
+      <strong>示例结果：</strong>不依赖 CDN 的单文件交互 HTML，原始 Excel 保持只读，报告只嵌入聚合数据。
+    </td>
+    <td valign="top">
+      <strong>06 · 飞书数字员工</strong><br>
+      <strong>解决什么：</strong>让对话不止返回文字，而是把一句自然语言真正变成企业协作系统中的任务。<br>
+      <strong>功能逻辑：</strong>Harness Desktop 或飞书接收指令 → Skill 判断动作 → 时间 MCP 解析“明天下午 6 点” → 飞书官方 MCP 创建任务 → Harness 与飞书双端返回回执。<br>
+      <strong>能力组成：</strong>1 个飞书 Skill + 专属数字员工 Preset + 飞书 MCP + 时间解析 MCP。<br>
+      <strong>示例结果：</strong>真实飞书任务、负责人和截止时间均可查看；首次使用需要配置飞书应用凭据与默认负责人。
+    </td>
+  </tr>
+</table>
+
+以上图片均来自六套工作流的真实案例成果。Desktop 随安装包交付的是运行所需的精简 Preset、Skills 与工具适配，不会把案例源码、输入数据、截图或生成成品塞进用户环境。
 
 ## 内置皮肤与自由换肤
 

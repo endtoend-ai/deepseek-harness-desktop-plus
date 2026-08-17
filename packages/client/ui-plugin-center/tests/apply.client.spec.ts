@@ -9,6 +9,8 @@ import { PluginCenterNavItem, type PluginCenterNavInjected } from '../src/client
 import { PluginCenterTab, type PluginCenterTabInjected } from '../src/client/PluginCenterTab.tsx'
 import { PluginDiscoveryNavItem, type PluginDiscoveryNavInjected } from '../src/client/PluginDiscoveryNavItem.tsx'
 import { PluginDiscoveryPage, type PluginDiscoveryInjected } from '../src/client/PluginDiscoveryPage.tsx'
+import { PresetSquareNavItem, type PresetSquareNavInjected } from '../src/client/PresetSquareNavItem.tsx'
+import { PresetSquarePage, type PresetSquarePageInjected } from '../src/client/PresetSquarePage.tsx'
 import { compatibilityDecision, installedListResult, listResult } from './fixtures.ts'
 
 usePinnedBrowserLanguages('zh-CN')
@@ -29,9 +31,29 @@ async function bench(withBridge: boolean) {
   const sessions = {
     list: { getSnapshot: vi.fn<() => { current?: string }>(() => ({})) },
     scope: vi.fn(() => agentContext),
+    noteAgentPreset: vi.fn(),
+    open: vi.fn(),
   }
-  const workspaces = { startSession: vi.fn() }
-  const connection = { api: { credentials: { describe: vi.fn() } } }
+  const workspaces = {
+    startSession: vi.fn(),
+    list: { getSnapshot: vi.fn(() => ({
+      items: [{ workspaceId: 'workspace-1', path: '/workspace', sessionIds: ['session-1'] }],
+      recentWorkspaceId: 'workspace-1',
+    })) },
+    connectWorkspace: vi.fn(async () => 'session-1'),
+  }
+  const connection = { api: {
+    credentials: { describe: vi.fn() },
+    agentPresets: {
+      list: vi.fn(async () => ({
+        result: { ok: true as const, value: { presets: [], authorable: true, hasDocument: true } },
+      })),
+      remove: vi.fn(async () => ({ result: { ok: true as const, value: {} } })),
+      select: vi.fn(async (request: { agentPreset: string }) => ({
+        result: { ok: true as const, value: { agentPreset: request.agentPreset } },
+      })),
+    },
+  } }
   ctx.provide('locale', locale)
   ctx.provide('layout', layout as never)
   ctx.provide('settingsNavigation', settingsNavigation as never)
@@ -61,6 +83,12 @@ async function bench(withBridge: boolean) {
     pluginId: request.pluginId,
     retained: true as const,
   }))
+  const listPresetSquare = vi.fn(async () => ({
+    items: [], total: 0, sort: 'downloads' as const, fetchedAt: '2026-08-17T08:00:00.000Z',
+  }))
+  const detailPresetSquare = vi.fn(async () => ({ item: null, fetchedAt: '2026-08-17T08:00:00.000Z' }))
+  const previewPresetInstall = vi.fn(async () => { throw new Error('not used') })
+  const installPreset = vi.fn(async () => { throw new Error('not used') })
   if (withBridge) {
     Object.defineProperty(window, 'dshDesktop', {
       configurable: true,
@@ -69,6 +97,13 @@ async function bench(withBridge: boolean) {
         installedPlugins: { list: listInstalled },
         pluginOperations: { mutationsEnabled: false, install, manage, getOperation, onState },
         pluginOwnedData: { getOffer: getOwnedDataOffer, remove: removeOwnedData, retain: retainOwnedData },
+        presetSquare: {
+          mutationsEnabled: true,
+          list: listPresetSquare,
+          detail: detailPresetSquare,
+          previewInstall: previewPresetInstall,
+          install: installPreset,
+        },
       },
     })
   }
@@ -77,6 +112,7 @@ async function bench(withBridge: boolean) {
     sessions, workspaces, connection, conversation,
     list, refresh, detail, checkCompatibility, listInstalled, install, manage, getOperation, onState,
     getOwnedDataOffer, removeOwnedData, retainOwnedData,
+    listPresetSquare, detailPresetSquare, previewPresetInstall, installPreset,
   }
 }
 
@@ -91,7 +127,7 @@ function declare(slots: SlotRegistry): () => void {
 }
 
 describe('ui-plugin-center browser plugin', () => {
-  it('registers localized Plugin Center and Plugin Discovery pages', async () => {
+  it('registers Plugin Center, Plugin Discovery, and Preset Square as independent pages', async () => {
     const b = await bench(true)
     declare(b.slots)
     await b.ctx.plugin({ inject: [...inject], apply }).await()
@@ -103,20 +139,28 @@ describe('ui-plugin-center browser plugin', () => {
     const pages = b.slots.entries('main.page')
     const nav = navs.find(entry => entry.options.id === 'plugin-center')!
     const discoveryNav = navs.find(entry => entry.options.id === 'plugin-discovery')!
+    const presetNav = navs.find(entry => entry.options.id === 'preset-square')!
     const page = pages.find(entry => entry.options.key === 'plugin-center')!
     const discoveryPage = pages.find(entry => entry.options.key === 'plugin-discovery')!
+    const presetPage = pages.find(entry => entry.options.key === 'preset-square')!
     expect(nav.component).toBe(PluginCenterNavItem)
     expect(nav.options).toMatchObject({ id: 'plugin-center', order: 20 })
     expect(discoveryNav.component).toBe(PluginDiscoveryNavItem)
     expect(discoveryNav.options).toMatchObject({ id: 'plugin-discovery', order: 21 })
+    expect(presetNav.component).toBe(PresetSquareNavItem)
+    expect(presetNav.options).toMatchObject({ id: 'preset-square', order: 22 })
     expect(page.component).toBe(PluginCenterTab)
     expect(page.options).toMatchObject({ key: 'plugin-center' })
     expect(discoveryPage.component).toBe(PluginDiscoveryPage)
     expect(discoveryPage.options).toMatchObject({ key: 'plugin-discovery' })
+    expect(presetPage.component).toBe(PresetSquarePage)
+    expect(presetPage.options).toMatchObject({ key: 'preset-square' })
     expect(nav.locale).toBe(NS)
     expect(discoveryNav.locale).toBe(NS)
+    expect(presetNav.locale).toBe(NS)
     expect(page.locale).toBe(NS)
     expect(discoveryPage.locale).toBe(NS)
+    expect(presetPage.locale).toBe(NS)
 
     const navFace = (nav.inject as unknown as () => PluginCenterNavInjected)()
     navFace.open()
@@ -124,6 +168,9 @@ describe('ui-plugin-center browser plugin', () => {
     const discoveryNavFace = (discoveryNav.inject as unknown as () => PluginDiscoveryNavInjected)()
     discoveryNavFace.open()
     expect(b.layout.openPrimaryPage).toHaveBeenCalledWith('plugin-discovery')
+    const presetNavFace = (presetNav.inject as unknown as () => PresetSquareNavInjected)()
+    presetNavFace.open()
+    expect(b.layout.openPrimaryPage).toHaveBeenCalledWith('preset-square')
 
     const face = (page.inject as unknown as () => PluginCenterTabInjected)()
     expect(face.available).toBe(true)
@@ -159,6 +206,23 @@ describe('ui-plugin-center browser plugin', () => {
     expect(b.getOwnedDataOffer).toHaveBeenCalledOnce()
     expect(b.removeOwnedData).toHaveBeenCalledOnce()
     expect(b.retainOwnedData).toHaveBeenCalledOnce()
+    const presetFace = (presetPage.inject as unknown as () => PresetSquarePageInjected)()
+    expect(presetFace.presetAvailable).toBe(true)
+    expect(presetFace.presetDevelopment).toBe(false)
+    expect(presetFace.presetMutationsEnabled).toBe(true)
+    await presetFace.listPresetSquare({ query: '', sort: 'downloads' })
+    await presetFace.detailPresetSquare({ slug: 'fixture' })
+    await presetFace.listLocalPresets()
+    await presetFace.removeLocalPreset('mine')
+    await expect(presetFace.useLocalPreset('mine')).resolves.toBe('opened')
+    expect(b.listPresetSquare).toHaveBeenCalledOnce()
+    expect(b.detailPresetSquare).toHaveBeenCalledOnce()
+    expect(b.connection.api.agentPresets.list).toHaveBeenCalledOnce()
+    expect(b.connection.api.agentPresets.remove).toHaveBeenCalledWith({ agentPreset: 'mine' })
+    expect(b.connection.api.agentPresets.select).toHaveBeenCalledWith({ sessionId: 'session-1', agentPreset: 'mine' })
+    expect(b.sessions.noteAgentPreset).toHaveBeenCalledWith('session-1', 'mine')
+    expect(b.sessions.open).toHaveBeenCalledWith('session-1')
+    expect(b.layout.closePrimaryPage).toHaveBeenCalledWith()
 
     const discoveryFace = (discoveryPage.inject as unknown as () => PluginDiscoveryInjected)()
     expect(discoveryFace.available).toBe(true)
@@ -203,8 +267,8 @@ describe('ui-plugin-center browser plugin', () => {
     expect(b.slots.entries('main.page')).toHaveLength(0)
     const stop = declare(b.slots)
     await vi.waitFor(() => {
-      expect(b.slots.entries('sidebar.primary.action')).toHaveLength(2)
-      expect(b.slots.entries('main.page')).toHaveLength(2)
+      expect(b.slots.entries('sidebar.primary.action')).toHaveLength(3)
+      expect(b.slots.entries('main.page')).toHaveLength(3)
     })
     const pluginCenterPage = b.slots.entries('main.page').find(entry => entry.options.key === 'plugin-center')!
     const face = (pluginCenterPage.inject as unknown as () => PluginCenterTabInjected)()
@@ -215,12 +279,13 @@ describe('ui-plugin-center browser plugin', () => {
     stop()
     expect(b.slots.entries('main.page')).toHaveLength(0)
     declare(b.slots)
-    await vi.waitFor(() => { expect(b.slots.entries('main.page')).toHaveLength(2) })
+    await vi.waitFor(() => { expect(b.slots.entries('main.page')).toHaveLength(3) })
     b.locale.setLocale('en')
     await fiber.dispose()
     expect(b.slots.entries('main.page')).toHaveLength(0)
     expect(b.layout.closePrimaryPage).toHaveBeenCalledWith('plugin-center')
     expect(b.layout.closePrimaryPage).toHaveBeenCalledWith('plugin-discovery')
+    expect(b.layout.closePrimaryPage).toHaveBeenCalledWith('preset-square')
     await b.ctx.fiber.dispose()
   })
 

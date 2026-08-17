@@ -110,6 +110,11 @@ import {
   inspectApiRemoteSession,
 } from '@deepseek-ai/dsh-api-remotes'
 import { canOpenNativePath, openNativePath, openNativeTextFile } from './native-path-opener.ts'
+import {
+  importPresetArchive,
+  PresetArchiveError,
+  type PresetArchivePreview,
+} from './preset-archive.ts'
 
 /** Page size when history is called without maxMessages. */
 const DEFAULT_MAX_MESSAGES = 50
@@ -3072,6 +3077,28 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
     },
 
     agentPresets: {
+      async importArchive(data, options, signal) {
+        const presets = ctx.get('agentPresets')
+        if (presets === undefined) {
+          return Response.json({ ok: false, error: 'This deployment has no agent presets.' }, { status: 503 })
+        }
+        try {
+          const preview = await importPresetArchive(presets, data, {
+            ...options,
+            currentDshVersion: '0.1.0-rc.5',
+          }, signal)
+          return Response.json({ ok: true, ...preview } satisfies { readonly ok: true } & PresetArchivePreview, {
+            headers: { 'cache-control': 'no-store' },
+          })
+        } catch (error: unknown) {
+          const status = signal.aborted ? 499 : error instanceof PresetArchiveError ? error.status : 500
+          const message = signal.aborted
+            ? 'Preset import was cancelled.'
+            : error instanceof Error ? error.message : String(error)
+          return Response.json({ ok: false, error: message }, { status })
+        }
+      },
+
       // A deployment with no roster answers with an empty list rather than an
       // error: composing no presets is a valid deployment, and the browser
       // simply offers no choice.

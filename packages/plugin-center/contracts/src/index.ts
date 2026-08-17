@@ -878,6 +878,109 @@ export interface RegistryErrorResult {
   }
 }
 
+/** Server-owned order for the public Preset Square. */
+export const PRESET_SQUARE_SORTS = ['downloads', 'newest'] as const
+/** Server-owned order for the public Preset Square. */
+export type PresetSquareSort = typeof PRESET_SQUARE_SORTS[number]
+
+/** Catalog provenance shown independently from local Preset trust. */
+export const PRESET_SQUARE_SOURCES = ['fufan-official', 'community'] as const
+/** Catalog provenance shown independently from local Preset trust. */
+export type PresetSquareSource = typeof PRESET_SQUARE_SOURCES[number]
+
+/** Immutable `.dshpreset` evidence published with one square entry. */
+export interface PresetSquareArtifact {
+  readonly downloadUrl: string
+  readonly sha256: string
+  readonly sizeBytes: number
+  readonly formatVersion: 1
+  readonly sourceDshVersion: string
+}
+
+/** One public Preset Square entry after strict boundary decoding. */
+export interface PresetSquareItem {
+  readonly id: string
+  readonly slug: string
+  readonly presetId: string
+  readonly title: string
+  readonly description: string
+  readonly source: PresetSquareSource
+  readonly publisher: { readonly username: string }
+  readonly artifact: PresetSquareArtifact
+  readonly detailUrl: string
+  readonly downloadCount: number
+  readonly visualVariant: number
+  readonly createdAt: string
+}
+
+/** Closed renderer intent for a square list. Search is applied locally to the complete public list. */
+export interface PresetSquareListQuery {
+  readonly query: string
+  readonly sort: PresetSquareSort
+}
+
+/** Strict public API list payload. */
+export interface PresetSquareListResponse {
+  readonly items: readonly PresetSquareItem[]
+  readonly total: number
+  readonly sort: PresetSquareSort
+}
+
+/** Renderer-safe square list with the Desktop fetch time. */
+export interface PresetSquareListResult {
+  readonly items: readonly PresetSquareItem[]
+  readonly total: number
+  readonly sort: PresetSquareSort
+  readonly fetchedAt: string
+}
+
+/** Closed renderer intent for one public square detail. */
+export interface PresetSquareDetailQuery {
+  readonly slug: string
+}
+
+/** Renderer-safe detail result. */
+export interface PresetSquareDetailResult {
+  readonly item: PresetSquareItem | null
+  readonly fetchedAt: string
+}
+
+/** Warnings found while previewing executable Preset configuration. */
+export const PRESET_ARCHIVE_WARNINGS = ['absolute-paths', 'possible-secrets', 'version-mismatch'] as const
+/** Warning found while previewing executable Preset configuration. */
+export type PresetArchiveWarning = typeof PRESET_ARCHIVE_WARNINGS[number]
+
+/** Closed request for an install preview; null selects the manifest id. */
+export interface PresetInstallPreviewRequest {
+  readonly slug: string
+  readonly targetId: string | null
+}
+
+/** Validated archive preview enriched with its trusted square identity. */
+export interface PresetInstallPreviewResult {
+  readonly slug: string
+  readonly title: string
+  readonly targetId: string
+  readonly sourcePresetId: string
+  readonly name: string | null
+  readonly description: string | null
+  readonly sourceDshVersion: string | null
+  readonly fileCount: number
+  readonly warnings: readonly PresetArchiveWarning[]
+  readonly conflict: boolean
+}
+
+/** Closed confirmation for one already-previewed square entry and target id. */
+export interface PresetInstallRequest {
+  readonly slug: string
+  readonly targetId: string
+}
+
+/** Successful atomic installation result. */
+export interface PresetInstallResult extends PresetInstallPreviewResult {
+  readonly installed: true
+}
+
 const ID = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/u
 const VERSION = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/u
 const PLATFORM = /^(?:darwin|win32)-(?:arm64|x64)$/u
@@ -927,6 +1030,10 @@ const REGISTRY_OPERATIONS = REGISTRY_OPERATION_CODES
 const REGISTRY_ERRORS = REGISTRY_ERROR_CODES
 const INSTALLATION_ID = /^[0-9a-f]{32,64}$/u
 const OBJECT_KEY_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u
+const PRESET_SQUARE_ORIGIN = 'https://www.dshdesktop.com'
+const PRESET_SQUARE_PATH_PREFIX = '/preset/'
+const PRESET_SORTS = PRESET_SQUARE_SORTS
+const PRESET_WARNINGS = PRESET_ARCHIVE_WARNINGS
 
 /** Error raised when untrusted catalog JSON violates the closed contract. */
 export class CatalogContractError extends Error {
@@ -1060,6 +1167,17 @@ function artifactUrl(value: unknown, path: string): string {
   if (parsed.protocol !== 'https:' || parsed.username !== '' || parsed.password !== '' || parsed.hash !== ''
     || !ARTIFACT_ORIGINS.has(parsed.origin)) {
     return fail(path, 'must use an approved HTTPS artifact origin')
+  }
+  return decoded
+}
+
+function presetSquareUrl(value: unknown, path: string): string {
+  const decoded = string(value, path, 2048)
+  let parsed: URL
+  try { parsed = new URL(decoded) } catch { return fail(path, 'must be an absolute URL') }
+  if (parsed.protocol !== 'https:' || parsed.username !== '' || parsed.password !== '' || parsed.hash !== ''
+    || parsed.origin !== PRESET_SQUARE_ORIGIN || !parsed.pathname.startsWith(PRESET_SQUARE_PATH_PREFIX)) {
+    return fail(path, 'must use the fixed Preset Square HTTPS origin')
   }
   return decoded
 }
@@ -2530,4 +2648,228 @@ export function decodeRegistryHealthResult(value: unknown): RegistryHealthResult
     database: enumeration(source['database'], '$health.database', ['ready', 'unavailable'] as const),
     currentCatalog: boolean(source['currentCatalog'], '$health.currentCatalog'),
   }
+}
+
+function decodePresetSquareItemAt(value: unknown, path: string): PresetSquareItem {
+  const source = record(value, path)
+  const itemKeys = [
+    'id', 'slug', 'presetId', 'title', 'description', 'publisher', 'artifact',
+    'detailUrl', 'downloadCount', 'visualVariant', 'createdAt',
+  ]
+  exact(source, path, source['source'] === undefined ? itemKeys : [...itemKeys, 'source'])
+  const slug = id(source['slug'], `${path}.slug`)
+  const publisherSource = record(source['publisher'], `${path}.publisher`)
+  exact(publisherSource, `${path}.publisher`, ['username'])
+  const artifactSource = record(source['artifact'], `${path}.artifact`)
+  exact(artifactSource, `${path}.artifact`, [
+    'downloadUrl', 'sha256', 'sizeBytes', 'formatVersion', 'sourceDshVersion',
+  ])
+  if (artifactSource['formatVersion'] !== 1) fail(`${path}.artifact.formatVersion`, 'must equal 1')
+  const downloadUrl = presetSquareUrl(artifactSource['downloadUrl'], `${path}.artifact.downloadUrl`)
+  const detailUrl = presetSquareUrl(source['detailUrl'], `${path}.detailUrl`)
+  const expectedDownloadPath = `${PRESET_SQUARE_PATH_PREFIX}api/v1/presets/${slug}/download`
+  const expectedDetailPath = `${PRESET_SQUARE_PATH_PREFIX}p/${slug}`
+  if (new URL(downloadUrl).pathname !== expectedDownloadPath) {
+    fail(`${path}.artifact.downloadUrl`, 'must identify the owning Preset slug')
+  }
+  if (new URL(detailUrl).pathname !== expectedDetailPath) {
+    fail(`${path}.detailUrl`, 'must identify the owning Preset slug')
+  }
+  return {
+    id: id(source['id'], `${path}.id`),
+    slug,
+    presetId: id(source['presetId'], `${path}.presetId`),
+    title: string(source['title'], `${path}.title`, 160),
+    description: string(source['description'], `${path}.description`, 4_000),
+    source: source['source'] === undefined
+      ? 'community'
+      : enumeration(source['source'], `${path}.source`, PRESET_SQUARE_SOURCES),
+    publisher: { username: string(publisherSource['username'], `${path}.publisher.username`, 128) },
+    artifact: {
+      downloadUrl,
+      sha256: sha256(artifactSource['sha256'], `${path}.artifact.sha256`),
+      sizeBytes: integer(artifactSource['sizeBytes'], `${path}.artifact.sizeBytes`, 1, 16 * 1024 * 1024),
+      formatVersion: 1,
+      sourceDshVersion: version(artifactSource['sourceDshVersion'], `${path}.artifact.sourceDshVersion`),
+    },
+    detailUrl,
+    downloadCount: integer(source['downloadCount'], `${path}.downloadCount`, 0, 2_147_483_647),
+    visualVariant: integer(source['visualVariant'], `${path}.visualVariant`, 0, 10_000),
+    createdAt: instant(source['createdAt'], `${path}.createdAt`),
+  }
+}
+
+/**
+ * Decode one strict public Preset Square item.
+ * @param value - Untrusted public API payload.
+ * @returns One immutable published Preset entry.
+ */
+export function decodePresetSquareItem(value: unknown): PresetSquareItem {
+  return decodePresetSquareItemAt(value, '$preset')
+}
+
+/**
+ * Decode a bounded Preset Square list intent.
+ * @param value - Untrusted renderer payload.
+ * @returns Closed local search text and server order.
+ */
+export function decodePresetSquareListQuery(value: unknown): PresetSquareListQuery {
+  const source = record(value, '$presetListQuery')
+  exact(source, '$presetListQuery', ['query', 'sort'])
+  return {
+    query: string(source['query'], '$presetListQuery.query', 120, true),
+    sort: enumeration(source['sort'], '$presetListQuery.sort', PRESET_SORTS),
+  }
+}
+
+/**
+ * Decode the strict public Preset Square list response.
+ * @param value - Untrusted public API payload.
+ * @returns Deduplicated entries and server-owned list metadata.
+ */
+export function decodePresetSquareListResponse(value: unknown): PresetSquareListResponse {
+  const source = record(value, '$presetList')
+  exact(source, '$presetList', ['items', 'total', 'sort'])
+  const items = array(source['items'], '$presetList.items', 1_000, decodePresetSquareItemAt)
+  if (new Set(items.map(item => item.slug)).size !== items.length) {
+    fail('$presetList.items', 'must not contain duplicate slugs')
+  }
+  return {
+    items,
+    total: integer(source['total'], '$presetList.total', items.length, 1_000_000),
+    sort: enumeration(source['sort'], '$presetList.sort', PRESET_SORTS),
+  }
+}
+
+/**
+ * Decode the renderer-safe Preset Square list result.
+ * @param value - Desktop-projected list payload.
+ * @returns Strict entries, list metadata, and fetch time.
+ */
+export function decodePresetSquareListResult(value: unknown): PresetSquareListResult {
+  const source = record(value, '$presetListResult')
+  exact(source, '$presetListResult', ['items', 'total', 'sort', 'fetchedAt'])
+  const decoded = decodePresetSquareListResponse({
+    items: source['items'],
+    total: source['total'],
+    sort: source['sort'],
+  })
+  return {
+    ...decoded,
+    fetchedAt: instant(source['fetchedAt'], '$presetListResult.fetchedAt'),
+  }
+}
+
+/**
+ * Decode one closed Preset Square detail intent.
+ * @param value - Untrusted renderer payload.
+ * @returns One bounded public slug.
+ */
+export function decodePresetSquareDetailQuery(value: unknown): PresetSquareDetailQuery {
+  const source = record(value, '$presetDetailQuery')
+  exact(source, '$presetDetailQuery', ['slug'])
+  return { slug: id(source['slug'], '$presetDetailQuery.slug') }
+}
+
+/**
+ * Decode a renderer-safe Preset Square detail result.
+ * @param value - Desktop-projected detail payload.
+ * @returns Optional strict entry and fetch time.
+ */
+export function decodePresetSquareDetailResult(value: unknown): PresetSquareDetailResult {
+  const source = record(value, '$presetDetailResult')
+  exact(source, '$presetDetailResult', ['item', 'fetchedAt'])
+  return {
+    item: source['item'] === null ? null : decodePresetSquareItemAt(source['item'], '$presetDetailResult.item'),
+    fetchedAt: instant(source['fetchedAt'], '$presetDetailResult.fetchedAt'),
+  }
+}
+
+/**
+ * Decode a closed request for Preset archive preview.
+ * @param value - Untrusted renderer payload.
+ * @returns Published slug and optional local target id.
+ */
+export function decodePresetInstallPreviewRequest(value: unknown): PresetInstallPreviewRequest {
+  const source = record(value, '$presetInstallPreview')
+  exact(source, '$presetInstallPreview', ['slug', 'targetId'])
+  return {
+    slug: id(source['slug'], '$presetInstallPreview.slug'),
+    targetId: source['targetId'] === null ? null : id(source['targetId'], '$presetInstallPreview.targetId'),
+  }
+}
+
+/**
+ * Decode a closed Preset install confirmation.
+ * @param value - Untrusted renderer payload.
+ * @returns Published slug and confirmed local target id.
+ */
+export function decodePresetInstallRequest(value: unknown): PresetInstallRequest {
+  const source = record(value, '$presetInstall')
+  exact(source, '$presetInstall', ['slug', 'targetId'])
+  return {
+    slug: id(source['slug'], '$presetInstall.slug'),
+    targetId: id(source['targetId'], '$presetInstall.targetId'),
+  }
+}
+
+function decodePresetInstallPreviewAt(value: unknown, path: string): PresetInstallPreviewResult {
+  const source = record(value, path)
+  exact(source, path, [
+    'slug', 'title', 'targetId', 'sourcePresetId', 'name', 'description', 'sourceDshVersion',
+    'fileCount', 'warnings', 'conflict',
+  ])
+  return {
+    slug: id(source['slug'], `${path}.slug`),
+    title: string(source['title'], `${path}.title`, 160),
+    targetId: id(source['targetId'], `${path}.targetId`),
+    sourcePresetId: id(source['sourcePresetId'], `${path}.sourcePresetId`),
+    name: source['name'] === null ? null : string(source['name'], `${path}.name`, 160),
+    description: source['description'] === null
+      ? null
+      : string(source['description'], `${path}.description`, 4_000, true),
+    sourceDshVersion: source['sourceDshVersion'] === null
+      ? null
+      : version(source['sourceDshVersion'], `${path}.sourceDshVersion`),
+    fileCount: integer(source['fileCount'], `${path}.fileCount`, 1, 512),
+    warnings: unique(array(source['warnings'], `${path}.warnings`, PRESET_WARNINGS.length,
+      (item, itemPath) => enumeration(item, itemPath, PRESET_WARNINGS)), `${path}.warnings`),
+    conflict: boolean(source['conflict'], `${path}.conflict`),
+  }
+}
+
+/**
+ * Decode one normalized Preset archive preview.
+ * @param value - Host or Desktop preview payload.
+ * @returns Bounded installation evidence and warnings.
+ */
+export function decodePresetInstallPreviewResult(value: unknown): PresetInstallPreviewResult {
+  return decodePresetInstallPreviewAt(value, '$presetInstallPreviewResult')
+}
+
+/**
+ * Decode one normalized successful Preset install result.
+ * @param value - Host or Desktop installation payload.
+ * @returns Bounded evidence for one committed installation.
+ */
+export function decodePresetInstallResult(value: unknown): PresetInstallResult {
+  const source = record(value, '$presetInstallResult')
+  exact(source, '$presetInstallResult', [
+    'slug', 'title', 'targetId', 'sourcePresetId', 'name', 'description', 'sourceDshVersion',
+    'fileCount', 'warnings', 'conflict', 'installed',
+  ])
+  if (source['installed'] !== true) fail('$presetInstallResult.installed', 'must equal true')
+  const preview = decodePresetInstallPreviewAt({
+    slug: source['slug'],
+    title: source['title'],
+    targetId: source['targetId'],
+    sourcePresetId: source['sourcePresetId'],
+    name: source['name'],
+    description: source['description'],
+    sourceDshVersion: source['sourceDshVersion'],
+    fileCount: source['fileCount'],
+    warnings: source['warnings'],
+    conflict: source['conflict'],
+  }, '$presetInstallResult')
+  return { ...preview, installed: true }
 }

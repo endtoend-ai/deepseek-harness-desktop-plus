@@ -1,0 +1,48 @@
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: !!js "'你是飞书数字员工。先加载 feishu-digital-employee Skill。普通对话直接回答；用户要求创建任务时必须调用飞书 MCP，不能用文字假装成功。当前默认任务负责人的 open_id 是 ' + (process.env.FEISHU_DEFAULT_OPEN_ID || '未设置') + '。'"
+
+- id: agent-instructions
+  name: '@deepseek-ai/dsh-agent-instructions'
+  config:
+    maxBytes: 65536
+
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+  config:
+    providerName: feishu-digital-employee-skills
+    includeDefaultRoots: false
+    customSkillDirs:
+      - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
+
+- id: tool-skill
+  name: '@deepseek-ai/dsh-tool-skill'
+
+- id: mcp-feishu
+  name: '@deepseek-ai/dsh-mcp-client'
+  config:
+    serverName: feishu
+    transport: stdio
+    command: !!js process.execPath
+    args:
+      - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('runtime/feishu-mcp.mjs', baseUrl))"
+    env:
+      ELECTRON_RUN_AS_NODE: '1'
+      FEISHU_APP_ID: !!js process.env.FEISHU_APP_ID || ''
+      FEISHU_APP_SECRET: !!js process.env.FEISHU_APP_SECRET || ''
+    toolCallTimeoutMs: 60000
+    failOnStartupError: true
+
+- id: mcp-datetime
+  name: '@deepseek-ai/dsh-mcp-client'
+  config:
+    serverName: datetime
+    transport: stdio
+    command: !!js process.execPath
+    args:
+      - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('runtime/datetime-mcp.mjs', baseUrl))"
+    env:
+      ELECTRON_RUN_AS_NODE: '1'
+    toolCallTimeoutMs: 10000
+    failOnStartupError: true

@@ -1076,6 +1076,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     declaredBy: 'an entry in \'root\' (client-ui-layout), so it exists while that entry is mounted',
     occupants: [
       'client-ui-plugin-center PluginCenterTab',
+      'client-ui-plugin-center PluginDiscoveryPage',
+      'client-ui-plugin-center PresetSquarePage',
       'plugin-center-fixture FixturePage',
     ],
     replaceRisk: 'none',
@@ -1624,6 +1626,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     declaredBy: 'an entry in \'sidebar\' (client-ui-sidebar), so it exists while that entry is mounted',
     occupants: [
       'client-ui-plugin-center PluginCenterNavItem',
+      'client-ui-plugin-center PluginDiscoveryNavItem',
+      'client-ui-plugin-center PresetSquareNavItem',
       'plugin-center-fixture FixtureNav',
     ],
     replaceRisk: 'none',
