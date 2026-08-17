@@ -1,23 +1,10 @@
-!macro customInit
-  nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
-  Pop $0
-  ${If} $0 == 0
-    Exec '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --dsh-installer-quit'
-  ${EndIf}
-!macroend
-
 !macro customCheckAppRunning
-  nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
-  Pop $0
-  ${If} $0 == 0
-    Exec '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --dsh-installer-quit'
-    Sleep 5000
+  ${If} ${FileExists} "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+    ExecWait '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --dsh-installer-quit'
+    Sleep 3000
 
-    nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
-    Pop $0
-  ${EndIf}
-
-  ${If} $0 == 0
+    # Do not gate forced cleanup on nsProcess: public preview builds can leave
+    # a process tree that its filename-only probe does not report reliably.
     nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /T /F /IM "${APP_EXECUTABLE_FILENAME}"'
     Pop $0
     Sleep 1000
