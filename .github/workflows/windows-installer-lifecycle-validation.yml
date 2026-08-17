@@ -161,7 +161,14 @@ jobs:
             if ($process.ExitCode -ne 0) {
               throw "$label running uninstall exited with $($process.ExitCode)."
             }
+            # NSIS can return from its launcher before the copied background
+            # uninstaller finishes closing the application and removing files.
+            $appExitDeadline = (Get-Date).AddSeconds(45)
             $application.Refresh()
+            while (-not $application.HasExited -and (Get-Date) -lt $appExitDeadline) {
+              Start-Sleep -Seconds 1
+              $application.Refresh()
+            }
             if (-not $application.HasExited) {
               Get-CimInstance Win32_Process -Filter "ProcessId = $($application.Id)" |
                 Select-Object ProcessId, ParentProcessId, Name, ExecutablePath, CommandLine |
@@ -170,8 +177,8 @@ jobs:
               taskkill /PID $application.Id /T /F | Out-Host
               throw "$label application process remained after uninstall."
             }
-            $deadline = (Get-Date).AddSeconds(30)
-            while ((Get-Date) -lt $deadline -and (Test-Path -LiteralPath $installDirectory)) {
+            $directoryDeadline = (Get-Date).AddSeconds(30)
+            while ((Get-Date) -lt $directoryDeadline -and (Test-Path -LiteralPath $installDirectory)) {
               Start-Sleep -Seconds 2
             }
             if (Test-Path -LiteralPath $installDirectory) {

@@ -67,6 +67,8 @@ describe('desktop GitHub Release workflow', () => {
     expect(installerValidationWorkflow).toContain('WINDOWS_INSTALLER_LIFECYCLE_VERIFICATION.txt')
     expect(installerValidationWorkflow).toContain('$hostProcess = Get-CimInstance Win32_Process')
     expect(installerValidationWorkflow).not.toContain('$host = Get-CimInstance Win32_Process')
+    expect(installerValidationWorkflow).toContain('$appExitDeadline = (Get-Date).AddSeconds(45)')
+    expect(installerValidationWorkflow).toContain('while (-not $application.HasExited')
     expect(installerValidationWorkflow).not.toContain('gh release upload')
   })
 })
