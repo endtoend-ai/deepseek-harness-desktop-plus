@@ -28,6 +28,17 @@ describe('bundled Preset Square catalog', () => {
       const composition = strFromU8(files['preset/agent.cordis.yml'] ?? new Uint8Array())
       expect(composition).not.toContain('__CASE_')
       expect(composition).not.toContain('__FEISHU_')
+      if (item.slug === 'fufan-feishu-digital-employee') {
+        expect(composition).toContain('credentialEnv:')
+        expect(composition).toContain('FEISHU_DEFAULT_OPEN_ID: FEISHU_DEFAULT_OPEN_ID')
+        const server = strFromU8(files['preset/runtime/feishu-mcp.mjs'] ?? new Uint8Array())
+        expect(server).toContain("role: 'assignee'")
+      }
+      if (item.slug === 'fufan-video-generation') {
+        const skill = strFromU8(files['preset/skills/product-launch-video/SKILL.md'] ?? new Uint8Array())
+        expect(skill).toContain('hyperframes init')
+        expect(skill).not.toContain('npx --yes hyperframes')
+      }
       skills += Object.keys(files).filter(path => /^preset\/skills\/[^/]+\/SKILL\.md$/u.test(path)).length
     }
     expect(skills).toBe(8)

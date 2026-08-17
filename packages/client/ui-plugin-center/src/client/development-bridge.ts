@@ -23,6 +23,7 @@ import type {
   PluginDiagnosticExportResult,
   PluginRecoveryRetryRequest,
   PluginRecoverySnapshot,
+  PresetRuntimeSnapshot,
   PresetSquareItem,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import { COMPATIBILITY_ACTIONS } from '@deepseek-ai/dsh-plugin-center-contracts'
@@ -912,6 +913,18 @@ export function developmentCatalogBridge(): DesktopCatalogBridge | undefined {
       }),
       previewInstall: () => rejectUnavailable(),
       install: () => rejectUnavailable(),
+      checkRuntime: ({ presetId }) => Promise.resolve({
+        presetId,
+        phase: 'missing',
+        dependencies: (presetId === 'product-video-director'
+          ? ['node', 'hyperframes', 'ffmpeg', 'ffprobe'] as const
+          : ['node', 'python', 'openpyxl', 'echarts', 'playwright', 'chromium'] as const)
+          .map(id => ({ id, state: 'missing' as const, installable: false, version: null })),
+        canInstall: false,
+        revision: 1,
+        updatedAt: new Date().toISOString(),
+      } satisfies PresetRuntimeSnapshot),
+      installRuntime: () => rejectUnavailable(),
     },
   }
 }

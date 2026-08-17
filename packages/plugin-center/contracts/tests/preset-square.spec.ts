@@ -4,6 +4,7 @@ import {
   decodePresetInstallPreviewRequest,
   decodePresetInstallPreviewResult,
   decodePresetInstallRequest,
+  decodePresetRuntimeRequest,
   decodePresetSquareDetailQuery,
   decodePresetSquareListQuery,
   decodePresetSquareListResponse,
@@ -40,6 +41,8 @@ describe('Preset Square contracts', () => {
       .toEqual({ slug: ITEM.slug, targetId: null })
     expect(decodePresetInstallRequest({ slug: ITEM.slug, targetId: ITEM.presetId }))
       .toEqual({ slug: ITEM.slug, targetId: ITEM.presetId })
+    expect(decodePresetRuntimeRequest({ presetId: 'product-video-director' }))
+      .toEqual({ presetId: 'product-video-director' })
   })
 
   it('preserves the first-party catalog provenance without changing local trust', () => {
@@ -89,5 +92,10 @@ describe('Preset Square contracts', () => {
     })).toThrow(CatalogContractError)
     expect(() => decodePresetInstallPreviewRequest({ slug: ITEM.slug, targetId: '../escape' }))
       .toThrow(CatalogContractError)
+    expect(() => decodePresetRuntimeRequest({ presetId: 'arbitrary-preset' }))
+      .toThrow(CatalogContractError)
+    expect(() => decodePresetRuntimeRequest({
+      presetId: 'product-video-director', packages: ['evil-package'],
+    })).toThrow(CatalogContractError)
   })
 })

@@ -48,6 +48,34 @@ const OFFICIAL_ITEM = {
   detailUrl: 'https://www.dshdesktop.com/preset/p/fufan-ai-webapp',
 } as const satisfies PresetSquareItem
 
+const FEISHU_ITEM = {
+  ...OFFICIAL_ITEM,
+  id: 'fufan-case-06-feishu-digital-employee',
+  slug: 'fufan-feishu-digital-employee',
+  presetId: 'feishu-digital-employee',
+  title: '飞书数字员工',
+  description: '1 套 Agent Preset + 1 个 Skill，并接入飞书 MCP 与时间解析 MCP。',
+  artifact: {
+    ...OFFICIAL_ITEM.artifact,
+    downloadUrl: 'https://www.dshdesktop.com/preset/api/v1/presets/fufan-feishu-digital-employee/download',
+  },
+  detailUrl: 'https://www.dshdesktop.com/preset/p/fufan-feishu-digital-employee',
+} as const satisfies PresetSquareItem
+
+const VIDEO_ITEM = {
+  ...OFFICIAL_ITEM,
+  id: 'fufan-case-03-video-generation',
+  slug: 'fufan-video-generation',
+  presetId: 'product-video-director',
+  title: '视频生成',
+  description: '1 套 Agent Preset + 1 个 Skill，从调研、分镜到 HyperFrames MP4。',
+  artifact: {
+    ...OFFICIAL_ITEM.artifact,
+    downloadUrl: 'https://www.dshdesktop.com/preset/api/v1/presets/fufan-video-generation/download',
+  },
+  detailUrl: 'https://www.dshdesktop.com/preset/p/fufan-video-generation',
+} as const satisfies PresetSquareItem
+
 function props(values: Partial<PresetSquareInjected> = {}): PresetSquareInjected {
   return {
     presetAvailable: true,
@@ -82,15 +110,35 @@ function props(values: Partial<PresetSquareInjected> = {}): PresetSquareInjected
       conflict: false,
       installed: true,
     }),
+    checkPresetRuntime: async presetId => ({
+      presetId,
+      phase: 'ready',
+      dependencies: [],
+      canInstall: false,
+      revision: 1,
+      updatedAt: '2026-08-17T08:00:00.000Z',
+    }),
+    installPresetRuntime: async presetId => ({
+      presetId,
+      phase: 'ready',
+      dependencies: [],
+      canInstall: false,
+      revision: 2,
+      updatedAt: '2026-08-17T08:00:01.000Z',
+    }),
     listLocalPresets: async () => ({ presets: [], authorable: true }),
     removeLocalPreset: async () => {},
+    describePresetCredentials: async refs => Object.fromEntries(refs.map(ref => [ref, {
+      configured: false, writable: true,
+    }])),
+    setPresetCredential: async () => {},
     useLocalPreset: async () => 'opened',
     ...values,
   }
 }
 
 describe('Preset Square shared surface', () => {
-  it('separates 赋范官方 packs from community entries and states their ownership', async () => {
+  it('defaults to 赋范官方, switches sources as tabs, and renders semantic SVG artwork', async () => {
     render(<PresetSquarePanel {...props({
       listPresetSquare: async () => ({
         items: [OFFICIAL_ITEM, ITEM], total: 2, sort: 'downloads', fetchedAt: '2026-08-17T08:00:00.000Z',
@@ -101,13 +149,25 @@ describe('Preset Square shared surface', () => {
       }),
     })} t={t} />)
 
-    expect(await screen.findByRole('heading', { name: zh.presetFufanOfficialTitle })).toBeTruthy()
-    expect(screen.getByRole('heading', { name: zh.presetCommunityTitle })).toBeTruthy()
-
-    const officialCard = screen.getByText(OFFICIAL_ITEM.title).closest('article')
+    expect((await screen.findByRole('tab', {
+      name: new RegExp(zh.presetFufanOfficialTitle),
+    })).getAttribute('aria-selected')).toBe('true')
+    const officialCard = (await screen.findByText(OFFICIAL_ITEM.title)).closest('article')
     if (officialCard === null) throw new Error('赋范官方卡片未渲染')
     expect(within(officialCard).getByText(zh.presetFufanOfficialBadge)).toBeTruthy()
-    fireEvent.click(within(officialCard).getByRole('button', { name: zh.details }))
+    expect(officialCard.querySelector('[data-artwork="ai-product-developer"] svg')).toBeTruthy()
+    expect(screen.queryByText(ITEM.title)).toBeNull()
+
+    fireEvent.click(screen.getByRole('tab', { name: new RegExp(zh.presetCommunityTitle) }))
+    const communityCard = (await screen.findByText(ITEM.title)).closest('article')
+    if (communityCard === null) throw new Error('社区卡片未渲染')
+    expect(communityCard.querySelector('[data-artwork="community-fallback"] svg')).toBeTruthy()
+    expect(screen.queryByText(OFFICIAL_ITEM.title)).toBeNull()
+
+    fireEvent.click(screen.getByRole('tab', { name: new RegExp(zh.presetFufanOfficialTitle) }))
+    const restoredOfficialCard = (await screen.findByText(OFFICIAL_ITEM.title)).closest('article')
+    if (restoredOfficialCard === null) throw new Error('赋范官方卡片未恢复')
+    fireEvent.click(within(restoredOfficialCard).getByRole('button', { name: zh.details }))
     expect(await screen.findByText(zh.presetFufanOfficialDisclaimer)).toBeTruthy()
   })
 
@@ -120,6 +180,7 @@ describe('Preset Square shared surface', () => {
     }))
     render(<PresetSquarePanel {...props({ listPresetSquare })} t={t} />)
 
+    fireEvent.click(screen.getByRole('tab', { name: new RegExp(zh.presetCommunityTitle) }))
     expect(await screen.findByText(ITEM.title)).toBeTruthy()
     expect(listPresetSquare).toHaveBeenCalledWith({ query: '', sort: 'downloads' })
     fireEvent.change(screen.getByRole('searchbox', { name: zh.presetSearch }), { target: { value: '不存在' } })
@@ -169,6 +230,7 @@ describe('Preset Square shared surface', () => {
       t={t}
     />)
 
+    fireEvent.click(screen.getByRole('tab', { name: new RegExp(zh.presetCommunityTitle) }))
     fireEvent.click(await screen.findByRole('button', { name: zh.install }))
     const dialog = await screen.findByRole('dialog', { name: ITEM.title })
     expect(await within(dialog).findByText(zh.presetWarningVersion)).toBeTruthy()
@@ -179,6 +241,126 @@ describe('Preset Square shared surface', () => {
     expect(await screen.findByText(zh.presetInstallSuccess)).toBeTruthy()
     expect(screen.getByRole('heading', { name: zh.presetTitle })).toBeTruthy()
     expect(listLocalPresets.mock.calls.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('explains Feishu prerequisites and saves all required credentials without echoing values', async () => {
+    const configured = new Set<string>()
+    const describePresetCredentials = vi.fn<PresetSquareInjected['describePresetCredentials']>(async refs => (
+      Object.fromEntries(refs.map(ref => [ref, { configured: configured.has(ref), writable: true }]))
+    ))
+    const setPresetCredential = vi.fn<PresetSquareInjected['setPresetCredential']>(async (ref) => {
+      configured.add(ref)
+    })
+    render(<PresetSquarePanel {...props({
+      listPresetSquare: async () => ({
+        items: [FEISHU_ITEM], total: 1, sort: 'downloads', fetchedAt: '2026-08-17T08:00:00.000Z',
+      }),
+      detailPresetSquare: async () => ({ item: FEISHU_ITEM, fetchedAt: '2026-08-17T08:00:00.000Z' }),
+      describePresetCredentials,
+      setPresetCredential,
+    })} t={t} />)
+
+    const card = (await screen.findByText(FEISHU_ITEM.title)).closest('article')
+    if (card === null) throw new Error('飞书 Preset 卡片未渲染')
+    expect(within(card).getByText(zh.presetSetupCredentials)).toBeTruthy()
+    fireEvent.click(within(card).getByRole('button', { name: zh.details }))
+    const dialog = await screen.findByRole('dialog', { name: FEISHU_ITEM.title })
+    expect(within(dialog).getByText(zh.presetSetupFeishuDetail)).toBeTruthy()
+    await waitFor(() => { expect(describePresetCredentials).toHaveBeenCalled() })
+
+    fireEvent.change(within(dialog).getByLabelText(zh.presetFeishuAppId), { target: { value: 'cli_app' } })
+    fireEvent.change(within(dialog).getByLabelText(zh.presetFeishuAppSecret), { target: { value: 'secret-value' } })
+    fireEvent.change(within(dialog).getByLabelText(zh.presetFeishuDefaultOpenId), { target: { value: 'ou_user' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: zh.presetCredentialSave }))
+
+    await waitFor(() => { expect(setPresetCredential).toHaveBeenCalledTimes(3) })
+    expect(await within(dialog).findByText(zh.presetCredentialSaved)).toBeTruthy()
+    expect(within(dialog).getAllByText(zh.presetCredentialConfigured)).toHaveLength(3)
+    expect(within(dialog).getByLabelText(zh.presetFeishuAppSecret)).toHaveProperty('value', '')
+  })
+
+  it('opens the setup details instead of starting an installed Feishu preset with missing credentials', async () => {
+    const useLocalPreset = vi.fn<PresetSquareInjected['useLocalPreset']>(async () => 'opened')
+    render(<PresetSquarePanel {...props({
+      listPresetSquare: async () => ({
+        items: [FEISHU_ITEM], total: 1, sort: 'downloads', fetchedAt: '2026-08-17T08:00:00.000Z',
+      }),
+      detailPresetSquare: async () => ({ item: FEISHU_ITEM, fetchedAt: '2026-08-17T08:00:00.000Z' }),
+      listLocalPresets: async () => ({
+        presets: [{ id: FEISHU_ITEM.presetId, trust: 'user', isDefault: false }], authorable: true,
+      }),
+      useLocalPreset,
+    })} t={t} />)
+
+    fireEvent.click(await screen.findByRole('button', { name: zh.presetUse }))
+    const dialog = await screen.findByRole('dialog', { name: FEISHU_ITEM.title })
+    expect(within(dialog).getByText(zh.presetSetupRequired)).toBeTruthy()
+    expect(useLocalPreset).not.toHaveBeenCalled()
+  })
+
+  it('detects, confirms, installs, and rechecks an installed managed Preset runtime before use', async () => {
+    let ready = false
+    let revision = 1
+    const runtimeSnapshot = () => ({
+      presetId: 'product-video-director' as const,
+      phase: ready ? 'ready' as const : 'missing' as const,
+      dependencies: [
+        { id: 'node' as const, state: 'ready' as const, installable: true, version: 'v24.0.0' },
+        {
+          id: 'hyperframes' as const,
+          state: ready ? 'ready' as const : 'missing' as const,
+          installable: true,
+          version: ready ? '0.7.109' : null,
+        },
+      ],
+      canInstall: !ready,
+      revision: revision++,
+      updatedAt: '2026-08-17T08:00:00.000Z',
+    })
+    const checkPresetRuntime = vi.fn<PresetSquareInjected['checkPresetRuntime']>(async presetId => (
+      presetId === 'product-video-director'
+        ? runtimeSnapshot()
+        : {
+          presetId,
+          phase: 'ready',
+          dependencies: [],
+          canInstall: false,
+          revision: revision++,
+          updatedAt: '2026-08-17T08:00:00.000Z',
+        }
+    ))
+    const installPresetRuntime = vi.fn<PresetSquareInjected['installPresetRuntime']>(async () => {
+      ready = true
+      return runtimeSnapshot()
+    })
+    const useLocalPreset = vi.fn<PresetSquareInjected['useLocalPreset']>(async () => 'opened')
+    render(<PresetSquarePanel {...props({
+      listPresetSquare: async () => ({
+        items: [VIDEO_ITEM], total: 1, sort: 'downloads', fetchedAt: '2026-08-17T08:00:00.000Z',
+      }),
+      detailPresetSquare: async () => ({ item: VIDEO_ITEM, fetchedAt: '2026-08-17T08:00:00.000Z' }),
+      listLocalPresets: async () => ({
+        presets: [{ id: VIDEO_ITEM.presetId, trust: 'user', isDefault: false }], authorable: true,
+      }),
+      checkPresetRuntime,
+      installPresetRuntime,
+      useLocalPreset,
+    })} t={t} />)
+
+    const card = (await screen.findByText(VIDEO_ITEM.title)).closest('article')
+    if (card === null) throw new Error('视频 Preset 卡片未渲染')
+    expect(await within(card).findByText(zh.presetRuntimeRequired)).toBeTruthy()
+    fireEvent.click(within(card).getByRole('button', { name: zh.presetRuntimeConfigureAction }))
+
+    const dialog = await screen.findByRole('dialog', { name: VIDEO_ITEM.title })
+    expect(within(dialog).getByText(zh.presetRuntimeHyperframes)).toBeTruthy()
+    fireEvent.click(within(dialog).getByRole('button', { name: zh.presetRuntimeConfirmAction }))
+    await waitFor(() => { expect(installPresetRuntime).toHaveBeenCalledWith('product-video-director') })
+    expect(await within(dialog).findByText(zh.presetRuntimeReadyDetail)).toBeTruthy()
+    fireEvent.click(within(dialog).getByRole('button', { name: zh.close }))
+
+    fireEvent.click(within(card).getByRole('button', { name: zh.presetUse }))
+    await waitFor(() => { expect(useLocalPreset).toHaveBeenCalledWith(VIDEO_ITEM.presetId) })
   })
 
   it('deletes only a user preset and refreshes just the local roster', async () => {

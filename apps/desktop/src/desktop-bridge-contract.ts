@@ -25,6 +25,8 @@ import type {
   PresetInstallPreviewResult,
   PresetInstallRequest,
   PresetInstallResult,
+  PresetRuntimeRequest,
+  PresetRuntimeSnapshot,
   PresetSquareDetailQuery,
   PresetSquareDetailResult,
   PresetSquareListQuery,
@@ -98,6 +100,8 @@ export interface DesktopBridge {
     detail(query: PresetSquareDetailQuery): Promise<PresetSquareDetailResult>
     previewInstall(request: PresetInstallPreviewRequest): Promise<PresetInstallPreviewResult>
     install(request: PresetInstallRequest): Promise<PresetInstallResult>
+    checkRuntime(request: PresetRuntimeRequest): Promise<PresetRuntimeSnapshot>
+    installRuntime(request: PresetRuntimeRequest): Promise<PresetRuntimeSnapshot>
   }
   readonly installedPlugins: {
     list(): Promise<InstalledPluginListResult>
@@ -142,6 +146,8 @@ export const DESKTOP_CHANNELS = {
   presetSquareDetail: 'dsh-desktop:preset-square:detail',
   presetSquarePreviewInstall: 'dsh-desktop:preset-square:preview-install',
   presetSquareInstall: 'dsh-desktop:preset-square:install',
+  presetSquareRuntimeCheck: 'dsh-desktop:preset-square:runtime-check',
+  presetSquareRuntimeInstall: 'dsh-desktop:preset-square:runtime-install',
   installedPluginsList: 'dsh-desktop:installed-plugins:list',
   pluginOperationStart: 'dsh-desktop:plugin-operation:start',
   pluginOperationGet: 'dsh-desktop:plugin-operation:get',

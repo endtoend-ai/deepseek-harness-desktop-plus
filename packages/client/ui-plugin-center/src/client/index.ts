@@ -58,6 +58,8 @@ export function apply(ctx: ClientContext): void {
     detailPresetSquare: query => bridge?.presetSquare?.detail(query) ?? unavailable(),
     previewPresetInstall: request => bridge?.presetSquare?.previewInstall(request) ?? unavailable(),
     installPreset: request => bridge?.presetSquare?.install(request) ?? unavailable(),
+    checkPresetRuntime: presetId => bridge?.presetSquare?.checkRuntime({ presetId }) ?? unavailable(),
+    installPresetRuntime: presetId => bridge?.presetSquare?.installRuntime({ presetId }) ?? unavailable(),
     listLocalPresets: async () => {
       const response = await hostConnection().api.agentPresets.list({})
       if (!response.result.ok) throw new Error(response.result.error.message)
@@ -70,6 +72,15 @@ export function apply(ctx: ClientContext): void {
       const response = await hostConnection().api.agentPresets.remove({ agentPreset: id })
       if (!response.result.ok) throw new Error(response.result.error.message)
     },
+    describePresetCredentials: async (refs) => {
+      const response = await hostConnection().api.credentials.describe({ refs: [...refs] })
+      if (!response.result.ok) throw new Error(response.result.error.message)
+      return response.result.value.credentials
+    },
+    setPresetCredential: async (ref, value) => {
+      const response = await hostConnection().api.credentials.set({ ref, value })
+      if (!response.result.ok) throw new Error(response.result.error.message)
+    },
     useLocalPreset: async (id) => {
       const workspaces = ctx.workspaces.list.getSnapshot()
       const currentSession = ctx.sessions.list.getSnapshot().current
@@ -78,13 +89,17 @@ export function apply(ctx: ClientContext): void {
         : workspaces.items.find(item => item.sessionIds.includes(currentSession))?.workspaceId
       const targetWorkspace = currentWorkspace ?? workspaces.recentWorkspaceId
       if (targetWorkspace === undefined) return 'workspace-needed'
-      const sessionId = await ctx.workspaces.connectWorkspace(targetWorkspace)
-      const response = await hostConnection().api.agentPresets.select({ sessionId, agentPreset: id })
-      if (!response.result.ok) throw new Error(response.result.error.message)
-      ctx.sessions.noteAgentPreset(sessionId, response.result.value.agentPreset)
-      ctx.sessions.open(sessionId)
-      ctx.layout.closePrimaryPage()
-      return 'opened'
+      try {
+        const sessionId = await ctx.workspaces.connectWorkspace(targetWorkspace)
+        const response = await hostConnection().api.agentPresets.select({ sessionId, agentPreset: id })
+        if (!response.result.ok) return 'not-ready'
+        ctx.sessions.noteAgentPreset(sessionId, response.result.value.agentPreset)
+        ctx.sessions.open(sessionId)
+        ctx.layout.closePrimaryPage()
+        return 'opened'
+      } catch {
+        return 'not-ready'
+      }
     },
   })
   const injected = (): PluginCenterTabInjected => ({

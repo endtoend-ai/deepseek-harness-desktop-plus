@@ -24,6 +24,7 @@ import {
   decodeCatalogListQuery,
   decodePluginDiagnosticExportRequest,
   decodePluginRecoveryRetryRequest,
+  decodePresetRuntimeRequest,
   type CompatibilityFingerprint,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
@@ -77,6 +78,10 @@ import {
 import { reloadWithHeldFrame, type HeldReloadFrame } from './window-reload-transition.ts'
 import { PresetSquareClient } from './preset-square/client.ts'
 import { ResourcePresetSquareCatalog } from './preset-square/bundled-catalog.ts'
+import {
+  PresetRuntimeController,
+  withPresetRuntimeEnvironment,
+} from './preset-square/runtime-controller.ts'
 
 const APP_NAME = 'DeepSeek Harness'
 const WINDOW_WIDTH = 1440
@@ -95,6 +100,7 @@ let pluginOperationController: PluginOperationController | undefined
 let pluginRecoveryController: PluginRecoveryController | undefined
 let pluginDiagnosticExporter: PluginRecoveryDiagnosticExporter | undefined
 let pluginOwnedDataRemover: PluginOwnedDataRemover | undefined
+let presetRuntimeController: PresetRuntimeController | undefined
 let pluginRecoveryStartupBlocked = false
 
 interface PluginCenterBackend {
@@ -376,6 +382,12 @@ function registerDesktopBridge(): PluginCenterBackend {
     new ResourcePresetSquareCatalog(bundledPresetRoot()),
   )
   const paths = hostPaths()
+  presetRuntimeController = new PresetRuntimeController({
+    homeDirectory: resolveDshHome(),
+    nodeExecutable: paths.nodeExecutable,
+    packageManagerEntry: paths.packageManagerEntry,
+    electronRunAsNode: paths.electronRunAsNode,
+  })
   const systemComponents = deriveProtectedSystemComponents(paths.shippedBundleManifests)
   const readFingerprint = (
     selection: CatalogPreflightSelection,
@@ -489,6 +501,18 @@ function registerDesktopBridge(): PluginCenterBackend {
   ipcMain.handle(DESKTOP_CHANNELS.presetSquareInstall, (event, value: unknown) => {
     assertDesktopSender(event)
     return presetSquare.install(value)
+  })
+  ipcMain.handle(DESKTOP_CHANNELS.presetSquareRuntimeCheck, (event, value: unknown) => {
+    assertDesktopSender(event)
+    const request = decodePresetRuntimeRequest(value)
+    if (presetRuntimeController === undefined) throw new Error('Preset runtime controller is unavailable')
+    return presetRuntimeController.check(request.presetId)
+  })
+  ipcMain.handle(DESKTOP_CHANNELS.presetSquareRuntimeInstall, (event, value: unknown) => {
+    assertDesktopSender(event)
+    const request = decodePresetRuntimeRequest(value)
+    if (presetRuntimeController === undefined) throw new Error('Preset runtime controller is unavailable')
+    return presetRuntimeController.install(request.presetId)
   })
   ipcMain.handle(DESKTOP_CHANNELS.installedPluginsList, async (event) => {
     assertDesktopSender(event)
@@ -736,10 +760,10 @@ async function boot(): Promise<void> {
   host = createHostSupervisor({
     spawnHost: () => spawnDshWeb({
       ...paths,
-      env: {
+      env: withPresetRuntimeEnvironment({
         ...process.env,
         DSH_DESKTOP: '1',
-      },
+      }, resolveDshHome()),
     }),
     log: chunk => process.stderr.write(chunk),
     onUnexpectedExit: ({ code, signal }) => {

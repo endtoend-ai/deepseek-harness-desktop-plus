@@ -25,6 +25,8 @@ import type {
   PresetInstallPreviewResult,
   PresetInstallRequest,
   PresetInstallResult,
+  PresetRuntimeRequest,
+  PresetRuntimeSnapshot,
   PresetSquareDetailQuery,
   PresetSquareDetailResult,
   PresetSquareListQuery,
@@ -68,6 +70,8 @@ export interface DesktopCatalogBridge {
     detail(query: PresetSquareDetailQuery): Promise<PresetSquareDetailResult>
     previewInstall(request: PresetInstallPreviewRequest): Promise<PresetInstallPreviewResult>
     install(request: PresetInstallRequest): Promise<PresetInstallResult>
+    checkRuntime(request: PresetRuntimeRequest): Promise<PresetRuntimeSnapshot>
+    installRuntime(request: PresetRuntimeRequest): Promise<PresetRuntimeSnapshot>
   }
 }
 

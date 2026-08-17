@@ -5,6 +5,7 @@ import {
   IconCloseOutline16, IconRefreshOutline16, IconSearchOutline16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
+  ManagedPresetRuntimeId,
   PresetArchiveWarning,
   PresetInstallPreviewRequest,
   PresetInstallPreviewResult,
@@ -16,6 +17,8 @@ import type {
   PresetSquareListQuery,
   PresetSquareListResult,
   PresetSquareSort,
+  PresetRuntimeDependencyId,
+  PresetRuntimeSnapshot,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import type { PluginCenterLocaleKey } from './locales.ts'
 import css from './PresetSquarePanel.module.css'
@@ -36,6 +39,13 @@ export interface LocalPresetRoster {
   readonly authorable: boolean
 }
 
+/** Value-free credential state returned by the Host credential seam. */
+export interface PresetCredentialView {
+  readonly configured: boolean
+  readonly source?: string
+  readonly writable: boolean
+}
+
 /** Shared Preset operations injected by the client plugin. */
 export interface PresetSquareInjected {
   readonly presetAvailable: boolean
@@ -45,16 +55,22 @@ export interface PresetSquareInjected {
   readonly detailPresetSquare: (query: PresetSquareDetailQuery) => Promise<PresetSquareDetailResult>
   readonly previewPresetInstall: (request: PresetInstallPreviewRequest) => Promise<PresetInstallPreviewResult>
   readonly installPreset: (request: PresetInstallRequest) => Promise<PresetInstallResult>
+  readonly checkPresetRuntime: (presetId: ManagedPresetRuntimeId) => Promise<PresetRuntimeSnapshot>
+  readonly installPresetRuntime: (presetId: ManagedPresetRuntimeId) => Promise<PresetRuntimeSnapshot>
   readonly listLocalPresets: () => Promise<LocalPresetRoster>
   readonly removeLocalPreset: (id: string) => Promise<void>
-  readonly useLocalPreset: (id: string) => Promise<'opened' | 'workspace-needed'>
+  readonly describePresetCredentials: (
+    refs: readonly string[],
+  ) => Promise<Readonly<Record<string, PresetCredentialView>>>
+  readonly setPresetCredential: (ref: string, value: string) => Promise<void>
+  readonly useLocalPreset: (id: string) => Promise<'opened' | 'workspace-needed' | 'not-ready'>
 }
 
 interface PresetSquarePanelProps extends PresetSquareInjected {
   readonly t: (key: PluginCenterLocaleKey) => string
 }
 
-type PresetView = 'square' | 'installed'
+type PresetView = 'official' | 'community' | 'installed'
 
 type RemoteState =
   | { readonly status: 'loading' }
@@ -77,11 +93,97 @@ type PreviewState =
   | { readonly status: 'error' }
   | { readonly status: 'ready'; readonly value: PresetInstallPreviewResult }
 
+type CredentialState =
+  | { readonly status: 'idle' }
+  | { readonly status: 'loading' }
+  | { readonly status: 'error' }
+  | { readonly status: 'ready'; readonly values: Readonly<Record<string, PresetCredentialView>> }
+
+type PresetSetupKind = 'ready' | 'software' | 'account' | 'credentials'
+
+interface PresetCredentialField {
+  readonly ref: string
+  readonly labelKey: PluginCenterLocaleKey
+  readonly secret: boolean
+}
+
+interface PresetSetup {
+  readonly kind: PresetSetupKind
+  readonly detailKey: PluginCenterLocaleKey
+  readonly runtimeId?: ManagedPresetRuntimeId
+  readonly credentials?: readonly PresetCredentialField[]
+}
+
 const WARNING_KEYS = {
   'absolute-paths': 'presetWarningAbsolute',
   'possible-secrets': 'presetWarningSecrets',
   'version-mismatch': 'presetWarningVersion',
 } as const satisfies Record<PresetArchiveWarning, PluginCenterLocaleKey>
+
+const FEISHU_CREDENTIALS = [{
+  ref: 'FEISHU_APP_ID', labelKey: 'presetFeishuAppId', secret: false,
+}, {
+  ref: 'FEISHU_APP_SECRET', labelKey: 'presetFeishuAppSecret', secret: true,
+}, {
+  ref: 'FEISHU_DEFAULT_OPEN_ID', labelKey: 'presetFeishuDefaultOpenId', secret: false,
+}] as const satisfies readonly PresetCredentialField[]
+
+const PRESET_SETUPS = {
+  'ai-product-developer': { kind: 'ready', detailKey: 'presetSetupReadyDetail' },
+  'dsh-motion-deck-studio': { kind: 'ready', detailKey: 'presetSetupReadyDetail' },
+  'product-video-director': {
+    kind: 'software', detailKey: 'presetSetupVideoDetail', runtimeId: 'product-video-director',
+  },
+  'ai-content-image-studio': { kind: 'account', detailKey: 'presetSetupContentDetail' },
+  'ai-report-analyst': {
+    kind: 'software', detailKey: 'presetSetupReportDetail', runtimeId: 'ai-report-analyst',
+  },
+  'feishu-digital-employee': {
+    kind: 'credentials', detailKey: 'presetSetupFeishuDetail', credentials: FEISHU_CREDENTIALS,
+  },
+} as const satisfies Readonly<Record<string, PresetSetup>>
+
+const SETUP_BADGE_KEYS = {
+  ready: 'presetSetupReady',
+  software: 'presetSetupSoftware',
+  account: 'presetSetupAccount',
+  credentials: 'presetSetupCredentials',
+} as const satisfies Record<PresetSetupKind, PluginCenterLocaleKey>
+
+const RUNTIME_DEPENDENCY_KEYS = {
+  node: 'presetRuntimeNode',
+  hyperframes: 'presetRuntimeHyperframes',
+  ffmpeg: 'presetRuntimeFfmpeg',
+  ffprobe: 'presetRuntimeFfprobe',
+  python: 'presetRuntimePython',
+  openpyxl: 'presetRuntimeOpenpyxl',
+  echarts: 'presetRuntimeEcharts',
+  playwright: 'presetRuntimePlaywright',
+  chromium: 'presetRuntimeChromium',
+} as const satisfies Record<PresetRuntimeDependencyId, PluginCenterLocaleKey>
+
+const MANAGED_RUNTIME_IDS = ['product-video-director', 'ai-report-analyst'] as const satisfies readonly ManagedPresetRuntimeId[]
+
+function setupForPreset(id: string): PresetSetup | undefined {
+  return PRESET_SETUPS[id as keyof typeof PRESET_SETUPS]
+}
+
+function runtimeBadgeKey(snapshot: PresetRuntimeSnapshot | undefined): PluginCenterLocaleKey {
+  if (snapshot === undefined || snapshot.phase === 'checking') return 'presetRuntimeChecking'
+  if (snapshot.phase === 'ready') return 'presetRuntimeReady'
+  if (snapshot.phase === 'installing') return 'presetRuntimeInstalling'
+  if (snapshot.phase === 'failed') return 'presetRuntimeFailed'
+  return snapshot.canInstall ? 'presetRuntimeRequired' : 'presetRuntimeManual'
+}
+
+function runtimeDependencyStateKey(
+  dependency: PresetRuntimeSnapshot['dependencies'][number],
+): PluginCenterLocaleKey {
+  if (dependency.state === 'ready') return 'presetRuntimeDependencyReady'
+  if (dependency.state === 'installing') return 'presetRuntimeDependencyInstalling'
+  if (dependency.state === 'failed') return 'presetRuntimeDependencyFailed'
+  return dependency.installable ? 'presetRuntimeDependencyMissing' : 'presetRuntimeDependencyManual'
+}
 
 function matches(item: PresetSquareItem, query: string): boolean {
   const needle = query.trim().toLocaleLowerCase()
@@ -96,17 +198,146 @@ function formatBytes(value: number): string {
   return `${(value / 1_048_576).toFixed(1)} MB`
 }
 
-function PresetArtwork({ item, compact = false }: {
+function OfficialPresetGlyph({ presetId }: { readonly presetId: string }): ReactNode {
+  const common = {
+    viewBox: '0 0 32 32',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  }
+  switch (presetId) {
+    case 'ai-product-developer':
+      return (
+        <svg {...common}>
+          <rect x="4.5" y="6" width="23" height="20" rx="3" />
+          <path d="M4.5 11h23M13 16l-3 3 3 3M19 16l3 3-3 3" />
+        </svg>
+      )
+    case 'dsh-motion-deck-studio':
+      return (
+        <svg {...common}>
+          <rect x="6" y="5" width="19" height="16" rx="2.5" />
+          <path d="M10 26h12M16 21v5M12.5 10.5l7 3.5-7 3.5z" />
+        </svg>
+      )
+    case 'product-video-director':
+      return (
+        <svg {...common}>
+          <rect x="4.5" y="7" width="23" height="18" rx="3" />
+          <path d="M9 7v18M23 7v18M4.5 12h4.5M23 12h4.5M4.5 20h4.5M23 20h4.5M13.5 12.5l6 3.5-6 3.5z" />
+        </svg>
+      )
+    case 'ai-content-image-studio':
+      return (
+        <svg {...common}>
+          <rect x="4.5" y="6" width="20" height="20" rx="3" />
+          <circle cx="10.5" cy="12" r="2" />
+          <path d="M7.5 22l5-5 3.5 3 3-3 5.5 5M25 4v6M22 7h6" />
+        </svg>
+      )
+    case 'ai-report-analyst':
+      return (
+        <svg {...common}>
+          <path d="M6 5v21h21M10 21v-5M15 21V10M20 21v-8M9 12l5-4 5 2 7-6" />
+        </svg>
+      )
+    case 'feishu-digital-employee':
+      return (
+        <svg {...common}>
+          <circle cx="16" cy="16" r="3.5" />
+          <circle cx="7" cy="9" r="2.5" />
+          <circle cx="25" cy="9" r="2.5" />
+          <circle cx="7" cy="24" r="2.5" />
+          <circle cx="25" cy="24" r="2.5" />
+          <path d="M9.2 10.5l3.8 3M22.8 10.5l-3.8 3M9.3 22.2l3.7-3.1M22.7 22.2L19 19.1" />
+        </svg>
+      )
+    default:
+      return (
+        <svg {...common}>
+          <path d="M16 4l2.1 7.1L25 14l-6.9 2.9L16 24l-2.1-7.1L7 14l6.9-2.9z" />
+          <path d="M25 5v5M22.5 7.5h5" />
+        </svg>
+      )
+  }
+}
+
+function CommunityPresetGlyph({ variant }: { readonly variant: number }): ReactNode {
+  const common = {
+    viewBox: '0 0 32 32',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  }
+  switch (variant % 6) {
+    case 1:
+      return (
+        <svg {...common}>
+          <circle cx="16" cy="16" r="4" />
+          <circle cx="7" cy="9" r="2.5" />
+          <circle cx="25" cy="9" r="2.5" />
+          <circle cx="16" cy="26" r="2.5" />
+          <path d="M9 10.5l4 3M23 10.5l-4 3M16 20v3.5" />
+        </svg>
+      )
+    case 2:
+      return (
+        <svg {...common}>
+          <path d="M8 4.5h11l5 5V27H8zM19 4.5V10h5M12 15h8M12 20h8" />
+        </svg>
+      )
+    case 3:
+      return (
+        <svg {...common}>
+          <rect x="4.5" y="6" width="23" height="20" rx="3" />
+          <path d="M9 12l4 4-4 4M16 20h7" />
+        </svg>
+      )
+    case 4:
+      return (
+        <svg {...common}>
+          <circle cx="14" cy="14" r="7" />
+          <path d="M19 19l7 7M11 14h6M14 11v6" />
+        </svg>
+      )
+    case 5:
+      return (
+        <svg {...common}>
+          <rect x="5" y="5" width="9" height="9" rx="2" />
+          <rect x="18" y="5" width="9" height="9" rx="2" />
+          <rect x="5" y="18" width="9" height="9" rx="2" />
+          <path d="M22.5 18v9M18 22.5h9" />
+        </svg>
+      )
+    default:
+      return (
+        <svg {...common}>
+          <path d="M16 4l2.1 7.1L25 14l-6.9 2.9L16 24l-2.1-7.1L7 14l6.9-2.9z" />
+          <path d="M25 5v5M22.5 7.5h5" />
+        </svg>
+      )
+  }
+}
+
+function PresetArtwork({ item, compact = false, local = false }: {
   readonly item: PresetSquareItem
   readonly compact?: boolean
+  readonly local?: boolean
 }): ReactNode {
   return (
     <span
-      className={`${css.artwork}${compact ? ` ${css.artworkCompact}` : ''}`}
+      className={`${css.artwork}${compact ? ` ${css.artworkCompact}` : ''}${local ? ` ${css.artworkLocal}` : ''}`}
       data-variant={String(item.visualVariant % 6)}
+      data-artwork={item.source === 'fufan-official' ? item.presetId : 'community-fallback'}
       aria-hidden="true"
     >
-      <span>{item.title.slice(0, 1).toLocaleUpperCase()}</span>
+      {item.source === 'fufan-official'
+        ? <OfficialPresetGlyph presetId={item.presetId} />
+        : <CommunityPresetGlyph variant={item.visualVariant} />}
     </span>
   )
 }
@@ -120,12 +351,16 @@ export function PresetSquarePanel({
   detailPresetSquare,
   previewPresetInstall,
   installPreset,
+  checkPresetRuntime,
+  installPresetRuntime,
   listLocalPresets,
   removeLocalPreset,
+  describePresetCredentials,
+  setPresetCredential,
   useLocalPreset,
   t,
 }: PresetSquarePanelProps): ReactNode {
-  const [view, setView] = useState<PresetView>('square')
+  const [view, setView] = useState<PresetView>('official')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<PresetSquareSort>('downloads')
   const [remoteRevision, setRemoteRevision] = useState(0)
@@ -140,6 +375,13 @@ export function PresetSquarePanel({
   const [removeTarget, setRemoveTarget] = useState<LocalPresetEntry | null>(null)
   const [removing, setRemoving] = useState(false)
   const [feedback, setFeedback] = useState<PluginCenterLocaleKey | null>(null)
+  const [credentialState, setCredentialState] = useState<CredentialState>({ status: 'idle' })
+  const [credentialInputs, setCredentialInputs] = useState<Readonly<Record<string, string>>>({})
+  const [credentialFeedback, setCredentialFeedback] = useState<PluginCenterLocaleKey | null>(null)
+  const [savingCredentials, setSavingCredentials] = useState(false)
+  const [runtimeSnapshots, setRuntimeSnapshots] = useState<Readonly<Partial<Record<ManagedPresetRuntimeId, PresetRuntimeSnapshot>>>>({})
+  const [runtimeConfirm, setRuntimeConfirm] = useState(false)
+  const [runtimeInstallTarget, setRuntimeInstallTarget] = useState<ManagedPresetRuntimeId | null>(null)
 
   useEffect(() => {
     if (!presetAvailable) return
@@ -163,29 +405,166 @@ export function PresetSquarePanel({
     return () => { current = false }
   }, [listLocalPresets, localRevision, presetAvailable])
 
+  useEffect(() => {
+    if (!presetAvailable) return
+    let current = true
+    for (const presetId of MANAGED_RUNTIME_IDS) {
+      void checkPresetRuntime(presetId).then(
+        (snapshot) => {
+          if (!current) return
+          setRuntimeSnapshots((values) => {
+            const previous = values[presetId]
+            return previous !== undefined && previous.revision > snapshot.revision
+              ? values
+              : { ...values, [presetId]: snapshot }
+          })
+        },
+        () => {
+          if (!current) return
+          setRuntimeSnapshots(values => ({ ...values, [presetId]: {
+            presetId,
+            phase: 'failed',
+            dependencies: [],
+            canInstall: false,
+            revision: 0,
+            updatedAt: new Date().toISOString(),
+          } }))
+        },
+      )
+    }
+    return () => { current = false }
+  }, [checkPresetRuntime, presetAvailable])
+
   const visible = useMemo(() => remote.status === 'ready'
     ? remote.result.items.filter(item => matches(item, query))
     : [], [query, remote])
   const officialVisible = useMemo(() => visible.filter(item => item.source === 'fufan-official'), [visible])
   const communityVisible = useMemo(() => visible.filter(item => item.source === 'community'), [visible])
+  const officialCount = remote.status === 'ready'
+    ? remote.result.items.filter(item => item.source === 'fufan-official').length
+    : 0
+  const communityCount = remote.status === 'ready'
+    ? remote.result.items.filter(item => item.source === 'community').length
+    : 0
+  const catalogVisible = view === 'official' ? officialVisible : communityVisible
+  const catalogTitle = view === 'official' ? t('presetFufanOfficialTitle') : t('presetCommunityTitle')
+  const catalogHint = view === 'official' ? t('presetFufanOfficialHint') : t('presetCommunityHint')
+  const catalogView = view !== 'installed'
 
   const localById = useMemo(() => new Map(local.status === 'ready'
     ? local.result.presets.map(item => [item.id, item] as const)
     : []), [local])
+  const remoteByPresetId = useMemo(() => new Map(remote.status === 'ready'
+    ? remote.result.items.map(item => [item.presetId, item] as const)
+    : []), [remote])
+
+  const acceptRuntimeSnapshot = (snapshot: PresetRuntimeSnapshot): void => {
+    setRuntimeSnapshots((values) => {
+      const previous = values[snapshot.presetId]
+      return previous !== undefined && previous.revision > snapshot.revision
+        ? values
+        : { ...values, [snapshot.presetId]: snapshot }
+    })
+  }
+
+  const failedRuntimeSnapshot = (
+    presetId: ManagedPresetRuntimeId,
+    previous?: PresetRuntimeSnapshot,
+  ): PresetRuntimeSnapshot => {
+    const dependencies = (previous?.dependencies ?? []).map(dependency => (
+      dependency.state === 'installing' ? { ...dependency, state: 'failed' as const } : dependency
+    ))
+    return {
+      presetId,
+      phase: 'failed',
+      dependencies,
+      canInstall: dependencies.some(dependency => dependency.state !== 'ready' && dependency.installable),
+      revision: previous?.revision ?? 0,
+      updatedAt: new Date().toISOString(),
+    }
+  }
+
+  const refreshRuntime = (presetId: ManagedPresetRuntimeId): void => {
+    const previous = runtimeSnapshots[presetId]
+    setRuntimeSnapshots(values => ({ ...values, [presetId]: {
+      presetId,
+      phase: 'checking',
+      dependencies: previous?.dependencies ?? [],
+      canInstall: previous?.canInstall ?? false,
+      revision: previous?.revision ?? 0,
+      updatedAt: new Date().toISOString(),
+    } }))
+    void checkPresetRuntime(presetId).then(
+      acceptRuntimeSnapshot,
+      () => { setRuntimeSnapshots(values => ({
+        ...values,
+        [presetId]: failedRuntimeSnapshot(presetId, values[presetId]),
+      })) },
+    )
+  }
+
+  const installRuntime = (presetId: ManagedPresetRuntimeId): void => {
+    if (runtimeInstallTarget !== null) return
+    const previous = runtimeSnapshots[presetId]
+    setRuntimeConfirm(false)
+    setRuntimeInstallTarget(presetId)
+    setRuntimeSnapshots(values => ({ ...values, [presetId]: {
+      presetId,
+      phase: 'installing',
+      dependencies: (previous?.dependencies ?? []).map(dependency => (
+        dependency.state !== 'ready' && dependency.installable
+          ? { ...dependency, state: 'installing' as const }
+          : dependency
+      )),
+      canInstall: previous?.canInstall ?? false,
+      revision: previous?.revision ?? 0,
+      updatedAt: new Date().toISOString(),
+    } }))
+    void installPresetRuntime(presetId).then(
+      acceptRuntimeSnapshot,
+      () => { setRuntimeSnapshots(values => ({
+        ...values,
+        [presetId]: failedRuntimeSnapshot(presetId, values[presetId]),
+      })) },
+    ).finally(() => { setRuntimeInstallTarget(null) })
+  }
+
+  const loadCredentials = (presetId: string): void => {
+    const fields = setupForPreset(presetId)?.credentials
+    setCredentialInputs({})
+    if (fields === undefined) {
+      setCredentialState({ status: 'idle' })
+      return
+    }
+    setCredentialState({ status: 'loading' })
+    void describePresetCredentials(fields.map(field => field.ref)).then(
+      (values) => { setCredentialState({ status: 'ready', values }) },
+      () => { setCredentialState({ status: 'error' }) },
+    )
+  }
 
   const closeDetail = (): void => {
-    if (installing) return
+    if (installing || savingCredentials || runtimeInstallTarget !== null) return
     setDetail(null)
     setPreview({ status: 'idle' })
     setTargetId('')
     setAcknowledged(false)
+    setCredentialState({ status: 'idle' })
+    setCredentialInputs({})
+    setCredentialFeedback(null)
+    setRuntimeConfirm(false)
   }
 
-  const openDetail = (item: PresetSquareItem): void => {
+  const openDetail = (item: PresetSquareItem, setupRequired = false): void => {
     setDetail({ status: 'loading', fallback: item })
     setPreview({ status: 'idle' })
     setTargetId(item.presetId)
     setAcknowledged(false)
+    setCredentialFeedback(setupRequired ? 'presetSetupRequired' : null)
+    const runtimeId = setupForPreset(item.presetId)?.runtimeId
+    setRuntimeConfirm(setupRequired && runtimeId !== undefined
+      && runtimeSnapshots[runtimeId]?.canInstall === true)
+    loadCredentials(item.presetId)
     void detailPresetSquare({ slug: item.slug }).then(
       (result) => {
         if (result.item === null) setDetail({ status: 'error', fallback: item })
@@ -215,6 +594,42 @@ export function PresetSquarePanel({
   const selectedItem = detail === null
     ? null
     : detail.status === 'ready' ? detail.item : detail.fallback
+  const selectedSetup = selectedItem === null ? undefined : setupForPreset(selectedItem.presetId)
+  const selectedRuntime = selectedSetup?.runtimeId === undefined
+    ? undefined
+    : runtimeSnapshots[selectedSetup.runtimeId]
+  const saveCredentials = (): void => {
+    const fields = selectedSetup?.credentials
+    if (fields === undefined || credentialState.status !== 'ready' || savingCredentials) return
+    const writes = fields.flatMap((field) => {
+      const value = credentialInputs[field.ref]?.trim() ?? ''
+      return value === '' ? [] : [{ ref: field.ref, value }]
+    })
+    if (writes.length === 0) return
+    const missingInput = fields.some((field) => {
+      const status = credentialState.values[field.ref]
+      return status?.configured !== true && (credentialInputs[field.ref]?.trim() ?? '') === ''
+    })
+    if (missingInput) {
+      setCredentialFeedback('presetCredentialIncomplete')
+      return
+    }
+    setSavingCredentials(true)
+    setCredentialFeedback(null)
+    void writes.reduce<Promise<void>>(
+      (chain, entry) => chain.then(() => setPresetCredential(entry.ref, entry.value)),
+      Promise.resolve(),
+    ).then(
+      () => describePresetCredentials(fields.map(field => field.ref)),
+    ).then(
+      (values) => {
+        setCredentialState({ status: 'ready', values })
+        setCredentialInputs({})
+        setCredentialFeedback('presetCredentialSaved')
+      },
+      () => { setCredentialFeedback('presetCredentialSaveFailed') },
+    ).finally(() => { setSavingCredentials(false) })
+  }
 
   const confirmInstall = (): void => {
     if (selectedItem === null || installing || !acknowledged || targetId.trim() === '') return
@@ -228,13 +643,24 @@ export function PresetSquarePanel({
         return installPreset({ slug: selectedItem.slug, targetId: checked.targetId })
       },
     ).then(
-      () => {
-        setFeedback('presetInstallSuccess')
+      async () => {
+        const setup = setupForPreset(selectedItem.presetId)
+        const runtime = setup?.runtimeId === undefined
+          ? undefined
+          : await checkPresetRuntime(setup.runtimeId).catch(() => undefined)
+        if (runtime !== undefined) acceptRuntimeSnapshot(runtime)
+        setFeedback(setup === undefined || setup.kind === 'ready'
+          ? 'presetInstallSuccess'
+          : 'presetInstallSuccessSetup')
         setLocalRevision(value => value + 1)
-        setDetail(null)
         setPreview({ status: 'idle' })
         setTargetId('')
         setAcknowledged(false)
+        if (setup?.runtimeId !== undefined && runtime?.phase !== 'ready') {
+          setRuntimeConfirm(runtime?.canInstall === true)
+          return
+        }
+        setDetail(null)
       },
       () => { setFeedback('presetInstallFailed') },
     ).finally(() => { setInstalling(false) })
@@ -255,11 +681,135 @@ export function PresetSquarePanel({
 
   const usePreset = (id: string): void => {
     setFeedback(null)
-    void useLocalPreset(id).then(
+    const applyPreset = (): void => { void useLocalPreset(id).then(
       (result) => {
         if (result === 'workspace-needed') setFeedback('presetWorkspaceNeeded')
+        if (result === 'not-ready') setFeedback('presetUseNotReady')
       },
       () => { setFeedback('presetUseFailed') },
+    ) }
+    const setup = setupForPreset(id)
+    const openRequiredSetup = (confirmRuntime = false): void => {
+      const item = remote.status === 'ready'
+        ? remote.result.items.find(candidate => candidate.presetId === id)
+        : undefined
+      if (item === undefined) {
+        setFeedback('presetSetupRequired')
+        return
+      }
+      setView(item.source === 'fufan-official' ? 'official' : 'community')
+      openDetail(item, true)
+      if (confirmRuntime) setRuntimeConfirm(true)
+    }
+    const checkCredentials = (): void => {
+      const fields = setup?.credentials
+      if (fields === undefined) {
+        applyPreset()
+        return
+      }
+      void describePresetCredentials(fields.map(field => field.ref)).then(
+        (values) => {
+          if (fields.every(field => values[field.ref]?.configured === true)) {
+            applyPreset()
+            return
+          }
+          openRequiredSetup()
+        },
+        () => { setFeedback('presetUseFailed') },
+      )
+    }
+    const runtimeId = setup?.runtimeId
+    if (runtimeId === undefined) {
+      checkCredentials()
+      return
+    }
+    void checkPresetRuntime(runtimeId).then(
+      (snapshot) => {
+        acceptRuntimeSnapshot(snapshot)
+        if (snapshot.phase === 'ready') {
+          checkCredentials()
+        } else {
+          openRequiredSetup(snapshot.canInstall)
+        }
+      },
+      () => {
+        setRuntimeSnapshots(values => ({
+          ...values,
+          [runtimeId]: failedRuntimeSnapshot(runtimeId, values[runtimeId]),
+        }))
+        openRequiredSetup()
+      },
+    )
+  }
+
+  const runtimeForSetup = (setup: PresetSetup | undefined): PresetRuntimeSnapshot | undefined => (
+    setup?.runtimeId === undefined ? undefined : runtimeSnapshots[setup.runtimeId]
+  )
+
+  const actionKeyForInstalled = (setup: PresetSetup | undefined): PluginCenterLocaleKey => {
+    if (setup?.runtimeId === undefined) return 'presetUse'
+    const runtime = runtimeSnapshots[setup.runtimeId]
+    if (runtimeInstallTarget === setup.runtimeId || runtime?.phase === 'installing') {
+      return 'presetRuntimeInstalling'
+    }
+    return runtime?.phase === 'ready' ? 'presetUse' : 'presetRuntimeConfigureAction'
+  }
+
+  const renderRuntimeSetup = (setup: PresetSetup): ReactNode => {
+    if (setup.runtimeId === undefined) return null
+    const runtimeId = setup.runtimeId
+    const snapshot = runtimeSnapshots[runtimeId]
+    const busy = runtimeInstallTarget === runtimeId || snapshot?.phase === 'installing'
+    return (
+      <div className={css.runtimeSetup} data-phase={snapshot?.phase ?? 'checking'}>
+        <div className={css.runtimeSetupHeading}>
+          <strong>{t('presetRuntimeTitle')}</strong>
+          <span>{t(runtimeBadgeKey(snapshot))}</span>
+        </div>
+        {snapshot === undefined || snapshot.phase === 'checking' ? (
+          <p>{t('presetRuntimeCheckingDetail')}</p>
+        ) : null}
+        {snapshot !== undefined && snapshot.dependencies.length > 0 ? (
+          <ul className={css.runtimeDependencies}>
+            {snapshot.dependencies.map(dependency => (
+              <li key={dependency.id} data-state={dependency.state}>
+                <span>{t(RUNTIME_DEPENDENCY_KEYS[dependency.id])}</span>
+                <em>{dependency.version ?? t(runtimeDependencyStateKey(dependency))}</em>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {snapshot?.phase === 'ready' ? <p className={css.runtimeSuccess}>{t('presetRuntimeReadyDetail')}</p> : null}
+        {snapshot?.phase === 'failed' ? <p className={css.runtimeFailure}>{t('presetRuntimeFailureDetail')}</p> : null}
+        {snapshot?.phase === 'missing' && !snapshot.canInstall ? (
+          <p className={css.runtimeManual}>{t('presetRuntimeManualDetail')}</p>
+        ) : null}
+        {runtimeConfirm ? (
+          <div className={css.runtimeConfirmation} role="alert">
+            <strong>{t('presetRuntimeConfirmTitle')}</strong>
+            <p>{t('presetRuntimeConfirmDetail')}</p>
+            <div>
+              <button type="button" disabled={busy} onClick={() => { setRuntimeConfirm(false) }}>
+                {t('cancel')}
+              </button>
+              <button type="button" className={css.primary} disabled={busy} onClick={() => { installRuntime(runtimeId) }}>
+                {t('presetRuntimeConfirmAction')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={css.runtimeActions}>
+            <button type="button" disabled={busy} onClick={() => { refreshRuntime(runtimeId) }}>
+              {t('presetRuntimeRecheck')}
+            </button>
+            {snapshot?.canInstall === true && snapshot.phase !== 'ready' ? (
+              <button type="button" className={css.primary} disabled={busy} onClick={() => { setRuntimeConfirm(true) }}>
+                {busy ? t('presetRuntimeInstalling') : t('presetRuntimeInstallAction')}
+              </button>
+            ) : null}
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -267,6 +817,8 @@ export function PresetSquarePanel({
     <div className={css.grid}>
       {items.map((item) => {
         const installed = localById.get(item.presetId)
+        const setup = setupForPreset(item.presetId)
+        const runtime = runtimeForSetup(setup)
         return (
           <article key={item.slug} className={css.card} data-source={item.source}>
             <PresetArtwork item={item} />
@@ -276,9 +828,16 @@ export function PresetSquarePanel({
                 {item.source === 'fufan-official' ? <span>{t('presetFufanOfficialBadge')}</span> : null}
               </div>
               <p>{item.description}</p>
-              <span>{item.source === 'fufan-official'
-                ? t('presetFufanOfficialPackage')
-                : `@${item.publisher.username} · ${item.downloadCount.toLocaleString()} ${t('presetDownloads')}`}</span>
+              <div className={css.cardMeta}>
+                <span>{item.source === 'fufan-official'
+                  ? t('presetFufanOfficialPackage')
+                  : `@${item.publisher.username} · ${item.downloadCount.toLocaleString()} ${t('presetDownloads')}`}</span>
+                {setup === undefined ? null : (
+                  <em data-kind={setup.kind}>{t(setup.runtimeId === undefined
+                    ? SETUP_BADGE_KEYS[setup.kind]
+                    : runtimeBadgeKey(runtime))}</em>
+                )}
+              </div>
             </div>
             <div className={css.cardActions}>
               <button type="button" onClick={() => { openDetail(item) }}>{t('details')}</button>
@@ -295,10 +854,14 @@ export function PresetSquarePanel({
                 <button
                   type="button"
                   className={css.primary}
-                  disabled={!presetMutationsEnabled || installed.broken !== undefined}
-                  onClick={() => { usePreset(installed.id) }}
+                  disabled={!presetMutationsEnabled || installed.broken !== undefined
+                    || runtimeInstallTarget === setup?.runtimeId}
+                  onClick={() => {
+                    if (setup?.runtimeId !== undefined && runtime?.phase !== 'ready') openDetail(item, true)
+                    else usePreset(installed.id)
+                  }}
                 >
-                  {t('presetUse')}
+                  {t(actionKeyForInstalled(setup))}
                 </button>
               )}
             </div>
@@ -316,7 +879,8 @@ export function PresetSquarePanel({
     <div
       className={css.root}
       data-development={presetDevelopment || undefined}
-      aria-busy={remote.status === 'loading' || local.status === 'loading' || installing || removing}
+      aria-busy={remote.status === 'loading' || local.status === 'loading'
+        || installing || removing || savingCredentials || runtimeInstallTarget !== null}
     >
       <div className={css.scroller}>
         <main className={css.content}>
@@ -343,12 +907,22 @@ export function PresetSquarePanel({
             <button
               type="button"
               role="tab"
-              aria-selected={view === 'square'}
-              data-active={view === 'square' || undefined}
-              onClick={() => { setView('square') }}
+              aria-selected={view === 'official'}
+              data-active={view === 'official' || undefined}
+              onClick={() => { setView('official') }}
             >
-              <span>{t('presetBrowseTab')}</span>
-              {remote.status === 'ready' ? <em>{remote.result.total}</em> : null}
+              <span>{t('presetFufanOfficialTitle')}</span>
+              {remote.status === 'ready' ? <em>{officialCount}</em> : null}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'community'}
+              data-active={view === 'community' || undefined}
+              onClick={() => { setView('community') }}
+            >
+              <span>{t('presetCommunityTitle')}</span>
+              {remote.status === 'ready' ? <em>{communityCount}</em> : null}
             </button>
             <button
               type="button"
@@ -365,7 +939,7 @@ export function PresetSquarePanel({
           {feedback === null ? null : <p className={css.feedback} role="status">{t(feedback)}</p>}
           {!presetMutationsEnabled ? <p className={css.desktopNote}>{t('presetDesktopOnly')}</p> : null}
 
-          {view === 'square' ? <label className={css.search}>
+          {catalogView ? <label className={css.search}>
             <IconSearchOutline16 aria-hidden="true" />
             <span className={css.visuallyHidden}>{t('presetSearch')}</span>
             <input
@@ -389,44 +963,63 @@ export function PresetSquarePanel({
             {local.status === 'ready' ? (
               <div className={css.localList}>
                 {local.result.presets.length === 0 ? <p className={css.status}>{t('presetInstalledEmpty')}</p> : null}
-                {local.result.presets.map(item => (
-                  <article key={item.id} className={css.localItem} data-broken={item.broken === undefined ? undefined : true}>
-                    <span className={css.localMark} aria-hidden="true">{(item.name ?? item.id).slice(0, 1).toLocaleUpperCase()}</span>
-                    <div className={css.localCopy}>
-                      <strong>{item.name ?? item.id}</strong>
-                      <span>{item.description ?? item.id}</span>
-                      {item.broken === undefined ? null : <em title={item.broken}>{t('presetBroken')}</em>}
-                    </div>
-                    <span className={css.trust} data-trust={item.trust}>{t(item.trust === 'system' ? 'presetSystem' : 'presetUser')}</span>
-                    <div className={css.localActions}>
-                      <button
-                        type="button"
-                        disabled={!presetMutationsEnabled || item.broken !== undefined}
-                        onClick={() => { usePreset(item.id) }}
-                      >
-                        {t('presetUse')}
-                      </button>
-                      {item.trust === 'user' ? (
+                {local.result.presets.map((item) => {
+                  const catalogItem = remoteByPresetId.get(item.id)
+                  return (
+                    <article
+                      key={item.id}
+                      className={css.localItem}
+                      data-broken={item.broken === undefined ? undefined : true}
+                    >
+                      {catalogItem === undefined
+                        ? (
+                          <span className={css.localMark} aria-hidden="true">
+                            {(item.name ?? item.id).slice(0, 1).toLocaleUpperCase()}
+                          </span>
+                        )
+                        : <PresetArtwork item={catalogItem} local />}
+                      <div className={css.localCopy}>
+                        <strong>{item.name ?? item.id}</strong>
+                        <span>{item.description ?? item.id}</span>
+                        {item.broken === undefined ? null : <em title={item.broken}>{t('presetBroken')}</em>}
+                      </div>
+                      <span className={css.trust} data-trust={item.trust}>
+                        {t(item.trust === 'system' ? 'presetSystem' : 'presetUser')}
+                      </span>
+                      <div className={css.localActions}>
                         <button
                           type="button"
-                          className={css.danger}
-                          disabled={!presetMutationsEnabled}
-                          onClick={() => { setRemoveTarget(item) }}
+                          disabled={!presetMutationsEnabled || item.broken !== undefined
+                            || runtimeInstallTarget === setupForPreset(item.id)?.runtimeId}
+                          onClick={() => { usePreset(item.id) }}
                         >
-                          {t('presetRemove')}
+                          {t(actionKeyForInstalled(setupForPreset(item.id)))}
                         </button>
-                      ) : <span className={css.protected}>{t('presetProtected')}</span>}
-                    </div>
-                  </article>
-                ))}
+                        {item.trust === 'user' ? (
+                          <button
+                            type="button"
+                            className={css.danger}
+                            disabled={!presetMutationsEnabled}
+                            onClick={() => { setRemoveTarget(item) }}
+                          >
+                            {t('presetRemove')}
+                          </button>
+                        ) : <span className={css.protected}>{t('presetProtected')}</span>}
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
             ) : null}
           </section> : null}
 
-          {view === 'square' ? <section className={css.section} aria-labelledby="square-presets-heading">
+          {catalogView ? <section className={css.section} aria-labelledby="square-presets-heading">
             <div className={css.sectionHeading}>
-              <h2 id="square-presets-heading">{t('presetSquareTitle')}</h2>
-              <div className={css.sort} aria-label={t('presetSquareTitle')}>
+              <div className={css.catalogHeadingCopy}>
+                <h2 id="square-presets-heading">{catalogTitle}</h2>
+                <p>{catalogHint}</p>
+              </div>
+              {view === 'community' ? <div className={css.sort} aria-label={t('presetSquareTitle')}>
                 {(['downloads', 'newest'] as const).map(value => (
                   <button
                     key={value}
@@ -437,7 +1030,7 @@ export function PresetSquarePanel({
                     {t(value === 'downloads' ? 'presetSortDownloads' : 'presetSortNewest')}
                   </button>
                 ))}
-              </div>
+              </div> : null}
             </div>
             {remote.status === 'loading' ? (
               <div className={css.grid} role="status" aria-label={t('presetLoading')}>
@@ -450,35 +1043,8 @@ export function PresetSquarePanel({
                 <button type="button" onClick={() => { setRemoteRevision(value => value + 1) }}>{t('retry')}</button>
               </div>
             ) : null}
-            {remote.status === 'ready' && visible.length === 0 ? <p className={css.status}>{t('presetEmpty')}</p> : null}
-            {remote.status === 'ready' && visible.length > 0 ? (
-              <div className={css.sourceGroups}>
-                {officialVisible.length === 0 ? null : (
-                  <section className={css.sourceGroup} aria-labelledby="fufan-official-presets">
-                    <div className={css.sourceHeading}>
-                      <div>
-                        <h3 id="fufan-official-presets">{t('presetFufanOfficialTitle')}</h3>
-                        <p>{t('presetFufanOfficialHint')}</p>
-                      </div>
-                      <span>{officialVisible.length}</span>
-                    </div>
-                    {renderCards(officialVisible)}
-                  </section>
-                )}
-                {communityVisible.length === 0 ? null : (
-                  <section className={css.sourceGroup} aria-labelledby="community-presets">
-                    <div className={css.sourceHeading}>
-                      <div>
-                        <h3 id="community-presets">{t('presetCommunityTitle')}</h3>
-                        <p>{t('presetCommunityHint')}</p>
-                      </div>
-                      <span>{communityVisible.length}</span>
-                    </div>
-                    {renderCards(communityVisible)}
-                  </section>
-                )}
-              </div>
-            ) : null}
+            {remote.status === 'ready' && catalogVisible.length === 0 ? <p className={css.status}>{t('presetEmpty')}</p> : null}
+            {remote.status === 'ready' && catalogVisible.length > 0 ? renderCards(catalogVisible) : null}
           </section> : null}
         </main>
       </div>
@@ -492,7 +1058,14 @@ export function PresetSquarePanel({
                 <span>{t('presetDetails')}</span>
                 <h2 id="preset-detail-title">{selectedItem.title}</h2>
               </div>
-              <button type="button" aria-label={t('close')} onClick={closeDetail}><IconCloseOutline16 size={16} /></button>
+              <button
+                type="button"
+                aria-label={t('close')}
+                disabled={installing || savingCredentials || runtimeInstallTarget !== null}
+                onClick={closeDetail}
+              >
+                <IconCloseOutline16 size={16} />
+              </button>
             </header>
             <div className={css.dialogBody}>
               {detail.status === 'loading' ? <p className={css.status}>{t('detailLoading')}</p> : null}
@@ -504,6 +1077,85 @@ export function PresetSquarePanel({
                   <p>{t('presetFufanOfficialDisclaimer')}</p>
                 </div>
               ) : null}
+              {selectedSetup === undefined ? null : (
+                <section className={css.setupNotice} data-kind={selectedSetup.kind} aria-labelledby="preset-setup-title">
+                  <header>
+                    <strong id="preset-setup-title">{t('presetSetupTitle')}</strong>
+                    <span>{t(selectedSetup.runtimeId === undefined
+                      ? SETUP_BADGE_KEYS[selectedSetup.kind]
+                      : runtimeBadgeKey(selectedRuntime))}</span>
+                  </header>
+                  <p>{t('presetSetupCommon')}</p>
+                  <ul><li>{t(selectedSetup.detailKey)}</li></ul>
+                  {selectedSetup.kind === 'ready' || selectedSetup.runtimeId !== undefined
+                    ? null
+                    : <small>{t('presetSetupInstallNote')}</small>}
+                  {renderRuntimeSetup(selectedSetup)}
+                  {selectedSetup.credentials === undefined ? null : (
+                    <div className={css.credentialForm}>
+                      <strong>{t('presetCredentialTitle')}</strong>
+                      <p>{t('presetCredentialPrivacy')}</p>
+                      {credentialFeedback === null ? null : (
+                        <p className={css.credentialFeedback} role="status">{t(credentialFeedback)}</p>
+                      )}
+                      {credentialState.status === 'loading' ? <p>{t('presetCredentialLoading')}</p> : null}
+                      {credentialState.status === 'error' ? (
+                        <div className={css.failure} role="alert">
+                          <span>{t('presetCredentialLoadFailed')}</span>
+                          <button type="button" onClick={() => { loadCredentials(selectedItem.presetId) }}>{t('retry')}</button>
+                        </div>
+                      ) : null}
+                      {credentialState.status === 'ready' ? (
+                        <>
+                          {selectedSetup.credentials.map((field) => {
+                            const status = credentialState.values[field.ref]
+                            const configured = status?.configured === true
+                            return (
+                              <label key={field.ref}>
+                                <span>
+                                  <strong>{t(field.labelKey)}</strong>
+                                  <em data-configured={configured || undefined}>
+                                    {t(configured ? 'presetCredentialConfigured' : 'presetCredentialMissing')}
+                                  </em>
+                                </span>
+                                <input
+                                  type={field.secret ? 'password' : 'text'}
+                                  autoComplete="off"
+                                  value={credentialInputs[field.ref] ?? ''}
+                                  disabled={savingCredentials || status?.writable === false}
+                                  placeholder={t(configured
+                                    ? 'presetCredentialReplacePlaceholder'
+                                    : 'presetCredentialInputPlaceholder')}
+                                  aria-label={t(field.labelKey)}
+                                  onChange={(event) => {
+                                    const value = event.currentTarget.value
+                                    setCredentialInputs(current => ({ ...current, [field.ref]: value }))
+                                    setCredentialFeedback(null)
+                                  }}
+                                />
+                                {status?.source === 'env' ? <small>{t('presetCredentialEnvironment')}</small> : null}
+                              </label>
+                            )
+                          })}
+                          <button
+                            type="button"
+                            className={css.secondaryWide}
+                            disabled={savingCredentials
+                              || selectedSetup.credentials.every(field => (credentialInputs[field.ref]?.trim() ?? '') === '')
+                              || selectedSetup.credentials.some(field => (
+                                credentialState.values[field.ref]?.configured !== true
+                                && (credentialInputs[field.ref]?.trim() ?? '') === ''
+                              ))}
+                            onClick={saveCredentials}
+                          >
+                            {savingCredentials ? t('presetCredentialSaving') : t('presetCredentialSave')}
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  )}
+                </section>
+              )}
               <dl className={css.metadata}>
                 <div><dt>{t('publisher')}</dt><dd>@{selectedItem.publisher.username}</dd></div>
                 <div><dt>{t('presetId')}</dt><dd><code>{selectedItem.presetId}</code></dd></div>

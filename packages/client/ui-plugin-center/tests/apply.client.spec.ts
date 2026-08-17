@@ -42,8 +42,14 @@ async function bench(withBridge: boolean) {
     })) },
     connectWorkspace: vi.fn(async () => 'session-1'),
   }
+  const describeCredentials = vi.fn(async (request: { refs: string[] }) => ({
+    result: { ok: true as const, value: { credentials: Object.fromEntries(request.refs.map(ref => [ref, {
+      configured: false, writable: true,
+    }])) } },
+  }))
+  const setCredential = vi.fn(async () => ({ result: { ok: true as const, value: {} } }))
   const connection = { api: {
-    credentials: { describe: vi.fn() },
+    credentials: { describe: describeCredentials, set: setCredential },
     agentPresets: {
       list: vi.fn(async () => ({
         result: { ok: true as const, value: { presets: [], authorable: true, hasDocument: true } },
@@ -109,7 +115,7 @@ async function bench(withBridge: boolean) {
   }
   return {
     ctx, slots: ctx.get('slots') as SlotRegistry, locale, layout, settingsNavigation,
-    sessions, workspaces, connection, conversation,
+    sessions, workspaces, connection, conversation, describeCredentials, setCredential,
     list, refresh, detail, checkCompatibility, listInstalled, install, manage, getOperation, onState,
     getOwnedDataOffer, removeOwnedData, retainOwnedData,
     listPresetSquare, detailPresetSquare, previewPresetInstall, installPreset,
@@ -214,11 +220,15 @@ describe('ui-plugin-center browser plugin', () => {
     await presetFace.detailPresetSquare({ slug: 'fixture' })
     await presetFace.listLocalPresets()
     await presetFace.removeLocalPreset('mine')
+    await presetFace.describePresetCredentials(['FEISHU_APP_ID'])
+    await presetFace.setPresetCredential('FEISHU_APP_ID', 'app-id')
     await expect(presetFace.useLocalPreset('mine')).resolves.toBe('opened')
     expect(b.listPresetSquare).toHaveBeenCalledOnce()
     expect(b.detailPresetSquare).toHaveBeenCalledOnce()
     expect(b.connection.api.agentPresets.list).toHaveBeenCalledOnce()
     expect(b.connection.api.agentPresets.remove).toHaveBeenCalledWith({ agentPreset: 'mine' })
+    expect(b.describeCredentials).toHaveBeenCalledWith({ refs: ['FEISHU_APP_ID'] })
+    expect(b.setCredential).toHaveBeenCalledWith({ ref: 'FEISHU_APP_ID', value: 'app-id' })
     expect(b.connection.api.agentPresets.select).toHaveBeenCalledWith({ sessionId: 'session-1', agentPreset: 'mine' })
     expect(b.sessions.noteAgentPreset).toHaveBeenCalledWith('session-1', 'mine')
     expect(b.sessions.open).toHaveBeenCalledWith('session-1')
@@ -245,13 +255,13 @@ describe('ui-plugin-center browser plugin', () => {
 
     b.sessions.list.getSnapshot.mockReturnValue({ current: 'session-1' })
     b.connection.api.credentials.describe.mockResolvedValue({
-      result: { ok: true, value: { credentials: { DEEPSEEK_API_KEY: { configured: false } } } },
+      result: { ok: true, value: { credentials: { DEEPSEEK_API_KEY: { configured: false, writable: true } } } },
     })
     await expect(discoveryFace.findWithAgent('帮我找 PDF 插件')).resolves.toBe('needs-model')
     expect(b.settingsNavigation.open).toHaveBeenLastCalledWith({ sectionId: 'models' })
 
     b.connection.api.credentials.describe.mockResolvedValue({
-      result: { ok: true, value: { credentials: { DEEPSEEK_API_KEY: { configured: true } } } },
+      result: { ok: true, value: { credentials: { DEEPSEEK_API_KEY: { configured: true, writable: true } } } },
     })
     await expect(discoveryFace.findWithAgent('帮我找 PDF 插件')).resolves.toBe('sent')
     expect(b.sessions.scope).toHaveBeenLastCalledWith('session-1')

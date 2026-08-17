@@ -26,6 +26,8 @@ import type {
   PresetInstallPreviewResult,
   PresetInstallRequest,
   PresetInstallResult,
+  PresetRuntimeRequest,
+  PresetRuntimeSnapshot,
   PresetSquareDetailQuery,
   PresetSquareDetailResult,
   PresetSquareListQuery,
@@ -81,6 +83,10 @@ const bridge: DesktopBridge = Object.freeze({
       ipcRenderer.invoke(DESKTOP_CHANNELS.presetSquarePreviewInstall, request) as Promise<PresetInstallPreviewResult>,
     install: (request: PresetInstallRequest) =>
       ipcRenderer.invoke(DESKTOP_CHANNELS.presetSquareInstall, request) as Promise<PresetInstallResult>,
+    checkRuntime: (request: PresetRuntimeRequest) =>
+      ipcRenderer.invoke(DESKTOP_CHANNELS.presetSquareRuntimeCheck, request) as Promise<PresetRuntimeSnapshot>,
+    installRuntime: (request: PresetRuntimeRequest) =>
+      ipcRenderer.invoke(DESKTOP_CHANNELS.presetSquareRuntimeInstall, request) as Promise<PresetRuntimeSnapshot>,
   }),
   installedPlugins: Object.freeze({
     list: () => ipcRenderer.invoke(DESKTOP_CHANNELS.installedPluginsList) as Promise<InstalledPluginListResult>,

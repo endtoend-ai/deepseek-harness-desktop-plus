@@ -21,8 +21,12 @@ export function PresetSquarePage({
   detailPresetSquare,
   previewPresetInstall,
   installPreset,
+  checkPresetRuntime,
+  installPresetRuntime,
   listLocalPresets,
   removeLocalPreset,
+  describePresetCredentials,
+  setPresetCredential,
   useLocalPreset,
   t,
 }: PresetSquarePageProps) {
@@ -46,8 +50,12 @@ export function PresetSquarePage({
         detailPresetSquare={detailPresetSquare}
         previewPresetInstall={previewPresetInstall}
         installPreset={installPreset}
+        checkPresetRuntime={checkPresetRuntime}
+        installPresetRuntime={installPresetRuntime}
         listLocalPresets={listLocalPresets}
         removeLocalPreset={removeLocalPreset}
+        describePresetCredentials={describePresetCredentials}
+        setPresetCredential={setPresetCredential}
         useLocalPreset={useLocalPreset}
         t={t}
       />

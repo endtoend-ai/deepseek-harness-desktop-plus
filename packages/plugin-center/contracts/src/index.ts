@@ -981,6 +981,47 @@ export interface PresetInstallResult extends PresetInstallPreviewResult {
   readonly installed: true
 }
 
+/** Presets whose external runtime is installed and verified by Desktop. */
+export const MANAGED_PRESET_RUNTIME_IDS = ['product-video-director', 'ai-report-analyst'] as const
+/** Preset whose external runtime is installed and verified by Desktop. */
+export type ManagedPresetRuntimeId = typeof MANAGED_PRESET_RUNTIME_IDS[number]
+
+/** Stable dependency ids rendered with client-owned localized labels. */
+export const PRESET_RUNTIME_DEPENDENCY_IDS = [
+  'node', 'hyperframes', 'ffmpeg', 'ffprobe', 'python', 'openpyxl', 'echarts', 'playwright', 'chromium',
+] as const
+/** One external runtime dependency known to Desktop. */
+export type PresetRuntimeDependencyId = typeof PRESET_RUNTIME_DEPENDENCY_IDS[number]
+
+/** Lifecycle of one dependency in the Desktop-owned runtime operation. */
+export type PresetRuntimeDependencyState = 'ready' | 'missing' | 'installing' | 'failed'
+
+/** Renderer-safe evidence for one Preset runtime dependency. */
+export interface PresetRuntimeDependency {
+  readonly id: PresetRuntimeDependencyId
+  readonly state: PresetRuntimeDependencyState
+  readonly installable: boolean
+  readonly version: string | null
+}
+
+/** Aggregate state of one managed Preset runtime. */
+export type PresetRuntimePhase = 'checking' | 'ready' | 'missing' | 'installing' | 'failed'
+
+/** Monotonic Desktop-owned snapshot for one managed Preset runtime. */
+export interface PresetRuntimeSnapshot {
+  readonly presetId: ManagedPresetRuntimeId
+  readonly phase: PresetRuntimePhase
+  readonly dependencies: readonly PresetRuntimeDependency[]
+  readonly canInstall: boolean
+  readonly revision: number
+  readonly updatedAt: string
+}
+
+/** Closed renderer request for checking or installing one managed runtime. */
+export interface PresetRuntimeRequest {
+  readonly presetId: ManagedPresetRuntimeId
+}
+
 const ID = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/u
 const VERSION = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/u
 const PLATFORM = /^(?:darwin|win32)-(?:arm64|x64)$/u
@@ -2706,6 +2747,19 @@ function decodePresetSquareItemAt(value: unknown, path: string): PresetSquareIte
  */
 export function decodePresetSquareItem(value: unknown): PresetSquareItem {
   return decodePresetSquareItemAt(value, '$preset')
+}
+
+/**
+ * Decode a closed managed-runtime request.
+ * @param value - Untrusted renderer payload.
+ * @returns One Desktop-owned Preset runtime id.
+ */
+export function decodePresetRuntimeRequest(value: unknown): PresetRuntimeRequest {
+  const source = record(value, '$presetRuntimeRequest')
+  exact(source, '$presetRuntimeRequest', ['presetId'])
+  return {
+    presetId: enumeration(source['presetId'], '$presetRuntimeRequest.presetId', MANAGED_PRESET_RUNTIME_IDS),
+  }
 }
 
 /**

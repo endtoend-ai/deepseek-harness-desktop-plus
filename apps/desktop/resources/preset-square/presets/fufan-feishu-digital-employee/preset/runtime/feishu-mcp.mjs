@@ -28,9 +28,14 @@ async function tenantToken() {
 }
 
 async function createTask(args) {
-  const data = args.data
-  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+  const input = args.data
+  if (input === null || typeof input !== 'object' || Array.isArray(input)) {
     throw new Error('data 必须包含飞书任务字段')
+  }
+  const defaultOpenId = process.env.FEISHU_DEFAULT_OPEN_ID?.trim()
+  const data = { ...input }
+  if ((!Array.isArray(data.members) || data.members.length === 0) && defaultOpenId) {
+    data.members = [{ id: defaultOpenId, type: 'user', role: 'assignee' }]
   }
   const userIdType = args.params?.user_id_type ?? 'open_id'
   if (userIdType !== 'open_id') throw new Error('params.user_id_type 必须为 open_id')

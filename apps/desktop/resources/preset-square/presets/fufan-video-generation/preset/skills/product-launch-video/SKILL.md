@@ -16,7 +16,7 @@ disable-model-invocation: false
 - 新任务只写入调用目录下全新的 `generated/<project-slug>/`。
 - 不读取、不复制、不改写调用目录根部已有的 `BRIEF.md`、`STORYBOARD.md`、`frame.md`、`compositions/`、`assets/screens/` 或 `output/`。
 - 若目标目录已存在，使用语义化后缀，例如 `<project-slug>-v2`；不得覆盖。
-- 固定使用 `hyperframes@0.7.109`，不得升级、登录、云发布或安装在线 Skill。
+- 固定使用桌面端已检测并安装的 `hyperframes@0.7.109`，不得自行升级、登录、云发布或安装在线 Skill。
 - 用户给出的品牌、产品、卖点和视觉要求必须进入新项目；不得把 DeepSeek Harness 示例文案带进其他主题。
 - 用户一句话已包含主题时直接执行。只有连“做什么产品的视频”都无法判断时，才使用 `ask_user_question` 问一次。
 
@@ -65,7 +65,7 @@ disable-model-invocation: false
 从用户内容提取短的 kebab-case 项目名，在调用目录执行：
 
 ```bash
-npx --yes hyperframes@0.7.109 init "generated/<project-slug>" \
+hyperframes init "generated/<project-slug>" \
   --non-interactive \
   --example=blank \
   --resolution=landscape \
@@ -146,9 +146,9 @@ capture/assets/
 node .agents/skills/product-launch-video/scripts/validate-project.mjs "generated/<project-slug>"
 
 cd "generated/<project-slug>"
-npx --yes hyperframes@0.7.109 lint
-npx --yes hyperframes@0.7.109 check
-npx --yes hyperframes@0.7.109 snapshot --at 1,3.5,6.5,9
+hyperframes lint
+hyperframes check
+hyperframes snapshot --at 1,3.5,6.5,9
 ```
 
 检查失败时只修最小源码并重跑失败项。不要绕过错误直接渲染。快照生成后读取或打开联系表，确认没有裁切、遮挡、空白镜头或明显的 PPT 式硬切。
@@ -160,7 +160,7 @@ npx --yes hyperframes@0.7.109 snapshot --at 1,3.5,6.5,9
 测试提示中写明“直接完成”时，无需再次等待确认，前台执行：
 
 ```bash
-npx --yes hyperframes@0.7.109 render \
+hyperframes render \
   --skill=product-launch-video \
   --quality=high \
   --output "renders/<project-slug>.mp4"
@@ -180,7 +180,7 @@ DSH 会话中应依次出现：
 
 1. `skill` 加载 `product-launch-video`；
 2. `web_search` 至少执行 4 次，覆盖产品事实、用户问题、同类表达和视觉线索；
-3. Shell 调用 `hyperframes@0.7.109 init` 创建新目录；
+3. Shell 调用桌面端托管的 `hyperframes init` 创建新目录；
 4. 文件工具新建 `RESEARCH.md`、`BRIEF.md`、`frame.md`、`STORYBOARD.md` 和 frame HTML；
 5. Shell 调用本 Skill 的 `validate-project.mjs`；
 6. Shell 调用 HyperFrames lint、check、snapshot、render；
