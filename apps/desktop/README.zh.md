@@ -102,17 +102,17 @@ pnpm run publish:desktop-update -- \
 
 ### Windows x64 NSIS 安装包
 
-使用以下命令构建当前用户安装、双击即用的 Windows x64 安装包：
+使用以下命令构建引导式 Windows x64 安装包：
 
 ```sh
 pnpm run dist:win:desktop
 ```
 
-该命令会构建完整工作区、暂存面向 Windows 的 Host 运行时，核验 Koffi、Sharp 和 node-pty 所需的 x64 原生模块，再生成 `.exe` 安装包、blockmap 与更新元数据。macOS 交叉构建会把 Electron Builder 的 NSIS 模板映射到一个较短的临时路径，因为 NSIS 在 POSIX include 路径上仍使用固定的 260 字符缓冲区；构建结束后会删除该临时符号链接。
+引导流程默认安装给当前用户，也允许选择所有用户安装和自定义安装目录。该命令会构建完整工作区、暂存面向 Windows 的 Host 运行时，移除 Node 运行时不会加载的声明文件与 source map，核验 Koffi、Sharp 和 node-pty 所需的 x64 原生模块，再生成 `.exe` 安装包、blockmap 与更新元数据。macOS 交叉构建会把 Electron Builder 的 NSIS 模板映射到一个较短的临时路径，因为 NSIS 在 POSIX include 路径上仍使用固定的 260 字符缓冲区；构建结束后会删除该临时符号链接。
 
-替换现有安装前，NSIS 安装程序会请求正在运行的单实例进入普通显式退出路径，并等待受 supervisor 管理的 Host 完全停稳。随后，自定义的运行中应用检查会终止任何残留的 `DeepSeek Harness.exe` 进程树，并替换 Electron Builder 的通用提示循环，因此常驻托盘或较旧的应用既无法继续锁定安装目录，也不会再要求人工重试。公开的 `0.1.0-rc.5` 包还会走一条按版本限定的原位替换路径：跳过已知缓慢的旧卸载器，由新载荷覆盖应用目录，并立即重建卸载注册信息。Profile 数据位于应用目录之外，不受该替换影响。
+替换或移除现有安装前，NSIS 会请求正在运行的单实例进入普通显式退出路径，最多等待五秒让 supervisor 管理的 Host 停稳，再以两次有界尝试终止任何残留的 `DeepSeek Harness.exe` 进程树。如果仍有进程占用安装目录，操作会明确失败，不会留下半卸载状态。公开的 `0.1.0-rc.5` 至 `0.1.0-rc.7` 安装还会走同目录修复路径：注册安装位置与所选目录一致时，替换程序会跳过已经失败的旧卸载器，覆盖应用载荷并重建卸载注册信息。Profile 数据位于应用目录之外，不受该替换影响。
 
-在配置 Windows Authenticode 证书前，内部测试安装包保持未签名。测试者核对已发布的 SHA-256 后，SmartScreen 可能仍要求选择“更多信息”→“仍要运行”。不需要关闭 Defender。实际启动与卸载验收仍必须在 Windows 10/11 x64 上完成。
+在配置 Windows Authenticode 证书前，内部测试安装包保持未签名。测试者核对已发布的 SHA-256 后，SmartScreen 可能仍要求选择“更多信息”→“仍要运行”。不需要关闭 Defender。原生 Windows 生命周期工作流会安装到非默认目录，启动打包 Host，在应用仍运行时卸载，再安装到同一目录并重复启动与卸载检查。
 
 ## 已知限制
 

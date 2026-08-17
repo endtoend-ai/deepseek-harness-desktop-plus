@@ -102,17 +102,17 @@ The command validates one version and channel across all supplied directories, c
 
 ### Windows x64 NSIS installer
 
-Build the per-user, one-click Windows x64 installer with:
+Build the guided Windows x64 installer with:
 
 ```sh
 pnpm run dist:win:desktop
 ```
 
-The command builds the complete workspace, stages a Windows-targeted Host runtime, verifies the required Koffi, Sharp, and node-pty x64 native modules, then creates the `.exe` installer, blockmap, and update metadata. macOS cross-builds expose Electron Builder's NSIS templates through a short temporary path because NSIS still uses a fixed 260-character POSIX include buffer; the temporary symlink is removed after the build.
+The assisted flow defaults to the current user, allows an all-users installation, and lets the user choose the installation directory. The command builds the complete workspace, stages a Windows-targeted Host runtime, removes declarations and source maps that Node never loads, verifies the required Koffi, Sharp, and node-pty x64 native modules, then creates the `.exe` installer, blockmap, and update metadata. macOS cross-builds expose Electron Builder's NSIS templates through a short temporary path because NSIS still uses a fixed 260-character POSIX include buffer; the temporary symlink is removed after the build.
 
-Before replacing an existing installation, the NSIS installer asks the running single instance to enter the ordinary explicit-quit path and waits for the supervised Host to settle. Its custom running-application check then terminates any remaining `DeepSeek Harness.exe` process tree and replaces Electron Builder's generic prompt loop, so a tray-resident or older application cannot keep the installation directory locked or require manual retry. The public `0.1.0-rc.5` package also receives a version-scoped, in-place replacement: its known slow old uninstaller is bypassed, the new payload overwrites the application directory, and the installer immediately recreates the uninstall registration. Profile data remains outside the application directory.
+Before replacement or removal, NSIS asks the running single instance to enter the ordinary explicit-quit path, waits up to five seconds for the supervised Host to settle, then makes two bounded attempts to terminate any remaining `DeepSeek Harness.exe` process tree. A process that still owns the installation directory fails the operation explicitly instead of leaving a partial uninstall. Public `0.1.0-rc.5` through `0.1.0-rc.7` installations also receive a same-directory repair path: when the registered installation location matches the selected directory, the replacement bypasses the failed old uninstaller, overwrites the application payload, and recreates the uninstall registration. Profile data remains outside the application directory.
 
-Internal test installers remain unsigned until a Windows Authenticode certificate is configured. SmartScreen may therefore require **More info → Run anyway** after the tester verifies the published SHA-256. Do not disable Defender. Actual launch and uninstall acceptance must still run on Windows 10/11 x64.
+Internal test installers remain unsigned until a Windows Authenticode certificate is configured. SmartScreen may therefore require **More info → Run anyway** after the tester verifies the published SHA-256. Do not disable Defender. The native Windows lifecycle workflow installs into a non-default directory, starts the packaged Host, uninstalls while the application is running, reinstalls into the same directory, and repeats the launch and uninstall check.
 
 ## Known limitations
 

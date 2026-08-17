@@ -6,6 +6,10 @@ import { describe, expect, it } from 'vitest'
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
 const workflow = readFileSync(resolve(repositoryRoot, '.github/workflows/desktop-release.yml'), 'utf8')
 const previewWorkflow = readFileSync(resolve(repositoryRoot, '.github/workflows/desktop-windows-preview.yml'), 'utf8')
+const installerValidationWorkflow = readFileSync(
+  resolve(repositoryRoot, '.github/workflows/windows-installer-lifecycle-validation.yml'),
+  'utf8',
+)
 const chineseReadme = readFileSync(resolve(repositoryRoot, 'README.md'), 'utf8')
 const englishReadme = readFileSync(resolve(repositoryRoot, 'README.en.md'), 'utf8')
 
@@ -50,5 +54,17 @@ describe('desktop GitHub Release workflow', () => {
     expect(releaseStep).not.toContain('Setup.exe.blockmap')
     expect(releaseStep).not.toContain('SHA256SUMS-windows-x64-preview.txt')
     expect(releaseStep).not.toContain('WINDOWS_PREVIEW_VERIFICATION.txt')
+  })
+
+  it('validates the Windows assisted installer through running uninstall and reinstall', () => {
+    expect(installerValidationWorkflow).toContain('workflow_dispatch:')
+    expect(installerValidationWorkflow).toContain('/D=$installDirectory')
+    expect(installerValidationWorkflow).toContain('Invoke-RunningUninstall $freshApplication')
+    expect(installerValidationWorkflow).toContain("Invoke-HarnessInstaller 'reinstall'")
+    expect(installerValidationWorkflow).toContain('same_directory_reinstall=PASS')
+    expect(installerValidationWorkflow).toContain('differential_update_blockmap=PASS')
+    expect(installerValidationWorkflow).toContain('fresh_install_seconds=')
+    expect(installerValidationWorkflow).toContain('WINDOWS_INSTALLER_LIFECYCLE_VERIFICATION.txt')
+    expect(installerValidationWorkflow).not.toContain('gh release upload')
   })
 })

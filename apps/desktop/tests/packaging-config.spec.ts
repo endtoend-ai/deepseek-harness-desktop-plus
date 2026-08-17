@@ -23,6 +23,7 @@ interface DesktopPackage {
     readonly nsis: {
       readonly oneClick: boolean
       readonly perMachine: boolean
+      readonly allowToChangeInstallationDirectory: boolean
       readonly include: string
       readonly createDesktopShortcut: string
       readonly createStartMenuShortcut: boolean
@@ -140,8 +141,9 @@ describe('desktop packaging configuration', () => {
       .toBe('DeepSeek-Harness-Desktop-Windows-x64-${version}-Setup.${ext}')
     expect(desktopPackage.build.toolsets.nsis).toBe('1.2.1')
     expect(desktopPackage.build.nsis).toMatchObject({
-      oneClick: true,
+      oneClick: false,
       perMachine: false,
+      allowToChangeInstallationDirectory: true,
       include: 'build/installer.nsh',
       createDesktopShortcut: 'always',
       createStartMenuShortcut: true,
@@ -152,8 +154,14 @@ describe('desktop packaging configuration', () => {
     expect(windowsInstallerInclude).toContain('taskkill.exe')
     expect(windowsInstallerInclude).toContain('/T /F /IM "${APP_EXECUTABLE_FILENAME}"')
     expect(windowsInstallerInclude).toContain('Pop $0')
-    expect(windowsInstallerInclude).toContain('Sleep 7000')
+    expect(windowsInstallerInclude).toContain('Sleep 5000')
     expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.5"')
+    expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.6"')
+    expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.7"')
+    expect(windowsInstallerInclude).toContain(
+      'ReadRegStr $2 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "InstallLocation"',
+    )
+    expect(windowsInstallerInclude).toContain('${If} $2 == $INSTDIR')
     expect(windowsInstallerInclude).toContain(
       'DeleteRegValue SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "UninstallString"',
     )
@@ -161,6 +169,7 @@ describe('desktop packaging configuration', () => {
       'DeleteRegValue SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "QuietUninstallString"',
     )
     expect(windowsInstallerInclude).toContain('SetOverwrite on')
+    expect(windowsInstallerInclude).toContain('SetErrorLevel 2')
     expect(windowsInstallerInclude).not.toContain('DeleteRegKey SHELL_CONTEXT')
   })
 

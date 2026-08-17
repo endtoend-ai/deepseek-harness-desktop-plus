@@ -3,26 +3,56 @@
   Pop $0
   ${If} $0 == 0
     Exec '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --dsh-installer-quit'
-    Sleep 7000
+  ${EndIf}
+!macroend
+
+!macro customCheckAppRunning
+  nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
+  Pop $0
+  ${If} $0 == 0
+    Exec '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --dsh-installer-quit'
+    Sleep 5000
+
+    nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
+    Pop $0
+  ${EndIf}
+
+  ${If} $0 == 0
     nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /T /F /IM "${APP_EXECUTABLE_FILENAME}"'
     Pop $0
     Sleep 1000
   ${EndIf}
 
-  # The public 0.1.0-rc.5 uninstaller can time out while atomically moving the
-  # staged Host's large dependency tree during an update. Skip that one known
-  # uninstaller and overwrite the application in place; the new installer
-  # recreates both uninstall values after its payload has been written.
+  nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
+  Pop $0
+  ${If} $0 == 0
+    nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /T /F /IM "${APP_EXECUTABLE_FILENAME}"'
+    Pop $0
+    Sleep 1000
+  ${EndIf}
+
+  nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
+  Pop $0
+  ${If} $0 == 0
+    ${IfNot} ${Silent}
+      MessageBox MB_OK|MB_ICONEXCLAMATION "$(appCannotBeClosed)"
+    ${EndIf}
+    SetErrorLevel 2
+    Abort
+  ${EndIf}
+
+  # Public preview uninstallers can leave their registration behind after a
+  # failed same-directory removal. Let the replacement payload repair that
+  # exact location without invoking the failed uninstaller again.
   ReadRegStr $1 SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion"
   ${If} $1 == "0.1.0-rc.5"
-    DeleteRegValue SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "UninstallString"
-    DeleteRegValue SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "QuietUninstallString"
-    SetOverwrite on
+  ${OrIf} $1 == "0.1.0-rc.6"
+  ${OrIf} $1 == "0.1.0-rc.7"
+    ReadRegStr $2 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "InstallLocation"
+    ${If} $2 == $INSTDIR
+      DeleteRegValue SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "UninstallString"
+      DeleteRegValue SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "QuietUninstallString"
+      SetOverwrite on
+    ${EndIf}
   ${EndIf}
-!macroend
-
-!macro customCheckAppRunning
-  nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /T /F /IM "${APP_EXECUTABLE_FILENAME}"'
-  Pop $0
-  Sleep 1000
 !macroend

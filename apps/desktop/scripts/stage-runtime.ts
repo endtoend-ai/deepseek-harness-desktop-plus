@@ -8,6 +8,7 @@ import {
   PACKAGE_MANAGER_ENTRY_SEGMENTS,
   PINNED_PACKAGE_MANAGER_VERSION,
 } from '../src/plugin-center/package-manager.ts'
+import { pruneRuntimeMetadata } from './runtime-staging-pruner.ts'
 
 const desktopRoot = resolve(import.meta.dirname, '..')
 const repositoryRoot = resolve(desktopRoot, '../..')
@@ -19,7 +20,7 @@ const frontend = join(staging, 'node_modules/@deepseek-ai/dsh-web-frontend/dist/
 const packageManagerEntry = join(staging, 'node_modules', ...PACKAGE_MANAGER_ENTRY_SEGMENTS)
 const packageManagerManifest = join(staging, 'node_modules/pnpm/package.json')
 const workspaceState = join(repositoryRoot, 'node_modules/.pnpm-workspace-state-v1.json')
-const stagedTextSuffixes = ['.cjs', '.js', '.json', '.mjs', '.map'] as const
+const stagedTextSuffixes = ['.cjs', '.js', '.json', '.mjs'] as const
 const targetPlatform = process.env.DSH_DESKTOP_TARGET_PLATFORM ?? process.platform
 const targetArch = process.env.DSH_DESKTOP_TARGET_ARCH ?? process.arch
 
@@ -137,6 +138,7 @@ async function main(): Promise<void> {
   await deploy()
   await restoreLegacyHoists()
   await materializeLinks()
+  const prunedMetadataFiles = await pruneRuntimeMetadata(join(staging, 'node_modules'))
   await removeBuildMachinePaths(staging)
   if (!existsSync(entry)) throw new Error(`desktop Host entry missing after staging: ${entry}`)
   if (!existsSync(frontend)) throw new Error(`desktop Web frontend missing after staging: ${frontend}`)
@@ -145,7 +147,7 @@ async function main(): Promise<void> {
   if (packageManager.version !== PINNED_PACKAGE_MANAGER_VERSION) {
     throw new Error(`desktop package-manager version must be ${PINNED_PACKAGE_MANAGER_VERSION}`)
   }
-  console.log(`desktop runtime staged for ${targetPlatform}-${targetArch} at ${staging}`)
+  console.log(`desktop runtime staged for ${targetPlatform}-${targetArch} at ${staging}; removed ${String(prunedMetadataFiles)} compile-time metadata files`)
 }
 
 await main()
