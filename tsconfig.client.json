@@ -94,6 +94,7 @@
     { "path": "./packages/client/ui-settings-models" },
     { "path": "./packages/client/ui-settings-plugin-inventory" },
     { "path": "./packages/client/ui-plugin-center/tsconfig.client.json" },
+    { "path": "./packages/examples/ff-llm-wiki-plugin/tsconfig.client.json" },
     { "path": "./packages/examples/plugin-center-fixture/tsconfig.client.json" },
     { "path": "./packages/client/locale" },
     { "path": "./packages/client/web" },
