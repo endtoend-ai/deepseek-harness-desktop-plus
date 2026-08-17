@@ -13,6 +13,7 @@ import {
   session,
   shell,
   Tray,
+  WebContentsView,
   type Event,
   type MenuItemConstructorOptions,
 } from 'electron'
@@ -66,18 +67,18 @@ import {
 } from './plugin-center/system-components.ts'
 import { createTrustedInstallRunner } from './plugin-center/trusted-install-executor.ts'
 import { createTrustedManagementRunner } from './plugin-center/trusted-management-executor.ts'
+import { desktopRendererUrl, PLUGIN_CENTER_PAGE_ID } from './renderer-navigation.ts'
 import { DesktopUpdateController } from './update-controller.ts'
 import {
   createDesktopLifecycle,
   isInstallerQuitRequest,
   type DesktopLifecycle,
 } from './window-lifecycle.ts'
+import { reloadWithHeldFrame, type HeldReloadFrame } from './window-reload-transition.ts'
 
 const APP_NAME = 'DeepSeek Harness'
 const WINDOW_WIDTH = 1440
 const WINDOW_HEIGHT = 920
-const PRIMARY_PAGE_PARAMETER = 'dsh-primary-page'
-const PLUGIN_CENTER_PAGE_ID = 'plugin-center'
 const DESKTOP_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const REPOSITORY_ROOT = resolve(DESKTOP_DIR, '../..')
 
@@ -164,13 +165,6 @@ function currentHostOrigin(): string | undefined {
   return host?.current?.origin
 }
 
-function rendererUrl(origin: string, primaryPage?: string): string {
-  const url = new URL(origin)
-  url.searchParams.set('dsh-desktop-platform', process.platform)
-  if (primaryPage !== undefined) url.searchParams.set(PRIMARY_PAGE_PARAMETER, primaryPage)
-  return url.href
-}
-
 function recoveryPageUrl(): string {
   const path = app.isPackaged
     ? join(process.resourcesPath, 'desktop-resources/recovery.html')
@@ -189,7 +183,67 @@ function isRecoveryPageUrl(raw: string): boolean {
 }
 
 async function loadWindowHost(window: BrowserWindow, origin: string, primaryPage?: string): Promise<void> {
-  await window.loadURL(rendererUrl(origin, primaryPage))
+  await window.loadURL(desktopRendererUrl({
+    origin,
+    platform: process.platform,
+    ...(primaryPage === undefined ? {} : { primaryPage }),
+    previousUrl: window.webContents.getURL(),
+  }))
+}
+
+async function holdCurrentWindowFrame(window: BrowserWindow): Promise<HeldReloadFrame | undefined> {
+  if (window.isDestroyed()) return undefined
+  const snapshot = await window.webContents.capturePage()
+  if (snapshot.isEmpty() || window.isDestroyed()) return undefined
+  const { width, height } = window.getContentBounds()
+  const held = new WebContentsView({
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+  held.setBounds({ x: 0, y: 0, width, height })
+  held.setBackgroundColor('#111318')
+  const document = [
+    '<!doctype html><meta charset="utf-8">',
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:">',
+    '<style>html,body,img{width:100%;height:100%;margin:0;overflow:hidden}img{display:block}</style>',
+    `<img alt="" src="${snapshot.toDataURL()}">`,
+  ].join('')
+  try {
+    await held.webContents.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(document)}`)
+    if (window.isDestroyed()) {
+      held.webContents.close()
+      return undefined
+    }
+    window.contentView.addChildView(held)
+  } catch (error) {
+    if (!held.webContents.isDestroyed()) held.webContents.close()
+    throw error
+  }
+  return {
+    release() {
+      if (!window.isDestroyed()) window.contentView.removeChildView(held)
+      if (!held.webContents.isDestroyed()) held.webContents.close()
+    },
+  }
+}
+
+async function reloadWindowHost(window: BrowserWindow, origin: string, primaryPage?: string): Promise<void> {
+  await reloadWithHeldFrame({
+    holdCurrentFrame: async () => await holdCurrentWindowFrame(window),
+    navigate: async () => { await loadWindowHost(window, origin, primaryPage) },
+    waitForPaint: async () => {
+      await Promise.race([
+        window.webContents.executeJavaScript(
+          'new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))',
+        ),
+        new Promise<void>((resolvePaint) => { setTimeout(resolvePaint, 250) }),
+      ])
+    },
+    reportTransitionFailure: (error) => { console.warn('desktop held-frame reload transition failed:', error) },
+  })
 }
 
 function manifestVersion(path: string): string {
@@ -668,7 +722,7 @@ async function boot(): Promise<void> {
     getWindow: () => mainWindow,
     createWindow: createMainWindow,
     loadHost: async (window, origin, primaryPage) => {
-      await loadWindowHost(window as BrowserWindow, origin, primaryPage)
+      await reloadWindowHost(window as BrowserWindow, origin, primaryPage)
     },
     disposeHost: async () => { await host?.shutdown() },
     quit: releaseAppQuit,

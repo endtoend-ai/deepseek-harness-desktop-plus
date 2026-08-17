@@ -143,12 +143,26 @@ const NO_RECOVERY_STATE = (): (() => void) => () => {}
 const RECOVERY_UNAVAILABLE = (): Promise<never> => Promise.reject(new Error('Plugin recovery is unavailable'))
 const NO_OWNED_DATA_OFFER = (): Promise<PluginOwnedDataOffer | null> => Promise.resolve(null)
 const OWNED_DATA_DECISION_UNAVAILABLE = (): Promise<never> => Promise.reject(new Error('Plugin owned-data decision is unavailable'))
+const PLUGIN_CENTER_VIEW_PARAMETER = 'dsh-plugin-center-view'
+const PLUGIN_CENTER_INSTALLED_VIEW = 'installed'
 
 interface OwnedDataUiOffer {
   readonly operationId: string
   readonly pluginId: string
   readonly displayName: string
   readonly declarations: readonly InstalledPluginOwnedData[]
+}
+
+function initialInstalledOpen(): boolean {
+  return new URLSearchParams(window.location.search).get(PLUGIN_CENTER_VIEW_PARAMETER)
+    === PLUGIN_CENTER_INSTALLED_VIEW
+}
+
+function persistInstalledOpen(open: boolean): void {
+  const url = new URL(window.location.href)
+  if (open) url.searchParams.set(PLUGIN_CENTER_VIEW_PARAMETER, PLUGIN_CENTER_INSTALLED_VIEW)
+  else url.searchParams.delete(PLUGIN_CENTER_VIEW_PARAMETER)
+  window.history.replaceState(window.history.state, '', url)
 }
 
 function uniqueEntries(results: readonly CatalogListResult[]): readonly CatalogSummary[] {
@@ -401,7 +415,7 @@ export function PluginCenterTab({
   const [revision, setRevision] = useState(0)
   const [view, setView] = useState<ViewState>({ status: 'loading' })
   const [installed, setInstalled] = useState<InstalledViewState>({ status: 'loading' })
-  const [installedOpen, setInstalledOpen] = useState(false)
+  const [installedOpen, setInstalledOpen] = useState(initialInstalledOpen)
   const [managementConfirmation, setManagementConfirmation] = useState<{
     readonly item: InstalledPluginProjection
     readonly action: PluginManagementAction
@@ -778,6 +792,11 @@ export function PluginCenterTab({
     )
   }
 
+  const showInstalled = (open: boolean): void => {
+    setInstalledOpen(open)
+    persistInstalledOpen(open)
+  }
+
   const retryPluginRecovery = (): void => {
     if (recovery === null || !recovery.canRetry || recoveryBusy) return
     setRecoveryBusy(true)
@@ -965,13 +984,13 @@ export function PluginCenterTab({
                 aria-expanded={installedOpen}
                 aria-label={t('manageInstalled')}
                 title={t('manageInstalled')}
-                onClick={() => { setInstalledOpen(value => !value) }}
+                onClick={() => { showInstalled(!installedOpen) }}
               >
                 <IconSettingsOutline16 size={16} />
               </button>
             </div>
             <div className={css.installedIcons}>
-              <InstalledIcons state={installed} onOpen={() => { setInstalledOpen(true) }} t={t} />
+              <InstalledIcons state={installed} onOpen={() => { showInstalled(true) }} t={t} />
             </div>
             {installedOpen ? (
               <InstalledPluginsPanel
