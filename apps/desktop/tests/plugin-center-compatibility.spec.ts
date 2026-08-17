@@ -20,6 +20,7 @@ const dshManifest = resolve(repositoryRoot, 'apps/cli/package.json')
 const shippedBundles = [
   resolve(repositoryRoot, 'packages/bundle/base/package.json'),
   resolve(repositoryRoot, 'packages/bundle/web-app/package.json'),
+  resolve(repositoryRoot, 'packages/examples/ff-llm-wiki-plugin/package.json'),
 ] as const
 const systemComponents = deriveProtectedSystemComponents(shippedBundles)
 const INTEGRITY = `sha512-${Buffer.alloc(64, 7).toString('base64')}`
@@ -87,12 +88,14 @@ describe('plugin center release environment', () => {
     expect(systemComponents.packageNames).toContain('@deepseek-ai/dsh-base')
     expect(systemComponents.packageNames).toContain('@deepseek-ai/dsh-web-app')
     expect(systemComponents.packageNames).toContain('@deepseek-ai/dsh-client-ui-plugin-center')
+    expect(systemComponents.packageNames).toContain('@fufan/dsh-plugin-llm-wiki')
     expect(systemComponents.entryIds).toContain('agent-loop')
     expect(systemComponents.entryIds).toContain('ui-plugin-center')
+    expect(systemComponents.entryIds).toContain('fufan.llm-wiki')
     expect(systemComponents.entryIds.length).toBeGreaterThan(100)
 
     const policyHash = createHash('sha256').update(JSON.stringify(systemComponents)).digest('hex')
-    expect(policyHash).toBe('5ec090d0eff4afb0139523564b29c7b50bd3826ff90936438455e436e43cd9e8')
+    expect(policyHash).toBe('b0bab25e730fc089bf359a543f12a6907f5f342be7807275cc5f807a18a2909b')
 
     const fingerprint = resolveCompatibilityFingerprint({
       desktopVersion: manifestVersion(desktopManifest),
@@ -108,7 +111,7 @@ describe('plugin center release environment', () => {
       activeOperation: false,
     })
     expect(fingerprint).toMatchObject({
-      desktopVersion: '0.1.0-rc.5',
+      desktopVersion: '0.1.0-rc.8',
       dshVersion: '0.1.0-rc.5',
       nodeVersion: '22.22.0',
       platform: 'darwin-arm64',

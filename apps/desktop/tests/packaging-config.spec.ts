@@ -176,6 +176,7 @@ describe('desktop packaging configuration', () => {
     expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.5"')
     expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.6"')
     expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.7"')
+    expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.8"')
     expect(windowsInstallerInclude).toContain(
       'ReadRegStr $2 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "InstallLocation"',
     )

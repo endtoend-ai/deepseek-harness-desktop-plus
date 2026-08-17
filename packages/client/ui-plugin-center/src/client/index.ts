@@ -14,11 +14,18 @@ import { PluginDiscoveryNavItem, type PluginDiscoveryNavInjected } from './Plugi
 import { PluginDiscoveryPage, type PluginDiscoveryInjected } from './PluginDiscoveryPage.tsx'
 import { PresetSquareNavItem, type PresetSquareNavInjected } from './PresetSquareNavItem.tsx'
 import { PresetSquarePage, type PresetSquarePageInjected } from './PresetSquarePage.tsx'
+import { ApplicationCenterNavItem, type ApplicationCenterNavInjected } from './ApplicationCenterNavItem.tsx'
+import {
+  ApplicationCenterPage, type ApplicationCenterInjected, type ApplicationRuntimeStatus,
+} from './ApplicationCenterPage.tsx'
 import { en, zh, type PluginCenterLocaleKey } from './locales.ts'
 
 export type { DesktopCatalogBridge } from './bridge.ts'
 export type { PluginCenterTabInjected, PluginCenterTabProps } from './PluginCenterTab.tsx'
 export type { PresetSquarePageInjected, PresetSquarePageProps } from './PresetSquarePage.tsx'
+export type {
+  ApplicationCenterInjected, ApplicationCenterPageProps, ApplicationRuntimeStatus,
+} from './ApplicationCenterPage.tsx'
 export type { PluginCenterLocaleKey } from './locales.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
@@ -38,6 +45,12 @@ export const inject = [
 const PLUGIN_CENTER_PAGE_ID = 'plugin-center'
 const PLUGIN_DISCOVERY_PAGE_ID = 'plugin-discovery'
 const PRESET_SQUARE_PAGE_ID = 'preset-square'
+const APPLICATION_CENTER_PAGE_ID = 'application-center'
+const LLM_WIKI_STATUS_PATH = '/api/ff-llm-wiki/status'
+const LLM_WIKI_OPEN_PATH = '/api/ff-llm-wiki/open'
+const LLM_WIKI_SIDEBAR_VISIBILITY_KEY = 'ff-llm-wiki:sidebar-visible'
+const LLM_WIKI_SIDEBAR_VISIBILITY_EVENT = 'ff-llm-wiki:sidebar-visibility'
+const LLM_WIKI_SIDEBAR_HIDDEN_ATTRIBUTE = 'data-ff-llm-wiki-sidebar-hidden'
 
 /** Add the Desktop-only catalog as a first-level page without replacing Settings. */
 export function apply(ctx: ClientContext): void {
@@ -102,6 +115,35 @@ export function apply(ctx: ClientContext): void {
       }
     },
   })
+  const applicationInjected = (): ApplicationCenterInjected => ({
+    inspectLlmWiki: async (): Promise<ApplicationRuntimeStatus> => {
+      const response = await fetch(LLM_WIKI_STATUS_PATH, { credentials: 'same-origin' })
+      if (response.status === 404) return { available: false, credentialConfigured: false }
+      if (!response.ok) throw new Error(`LLM Wiki status request failed: ${String(response.status)}`)
+      const value = await response.json() as { readonly installed?: unknown; readonly credentialConfigured?: unknown }
+      return {
+        available: value.installed === true,
+        credentialConfigured: value.credentialConfigured === true,
+      }
+    },
+    openLlmWiki: () => {
+      const opened = window.open(LLM_WIKI_OPEN_PATH, '_blank')
+      if (opened !== null) opened.opener = null
+    },
+    openModelSettings: () => { ctx.settingsNavigation.open({ sectionId: 'models' }) },
+    getLlmWikiSidebarVisible: () => {
+      try {
+        return window.localStorage.getItem(LLM_WIKI_SIDEBAR_VISIBILITY_KEY) !== 'false'
+      } catch {
+        return true
+      }
+    },
+    setLlmWikiSidebarVisible: (visible) => {
+      window.localStorage.setItem(LLM_WIKI_SIDEBAR_VISIBILITY_KEY, String(visible))
+      document.documentElement.toggleAttribute(LLM_WIKI_SIDEBAR_HIDDEN_ATTRIBUTE, !visible)
+      window.dispatchEvent(new CustomEvent(LLM_WIKI_SIDEBAR_VISIBILITY_EVENT, { detail: { visible } }))
+    },
+  })
   const injected = (): PluginCenterTabInjected => ({
     available: bridge !== undefined,
     development: resolved.development,
@@ -140,6 +182,10 @@ export function apply(ctx: ClientContext): void {
   const presetNavInjected = (): PresetSquareNavInjected => ({
     pageId: PRESET_SQUARE_PAGE_ID,
     open: () => { ctx.layout.openPrimaryPage(PRESET_SQUARE_PAGE_ID) },
+  })
+  const applicationNavInjected = (): ApplicationCenterNavInjected => ({
+    pageId: APPLICATION_CENTER_PAGE_ID,
+    open: () => { ctx.layout.openPrimaryPage(APPLICATION_CENTER_PAGE_ID) },
   })
   const discoveryInjected = (): PluginDiscoveryInjected => ({
     available: bridge !== undefined,
@@ -198,6 +244,13 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     inject: presetNavInjected,
   }, PresetSquareNavItem))
+  ctx.slots.inject('sidebar.primary.action', () => ctx.slots.register({
+    name: 'sidebar.primary.action',
+    id: APPLICATION_CENTER_PAGE_ID,
+    order: 23,
+    locale: NS,
+    inject: applicationNavInjected,
+  }, ApplicationCenterNavItem))
   ctx.slots.inject('main.page', () => ctx.slots.register({
     name: 'main.page',
     key: PLUGIN_CENTER_PAGE_ID,
@@ -216,11 +269,18 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     inject: presetInjected,
   }, PresetSquarePage))
+  ctx.slots.inject('main.page', () => ctx.slots.register({
+    name: 'main.page',
+    key: APPLICATION_CENTER_PAGE_ID,
+    locale: NS,
+    inject: applicationInjected,
+  }, ApplicationCenterPage))
   ctx.effect(
     () => () => {
       ctx.layout.closePrimaryPage(PLUGIN_CENTER_PAGE_ID)
       ctx.layout.closePrimaryPage(PLUGIN_DISCOVERY_PAGE_ID)
       ctx.layout.closePrimaryPage(PRESET_SQUARE_PAGE_ID)
+      ctx.layout.closePrimaryPage(APPLICATION_CENTER_PAGE_ID)
     },
     'ui-plugin-center: close selected pages on teardown',
   )

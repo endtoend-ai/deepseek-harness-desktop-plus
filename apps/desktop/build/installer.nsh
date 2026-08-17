@@ -55,6 +55,7 @@
     ${If} $1 == "0.1.0-rc.5"
     ${OrIf} $1 == "0.1.0-rc.6"
     ${OrIf} $1 == "0.1.0-rc.7"
+    ${OrIf} $1 == "0.1.0-rc.8"
       ReadRegStr $2 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "InstallLocation"
       ${If} $2 == $INSTDIR
         DeleteRegValue SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "UninstallString"

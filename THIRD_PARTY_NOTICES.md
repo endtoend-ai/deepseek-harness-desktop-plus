@@ -34,9 +34,10 @@ External packages that a workspace package resolves at runtime. The tier covers 
 | [`@agentclientprotocol/sdk`](https://github.com/agentclientprotocol/typescript-sdk) | Apache-2.0 |
 | [`@anthropic-ai/claude-agent-sdk`](https://github.com/anthropics/claude-agent-sdk-typescript) | SEE LICENSE IN README.md |
 | [`@anthropic-ai/sdk`](https://github.com/anthropics/anthropic-sdk-typescript) | MIT |
-| [`@antv/g6`](https://github.com/antvis/g6) | MIT |
 | [`@babel/code-frame`](https://github.com/babel/babel) | MIT |
 | [`@earendil-works/pi-ai`](https://github.com/earendil-works/pi) | MIT |
+| [`@fastify/cors`](https://github.com/fastify/fastify-cors) | MIT |
+| [`@fastify/multipart`](https://github.com/fastify/fastify-multipart) | MIT |
 | [`@joplin/turndown-plugin-gfm`](https://github.com/laurent22/joplin-turndown-plugin-gfm) | MIT |
 | [`@jridgewell/gen-mapping`](https://github.com/jridgewell/sourcemaps) | MIT |
 | [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk) | MIT |
@@ -52,6 +53,7 @@ External packages that a workspace package resolves at runtime. The tier covers 
 | [`@types/mdast`](https://github.com/DefinitelyTyped/DefinitelyTyped) | MIT |
 | [`@vscode/ripgrep`](https://github.com/microsoft/vscode-ripgrep) | MIT |
 | [`anser`](https://github.com/IonicaBizau/anser) | MIT |
+| [`better-sqlite3`](https://github.com/WiseLibs/better-sqlite3) | MIT |
 | [`chokidar`](https://github.com/paulmillr/chokidar) | MIT |
 | [`clsx`](https://github.com/lukeed/clsx) | MIT |
 | [`commander`](https://github.com/tj/commander.js) | MIT |
@@ -59,11 +61,13 @@ External packages that a workspace package resolves at runtime. The tier covers 
 | [`e2b`](https://github.com/e2b-dev/e2b) | MIT |
 | [`electron-updater`](https://github.com/electron-userland/electron-builder) | MIT |
 | [`eventsource-parser`](https://github.com/rexxars/eventsource-parser) | MIT |
+| [`fastify`](https://github.com/fastify/fastify) | MIT |
 | [`fflate`](https://github.com/101arrowz/fflate) | MIT |
 | [`immer`](https://github.com/immerjs/immer) | MIT |
 | [`js-yaml`](https://github.com/nodeca/js-yaml) | MIT |
 | [`katex`](https://github.com/KaTeX/KaTeX) | MIT |
 | [`koffi`](https://github.com/Koromix/koffi) | MIT |
+| [`mammoth`](https://github.com/mwilliamson/mammoth.js) | BSD-2-Clause |
 | [`mdast-util-from-markdown`](https://github.com/syntax-tree/mdast-util-from-markdown) | MIT |
 | [`mdast-util-gfm`](https://github.com/syntax-tree/mdast-util-gfm) | MIT |
 | [`mdast-util-math`](https://github.com/syntax-tree/mdast-util-math) | MIT |
@@ -78,12 +82,11 @@ External packages that a workspace package resolves at runtime. The tier covers 
 | [`micromark-util-types`](https://github.com/micromark/micromark/tree/main/packages/micromark-util-types) | MIT |
 | [`node-addon-require-builtin`](https://www.npmjs.com/package/node-addon-require-builtin) | MIT |
 | [`node-pty`](https://github.com/microsoft/node-pty) | MIT |
+| [`pdf-parse`](https://github.com/mehmet-kozan/pdf-parse) | Apache-2.0 |
 | [`picomatch`](https://github.com/micromatch/picomatch) | MIT |
 | [`pnpm`](https://github.com/pnpm/pnpm) | MIT |
 | [`react`](https://github.com/facebook/react) | MIT |
 | [`react-dom`](https://github.com/facebook/react) | MIT |
-| [`react-markdown`](https://github.com/remarkjs/react-markdown) | MIT |
-| [`remark-gfm`](https://github.com/remarkjs/remark-gfm) | MIT |
 | [`semver`](https://github.com/npm/node-semver) | ISC |
 | [`sharp`](https://github.com/lovell/sharp) | Apache-2.0 |
 | [`shiki`](https://github.com/shikijs/shiki) | MIT |

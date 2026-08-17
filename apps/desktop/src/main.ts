@@ -18,7 +18,9 @@ import {
   type MenuItemConstructorOptions,
 } from 'electron'
 import electronUpdater from 'electron-updater'
-import { initProfile, PROFILE_TEMPLATES } from '@deepseek-ai/dsh-app-boot'
+import {
+  initProfile, PROFILE_TEMPLATES, readProfileManifest, writeProfileManifest,
+} from '@deepseek-ai/dsh-app-boot'
 import {
   decodeCatalogDetailQuery,
   decodeCatalogListQuery,
@@ -131,6 +133,7 @@ function hostPaths(): {
       shippedBundleManifests: [
         join(REPOSITORY_ROOT, 'packages/bundle/base/package.json'),
         join(REPOSITORY_ROOT, 'packages/bundle/web-app/package.json'),
+        join(REPOSITORY_ROOT, 'packages/examples/ff-llm-wiki-plugin/package.json'),
       ],
       packageManagerEntry: join(packageManager, 'bin/pnpm.cjs'),
       packageManagerManifest: join(packageManager, 'package.json'),
@@ -146,12 +149,43 @@ function hostPaths(): {
     shippedBundleManifests: [
       join(hostModules, '@deepseek-ai/dsh-base/package.json'),
       join(hostModules, '@deepseek-ai/dsh-web-app/package.json'),
+      join(hostModules, '@fufan/dsh-plugin-llm-wiki/package.json'),
     ],
     packageManagerEntry: join(hostModules, 'pnpm/bin/pnpm.cjs'),
     packageManagerManifest: join(hostModules, 'pnpm/package.json'),
     cwd: app.getPath('home'),
     electronRunAsNode: true,
   }
+}
+
+const BUILT_IN_APPLICATION_BUNDLES = ['@fufan/dsh-plugin-llm-wiki'] as const
+
+/** Add release-owned applications to an existing Desktop Profile without replacing user Bundles. */
+function ensureBuiltInApplications(profileDirectory: string): void {
+  const manifest = readProfileManifest('desktop', profileDirectory)
+  const profile = manifest.dsh?.profile
+  const bundles = [...(profile?.bundles ?? [])]
+  const disabledBundles = [...(profile?.disabledBundles ?? [])]
+  let changed = false
+  for (const packageName of BUILT_IN_APPLICATION_BUNDLES) {
+    if (!bundles.includes(packageName)) {
+      bundles.push(packageName)
+      changed = true
+    }
+    const disabledIndex = disabledBundles.indexOf(packageName)
+    if (disabledIndex !== -1) {
+      disabledBundles.splice(disabledIndex, 1)
+      changed = true
+    }
+  }
+  if (!changed) return
+  writeProfileManifest(profileDirectory, {
+    ...manifest,
+    dsh: {
+      ...manifest.dsh,
+      profile: { ...profile, bundles, disabledBundles },
+    },
+  })
 }
 
 function assertHostArtifacts(paths: ReturnType<typeof hostPaths>): void {
@@ -691,7 +725,8 @@ async function initializePluginOperations(backend: PluginCenterBackend): Promise
     startNormalHost: async () => {
       const webProfileBundles = PROFILE_TEMPLATES['web']
       if (webProfileBundles === undefined) throw new Error('web Profile template is unavailable')
-      initProfile(profileDirectory, webProfileBundles)
+      initProfile(profileDirectory, [...webProfileBundles, ...BUILT_IN_APPLICATION_BUNDLES])
+      ensureBuiltInApplications(profileDirectory)
       const authority = await backend.catalog.installedAuthority()
       const selection = {
         candidate: null,

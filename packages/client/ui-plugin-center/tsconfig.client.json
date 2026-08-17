@@ -9,6 +9,8 @@
     "src/client/PluginCenterNavItem.tsx",
     "src/client/PluginDiscoveryNavItem.tsx",
     "src/client/PresetSquareNavItem.tsx",
+    "src/client/ApplicationCenterNavItem.tsx",
+    "src/client/ApplicationCenterPage.tsx",
     "src/client/PresetSquarePage.tsx",
     "src/client/PluginDiscoveryPage.tsx",
     "src/client/PluginCenterTab.tsx",

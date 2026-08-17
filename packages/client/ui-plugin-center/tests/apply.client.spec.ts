@@ -11,6 +11,8 @@ import { PluginDiscoveryNavItem, type PluginDiscoveryNavInjected } from '../src/
 import { PluginDiscoveryPage, type PluginDiscoveryInjected } from '../src/client/PluginDiscoveryPage.tsx'
 import { PresetSquareNavItem, type PresetSquareNavInjected } from '../src/client/PresetSquareNavItem.tsx'
 import { PresetSquarePage, type PresetSquarePageInjected } from '../src/client/PresetSquarePage.tsx'
+import { ApplicationCenterNavItem, type ApplicationCenterNavInjected } from '../src/client/ApplicationCenterNavItem.tsx'
+import { ApplicationCenterPage, type ApplicationCenterInjected } from '../src/client/ApplicationCenterPage.tsx'
 import { compatibilityDecision, installedListResult, listResult } from './fixtures.ts'
 
 usePinnedBrowserLanguages('zh-CN')
@@ -18,6 +20,8 @@ usePinnedBrowserLanguages('zh-CN')
 afterEach(() => {
   delete (window as unknown as { dshDesktop?: unknown }).dshDesktop
   delete (window as unknown as { __DSH_PLUGIN_CENTER_DEV__?: unknown }).__DSH_PLUGIN_CENTER_DEV__
+  window.localStorage.clear()
+  document.documentElement.removeAttribute('data-ff-llm-wiki-sidebar-hidden')
 })
 
 async function bench(withBridge: boolean) {
@@ -133,7 +137,7 @@ function declare(slots: SlotRegistry): () => void {
 }
 
 describe('ui-plugin-center browser plugin', () => {
-  it('registers Plugin Center, Plugin Discovery, and Preset Square as independent pages', async () => {
+  it('registers Plugin Center, Plugin Discovery, Preset Square, and Application Center as independent pages', async () => {
     const b = await bench(true)
     declare(b.slots)
     await b.ctx.plugin({ inject: [...inject], apply }).await()
@@ -146,27 +150,35 @@ describe('ui-plugin-center browser plugin', () => {
     const nav = navs.find(entry => entry.options.id === 'plugin-center')!
     const discoveryNav = navs.find(entry => entry.options.id === 'plugin-discovery')!
     const presetNav = navs.find(entry => entry.options.id === 'preset-square')!
+    const applicationNav = navs.find(entry => entry.options.id === 'application-center')!
     const page = pages.find(entry => entry.options.key === 'plugin-center')!
     const discoveryPage = pages.find(entry => entry.options.key === 'plugin-discovery')!
     const presetPage = pages.find(entry => entry.options.key === 'preset-square')!
+    const applicationPage = pages.find(entry => entry.options.key === 'application-center')!
     expect(nav.component).toBe(PluginCenterNavItem)
     expect(nav.options).toMatchObject({ id: 'plugin-center', order: 20 })
     expect(discoveryNav.component).toBe(PluginDiscoveryNavItem)
     expect(discoveryNav.options).toMatchObject({ id: 'plugin-discovery', order: 21 })
     expect(presetNav.component).toBe(PresetSquareNavItem)
     expect(presetNav.options).toMatchObject({ id: 'preset-square', order: 22 })
+    expect(applicationNav.component).toBe(ApplicationCenterNavItem)
+    expect(applicationNav.options).toMatchObject({ id: 'application-center', order: 23 })
     expect(page.component).toBe(PluginCenterTab)
     expect(page.options).toMatchObject({ key: 'plugin-center' })
     expect(discoveryPage.component).toBe(PluginDiscoveryPage)
     expect(discoveryPage.options).toMatchObject({ key: 'plugin-discovery' })
     expect(presetPage.component).toBe(PresetSquarePage)
     expect(presetPage.options).toMatchObject({ key: 'preset-square' })
+    expect(applicationPage.component).toBe(ApplicationCenterPage)
+    expect(applicationPage.options).toMatchObject({ key: 'application-center' })
     expect(nav.locale).toBe(NS)
     expect(discoveryNav.locale).toBe(NS)
     expect(presetNav.locale).toBe(NS)
+    expect(applicationNav.locale).toBe(NS)
     expect(page.locale).toBe(NS)
     expect(discoveryPage.locale).toBe(NS)
     expect(presetPage.locale).toBe(NS)
+    expect(applicationPage.locale).toBe(NS)
 
     const navFace = (nav.inject as unknown as () => PluginCenterNavInjected)()
     navFace.open()
@@ -177,6 +189,24 @@ describe('ui-plugin-center browser plugin', () => {
     const presetNavFace = (presetNav.inject as unknown as () => PresetSquareNavInjected)()
     presetNavFace.open()
     expect(b.layout.openPrimaryPage).toHaveBeenCalledWith('preset-square')
+    const applicationNavFace = (applicationNav.inject as unknown as () => ApplicationCenterNavInjected)()
+    applicationNavFace.open()
+    expect(b.layout.openPrimaryPage).toHaveBeenCalledWith('application-center')
+
+    const applicationFace = (applicationPage.inject as unknown as () => ApplicationCenterInjected)()
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      installed: true,
+      credentialConfigured: true,
+    }), { status: 200, headers: { 'content-type': 'application/json' } }))
+    await expect(applicationFace.inspectLlmWiki()).resolves.toEqual({ available: true, credentialConfigured: true })
+    applicationFace.setLlmWikiSidebarVisible(false)
+    expect(window.localStorage.getItem('ff-llm-wiki:sidebar-visible')).toBe('false')
+    expect(document.documentElement.hasAttribute('data-ff-llm-wiki-sidebar-hidden')).toBe(true)
+    applicationFace.setLlmWikiSidebarVisible(true)
+    expect(document.documentElement.hasAttribute('data-ff-llm-wiki-sidebar-hidden')).toBe(false)
+    applicationFace.openModelSettings()
+    expect(b.settingsNavigation.open).toHaveBeenCalledWith({ sectionId: 'models' })
+    fetchSpy.mockRestore()
 
     const face = (page.inject as unknown as () => PluginCenterTabInjected)()
     expect(face.available).toBe(true)
@@ -277,8 +307,8 @@ describe('ui-plugin-center browser plugin', () => {
     expect(b.slots.entries('main.page')).toHaveLength(0)
     const stop = declare(b.slots)
     await vi.waitFor(() => {
-      expect(b.slots.entries('sidebar.primary.action')).toHaveLength(3)
-      expect(b.slots.entries('main.page')).toHaveLength(3)
+      expect(b.slots.entries('sidebar.primary.action')).toHaveLength(4)
+      expect(b.slots.entries('main.page')).toHaveLength(4)
     })
     const pluginCenterPage = b.slots.entries('main.page').find(entry => entry.options.key === 'plugin-center')!
     const face = (pluginCenterPage.inject as unknown as () => PluginCenterTabInjected)()
@@ -289,13 +319,14 @@ describe('ui-plugin-center browser plugin', () => {
     stop()
     expect(b.slots.entries('main.page')).toHaveLength(0)
     declare(b.slots)
-    await vi.waitFor(() => { expect(b.slots.entries('main.page')).toHaveLength(3) })
+    await vi.waitFor(() => { expect(b.slots.entries('main.page')).toHaveLength(4) })
     b.locale.setLocale('en')
     await fiber.dispose()
     expect(b.slots.entries('main.page')).toHaveLength(0)
     expect(b.layout.closePrimaryPage).toHaveBeenCalledWith('plugin-center')
     expect(b.layout.closePrimaryPage).toHaveBeenCalledWith('plugin-discovery')
     expect(b.layout.closePrimaryPage).toHaveBeenCalledWith('preset-square')
+    expect(b.layout.closePrimaryPage).toHaveBeenCalledWith('application-center')
     await b.ctx.fiber.dispose()
   })
 
