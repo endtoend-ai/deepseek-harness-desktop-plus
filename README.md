@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
   <img src="https://img.shields.io/badge/Plugin%20Center-online-22C55E" alt="公开插件中心已上线">
   <img src="https://img.shields.io/badge/Preset%20Square-online-6366F1" alt="Preset 广场已上线">
+  <img src="https://img.shields.io/badge/Application%20Center-online-0F9D8A" alt="应用中心已上线">
   <img src="https://img.shields.io/badge/Vision-Qwen3.8-7C3AED" alt="Qwen3.8 视觉增强">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-studio?color=22C55E" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
@@ -21,14 +22,14 @@
 
 <p align="center"><strong>赋范空间出品 · DeepSeek Harness 的零代码桌面增强</strong></p>
 
-<p align="center"><strong>视觉增强 + 插件商店 · 0 代码一键安装、启用和使用</strong></p>
+<p align="center"><strong>视觉增强 + 插件市场 + Preset 广场 · 0 代码一键部署和使用</strong></p>
 
 <p align="center">自动发现并推送生态新插件，AI 智能推荐值得安装的能力；无需命令行即可完成搜索、校验、安装、启停与卸载。</p>
 
 <p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.8/DeepSeek-Harness-Desktop-0.1.0-rc.8-macos-arm64-preview.zip"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.8/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.8-Setup.exe"><strong>下载 Windows x64 开发预览版</strong></a></p>
 
 <p align="center">
-  <img src="assets/plugin-discovery-hero.jpg" alt="DeepSeek Harness Studio 视觉增强、插件商店、零代码一键启用、插件自动推送与 AI 智能推荐" width="100%">
+  <img src="assets/plugin-discovery-hero.jpg" alt="DeepSeek Harness Studio 视觉增强、插件市场、Preset 广场、零代码一键部署、插件自动推送与 AI 智能推荐" width="100%">
 </p>
 
 <p align="center">
@@ -39,13 +40,14 @@ https://github.com/user-attachments/assets/0717f7c7-a872-4d2b-acc2-3a1c4874c732
 
 ## 先看功能：当前能力与近期路线图
 
-> 状态说明：✅ 已支持；🗓️ 规划中。桌面开发工作区、公开插件中心、Preset 广场和中文 DeepSeek 控制已经可用；规划能力会在真实功能可运行后更新状态。
+> 状态说明：✅ 已支持；🗓️ 规划中。桌面开发工作区、公开插件中心、Preset 广场、应用中心和中文 DeepSeek 控制已经可用；规划能力会在真实功能可运行后更新状态。
 
 | 能力 | 状态 | 可以做什么 |
 | --- | --- | --- |
 | **插件发现与热门推荐** | ✅ | 自动读取公开目录，按精选、最近更新、生态热门和使用场景呈现值得关注的插件，并支持按名称、功能或作者搜索。 |
 | **公开插件中心** | ✅ | 查看确定版本、能力、权限、兼容性与风险，一键在线安装，并集中管理插件的启用、停用、更新和卸载。 |
 | **Preset 广场与内置工作流** | ✅ | 浏览赋范官方与社区 Agent Preset，查看能力组成后完成一键安装，并从“已安装”直接用于新会话；当前内置六套真实场景工作流。 |
+| **应用中心与内置 AI 应用** | ✅ | 从独立一级入口启动拥有专属界面、数据和运行流程的完整 AI 应用；首个内置应用 FF–LLM Wiki 提供企业文档、Wiki、知识图谱、溯源问答与质量评估。 |
 | **桌面开发工作区** | ✅ | 在本地打开项目、管理会话与工作区，调用 Harness 的模型、工具、Skills 和插件能力，并直接修改完整源码。 |
 | **视觉增强** | ✅ | 为 DeepSeek 文本工作流补齐图像理解：读取对话附件和工作区图片，再把可追溯的识别结果交给 Agent。 |
 | **中文 DeepSeek 控制** | ✅ | 使用中文权限选项和适配 DeepSeek 的思考模式，在输入区直接完成会话级选择。 |
@@ -73,6 +75,7 @@ DeepSeek Harness Studio 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 - **Agent 智能找插件**：用一句自然语言描述需求，Agent 自动检索公开 `dsh-plugin` 目录、筛选相关候选并说明推荐理由。
 - **公开插件中心**：在线搜索 npm 公共 `dsh-plugin` 生态，在安装前校验确定版本、产物完整性、Bundle 声明和本机兼容性，并在已安装区域管理启用、停用与卸载。
 - **Preset 广场**：从独立一级页面浏览赋范官方与社区 Agent Preset，查看 Skill、工具和环境要求后安全安装，并从已安装列表直接用于新会话。
+- **应用中心**：集中启动由赋范桌面端内置维护的完整 AI 应用；应用拥有独立界面、数据目录和运行流程，并可按需显示在左侧导航。
 - **对话区视觉增强**：一键启用百炼 Qwen3.8 图像理解，支持截图、照片、图表、OCR 和工作区图片，不替换当前 DeepSeek 主模型。
 - **桌面外观设置**：内置“官方原版”“大肥鱼拟人”和“云端猫咪”三套外观，也支持本地背景图片、主体焦点和界面玻璃层调节。
 - **完整开发源码**：仓库同时包含桌面应用、Web 界面、CLI、功能包、原生辅助模块、Python SDK、示例和构建脚本。
@@ -162,12 +165,14 @@ DeepSeek Harness Studio 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 | 数据分析 | AI 报表 | 1 Preset + 1 Skill | 从本地 Excel 生成可核验的离线交互报告 |
 | 企业协同 | 飞书数字员工 | 1 Preset + 1 Skill + 飞书 MCP + 时间解析 MCP | 从自然语言指令到真实飞书任务与双端回执 |
 
+> 下方六个案例统一使用 `16:10` 预览图，避免横幅和长图破坏版面；点击任意图片可查看完整原图。
+
 ### 产品与演示：把想法变成可交付成果
 
 <table>
   <tr>
-    <td width="50%" align="center"><img src="assets/presets/ai-webapp.png" alt="AI WebApp Preset 生成的创作指挥舱"></td>
-    <td width="50%" align="center"><img src="assets/presets/ppt-office.png" alt="PPT Office Preset 生成的动效 HTML 演示文稿"></td>
+    <td width="50%" align="center"><a href="assets/presets/ai-webapp.png"><img src="assets/presets/thumbs/ai-webapp.webp" alt="AI WebApp Preset 生成的创作指挥舱，点击查看完整原图" width="100%"></a></td>
+    <td width="50%" align="center"><a href="assets/presets/ppt-office.png"><img src="assets/presets/thumbs/ppt-office.webp" alt="PPT Office Preset 生成的动效 HTML 演示文稿，点击查看完整原图" width="100%"></a></td>
   </tr>
   <tr>
     <td valign="top">
@@ -191,8 +196,8 @@ DeepSeek Harness Studio 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 
 <table>
   <tr>
-    <td width="50%" align="center"><img src="assets/presets/video-generation.jpg" alt="视频生成 Preset 完成的 DeepSeek Harness 产品发布片分镜联系表"></td>
-    <td width="50%" align="center"><img src="assets/presets/content-factory.jpg" alt="内容工厂 Preset 生成的九张系列图文卡片"></td>
+    <td width="50%" align="center"><a href="assets/presets/video-generation.jpg"><img src="assets/presets/thumbs/video-generation.webp" alt="视频生成 Preset 完成的 DeepSeek Harness 产品发布片分镜联系表，点击查看完整原图" width="100%"></a></td>
+    <td width="50%" align="center"><a href="assets/presets/content-factory.jpg"><img src="assets/presets/thumbs/content-factory.webp" alt="内容工厂 Preset 生成的九张系列图文卡片，点击查看完整原图" width="100%"></a></td>
   </tr>
   <tr>
     <td valign="top">
@@ -216,8 +221,8 @@ DeepSeek Harness Studio 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 
 <table>
   <tr>
-    <td width="50%" align="center"><img src="assets/presets/ai-report.png" alt="AI 报表 Preset 从 Excel 生成的 Epoch AI 模型趋势交互报告"></td>
-    <td width="50%" align="center"><img src="assets/presets/feishu-digital-employee.png" alt="飞书数字员工从 Harness 指令、MCP 调用、飞书回执到任务落地的四步闭环"></td>
+    <td width="50%" align="center"><a href="assets/presets/ai-report.png"><img src="assets/presets/thumbs/ai-report.webp" alt="AI 报表 Preset 从 Excel 生成的 Epoch AI 模型趋势交互报告，点击查看完整原图" width="100%"></a></td>
+    <td width="50%" align="center"><a href="assets/presets/feishu-digital-employee.png"><img src="assets/presets/thumbs/feishu-digital-employee.webp" alt="飞书数字员工从 Harness 指令、MCP 调用、飞书回执到任务落地的四步闭环，点击查看完整原图" width="100%"></a></td>
   </tr>
   <tr>
     <td valign="top">
@@ -238,6 +243,40 @@ DeepSeek Harness Studio 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 </table>
 
 以上图片均来自六套工作流的真实案例成果。Desktop 随安装包交付的是运行所需的精简 Preset、Skills 与工具适配，不会把案例源码、输入数据、截图或生成成品塞进用户环境。
+
+## 应用中心已上线：从能力扩展进入完整 AI 应用
+
+插件为 Harness 增加工具或界面能力，Preset 把角色、Skills 与工具组合成一套工作方式，而 **应用** 面向更完整的产品场景：它拥有独立界面、专属数据和自己的运行流程。应用中心因此与插件中心、插件发现和 Preset 广场平级，用户不需要在插件列表中辨认技术包，直接从一个稳定入口发现并启动完整产品。
+
+| 形态 | 主要作用 | 典型使用方式 |
+| --- | --- | --- |
+| **Plugin / MCP** | 增加可调用工具、服务连接或局部界面能力 | 安装后由 Agent 或 Harness 功能触发 |
+| **Agent Preset** | 组合角色、Skills、工具与工作规则 | 用 Preset 创建新会话并按既定流程完成任务 |
+| **AI 应用** | 提供专属界面、数据和端到端业务流程 | 从应用中心直接打开并持续管理自己的业务数据 |
+
+<p align="center">
+  <img src="assets/applications/application-center-desktop.webp" alt="DeepSeek Harness Studio 应用中心真实桌面界面，展示赋范官方内置 FF–LLM Wiki 应用" width="100%">
+  <br><sub>真实 Desktop 界面：应用中心作为一级入口展示赋范官方应用；可直接打开应用，也可选择是否把快捷入口显示在左侧导航。</sub>
+</p>
+
+### 首个内置应用：FF–LLM Wiki 企业知识库
+
+FF–LLM Wiki 面向企业文档分散、知识关系难整理、问答结果无法追溯的问题，把原始资料逐步转换为可检索、可关联、可核查的知识资产。它不是嵌在对话页中的演示卡片，而是一套由 Desktop 管理本地运行环境、在系统浏览器中打开的完整应用。
+
+<p align="center">
+  <img src="assets/applications/ff-llm-wiki-dashboard.webp" alt="FF–LLM Wiki 企业知识库真实运行界面，包含文档、Wiki、知识图谱、智能问答和质量评估" width="100%">
+  <br><sub>真实运行界面：从文档解析、Wiki 编译和知识图谱构建，到基于检索证据的 Agent 问答与质量评估。</sub>
+</p>
+
+- **完整知识流水线**：文档解析 → 实体与条目抽取 → Wiki 与知识图谱构建 → 向量化和索引 → 可追溯问答。
+- **来源可以核查**：问答只使用当前检索命中的证据片段，并保留来源引用；模型不可用时会明确降级到本地检索结果。
+- **本地数据隔离**：文档、Wiki、图谱和 SQLite 数据写入 DSH Home 下的应用专属目录，不混入当前项目工作区。
+- **密钥由用户掌控**：应用不会携带赋范团队的 API Key。知识编译、浏览和本地检索无需模型密钥；使用 DeepSeek 生成式 RAG 前，需要用户在 Harness 凭证中心配置自己的 `DEEPSEEK_API_KEY`。
+- **入口按需显示**：应用中心始终可访问；FF–LLM Wiki 的左侧快捷入口默认关闭，用户可通过“显示在侧边栏”随时开启或隐藏。
+
+> **使用路径：** 打开应用中心 → 选择 FF–LLM Wiki → 点击“打开应用” → 导入或管理企业资料 → 构建 Wiki 与知识图谱 → 在智能问答中核查带来源的答案。
+
+> **命名说明：** “赋范官方”表示由赋范桌面端开发团队内置和维护，不代表 DeepSeek Harness 官方。
 
 ## 内置皮肤与自由换肤
 
