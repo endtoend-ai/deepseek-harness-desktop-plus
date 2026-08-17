@@ -21,7 +21,6 @@ afterEach(() => {
   delete (window as unknown as { dshDesktop?: unknown }).dshDesktop
   delete (window as unknown as { __DSH_PLUGIN_CENTER_DEV__?: unknown }).__DSH_PLUGIN_CENTER_DEV__
   window.localStorage.clear()
-  document.documentElement.removeAttribute('data-ff-llm-wiki-sidebar-hidden')
 })
 
 async function bench(withBridge: boolean) {
@@ -199,11 +198,17 @@ describe('ui-plugin-center browser plugin', () => {
       credentialConfigured: true,
     }), { status: 200, headers: { 'content-type': 'application/json' } }))
     await expect(applicationFace.inspectLlmWiki()).resolves.toEqual({ available: true, credentialConfigured: true })
+    expect(applicationFace.getLlmWikiSidebarVisible()).toBe(false)
+    const visibilityEvents: boolean[] = []
+    const onVisibility = (event: Event): void => {
+      visibilityEvents.push((event as CustomEvent<{ visible: boolean }>).detail.visible)
+    }
+    window.addEventListener('ff-llm-wiki:sidebar-visibility', onVisibility)
     applicationFace.setLlmWikiSidebarVisible(false)
     expect(window.localStorage.getItem('ff-llm-wiki:sidebar-visible')).toBe('false')
-    expect(document.documentElement.hasAttribute('data-ff-llm-wiki-sidebar-hidden')).toBe(true)
     applicationFace.setLlmWikiSidebarVisible(true)
-    expect(document.documentElement.hasAttribute('data-ff-llm-wiki-sidebar-hidden')).toBe(false)
+    expect(visibilityEvents).toEqual([false, true])
+    window.removeEventListener('ff-llm-wiki:sidebar-visibility', onVisibility)
     applicationFace.openModelSettings()
     expect(b.settingsNavigation.open).toHaveBeenCalledWith({ sectionId: 'models' })
     fetchSpy.mockRestore()

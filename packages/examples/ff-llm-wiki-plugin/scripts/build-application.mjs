@@ -31,21 +31,6 @@ await build({
   alias: {
     '@llmwiki/contracts': join(application, 'packages/contracts/src/index.ts'),
   },
-  plugins: [{
-    name: 'ff-llm-wiki-runtime-root',
-    setup(builder) {
-      builder.onLoad({ filter: /apps\/api\/src\/wiki\/paths\.ts$/ }, async (args) => {
-        const source = await readFile(args.path, 'utf8')
-        return {
-          loader: 'ts',
-          contents: source.replace(
-            'export const REPO_ROOT = findRepoRoot(MODULE_DIR);',
-            'export const REPO_ROOT = process.env.LLMWIKI_RUNTIME_ROOT || findRepoRoot(MODULE_DIR);',
-          ),
-        }
-      })
-    },
-  }],
 })
 
 const webBuild = join(temporary, 'web')

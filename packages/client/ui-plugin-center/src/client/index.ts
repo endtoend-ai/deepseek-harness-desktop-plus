@@ -50,7 +50,6 @@ const LLM_WIKI_STATUS_PATH = '/api/ff-llm-wiki/status'
 const LLM_WIKI_OPEN_PATH = '/api/ff-llm-wiki/open'
 const LLM_WIKI_SIDEBAR_VISIBILITY_KEY = 'ff-llm-wiki:sidebar-visible'
 const LLM_WIKI_SIDEBAR_VISIBILITY_EVENT = 'ff-llm-wiki:sidebar-visibility'
-const LLM_WIKI_SIDEBAR_HIDDEN_ATTRIBUTE = 'data-ff-llm-wiki-sidebar-hidden'
 
 /** Add the Desktop-only catalog as a first-level page without replacing Settings. */
 export function apply(ctx: ClientContext): void {
@@ -133,14 +132,13 @@ export function apply(ctx: ClientContext): void {
     openModelSettings: () => { ctx.settingsNavigation.open({ sectionId: 'models' }) },
     getLlmWikiSidebarVisible: () => {
       try {
-        return window.localStorage.getItem(LLM_WIKI_SIDEBAR_VISIBILITY_KEY) !== 'false'
+        return window.localStorage.getItem(LLM_WIKI_SIDEBAR_VISIBILITY_KEY) === 'true'
       } catch {
-        return true
+        return false
       }
     },
     setLlmWikiSidebarVisible: (visible) => {
       window.localStorage.setItem(LLM_WIKI_SIDEBAR_VISIBILITY_KEY, String(visible))
-      document.documentElement.toggleAttribute(LLM_WIKI_SIDEBAR_HIDDEN_ATTRIBUTE, !visible)
       window.dispatchEvent(new CustomEvent(LLM_WIKI_SIDEBAR_VISIBILITY_EVENT, { detail: { visible } }))
     },
   })

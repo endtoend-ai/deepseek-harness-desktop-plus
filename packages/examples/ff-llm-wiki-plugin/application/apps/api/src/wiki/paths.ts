@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /** 本模块所在目录（src 与编译后 dist 均可据此定位仓库根） */
@@ -11,6 +11,9 @@ const MODULE_DIR = dirname(fileURLToPath(import.meta.url))
  * 都能定位到同一个 content 目录。
  */
 export function findRepoRoot(startDir: string): string {
+  const runtimeRoot = process.env.LLMWIKI_RUNTIME_ROOT?.trim()
+  if (runtimeRoot) return resolve(runtimeRoot)
+
   let dir = startDir
   for (;;) {
     if (existsSync(join(dir, 'pnpm-workspace.yaml'))) return dir

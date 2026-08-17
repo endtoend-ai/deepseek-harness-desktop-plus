@@ -20,10 +20,6 @@
   cursor: pointer;
 }
 
-:global(html[data-ff-llm-wiki-sidebar-hidden]) .entry {
-  display: none;
-}
-
 .entry:hover {
   background: var(--dsw-specific-sidebar-nav-item-hover);
 }
@@ -66,20 +62,9 @@
   overflow: visible;
 }
 
-.mark path {
-  fill: none;
-  stroke: currentcolor;
-  stroke-width: 0.75;
-  opacity: 0.38;
-}
-
-.mark circle {
-  fill: currentcolor;
-}
-
 .mark .markFocus {
-  fill: #f6cf62;
-  filter: drop-shadow(0 0 2px rgb(246 207 98 / 65%));
+  fill: #ecfffa;
+  filter: drop-shadow(0 0 2px rgb(81 231 178 / 60%));
 }
 
 .label {
