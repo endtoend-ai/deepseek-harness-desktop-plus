@@ -143,6 +143,14 @@ jobs:
             if ($uninstallers.Count -ne 1) {
               throw "$label expected one uninstaller; found $($uninstallers.Count)."
             }
+            Get-CimInstance Win32_Process |
+              Where-Object {
+                $_.ExecutablePath -and
+                $_.ExecutablePath.StartsWith($installDirectory, [System.StringComparison]::OrdinalIgnoreCase)
+              } |
+              Select-Object ProcessId, ParentProcessId, Name, ExecutablePath |
+              Format-List |
+              Out-Host
             $process = Start-Process -FilePath $uninstallers[0].FullName `
               -ArgumentList '/S /currentuser' -PassThru
             if (-not $process.WaitForExit(180000)) {
@@ -155,6 +163,10 @@ jobs:
             }
             $application.Refresh()
             if (-not $application.HasExited) {
+              Get-CimInstance Win32_Process -Filter "ProcessId = $($application.Id)" |
+                Select-Object ProcessId, ParentProcessId, Name, ExecutablePath, CommandLine |
+                Format-List |
+                Out-Host
               taskkill /PID $application.Id /T /F | Out-Host
               throw "$label application process remained after uninstall."
             }

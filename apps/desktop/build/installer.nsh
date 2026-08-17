@@ -22,6 +22,11 @@
   # process that both the install-path and filename probes fail to report.
   nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /T /F /IM "${APP_EXECUTABLE_FILENAME}"'
   Pop $0
+
+  # Catch an orphaned Electron renderer or packaged Host whose image name no
+  # longer matches the main executable but whose binary still lives in $3.
+  nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-CimInstance -ClassName Win32_Process | Where-Object {$$_.ExecutablePath -and $$_.ExecutablePath.StartsWith(''$3'', ''CurrentCultureIgnoreCase'')} | ForEach-Object {Stop-Process -Id $$_.ProcessId -Force -ErrorAction SilentlyContinue}"'
+  Pop $0
   Sleep 1000
 
   nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
