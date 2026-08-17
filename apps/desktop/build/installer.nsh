@@ -1,8 +1,14 @@
 !macro customCheckAppRunning
   # The assisted uninstaller checks processes before multi-user initialization,
-  # so $INSTDIR can still be the default when the app lives in a custom folder.
+  # so read its registered custom location before falling back to the temp copy.
   !ifdef BUILD_UNINSTALLER
-    StrCpy $3 "$EXEDIR"
+    ReadRegStr $3 HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation"
+    ${If} $3 == ""
+      ReadRegStr $3 HKLM "${INSTALL_REGISTRY_KEY}" "InstallLocation"
+    ${EndIf}
+    ${If} $3 == ""
+      StrCpy $3 "$EXEDIR"
+    ${EndIf}
   !else
     StrCpy $3 "$INSTDIR"
   !endif
@@ -10,13 +16,13 @@
   ${If} ${FileExists} "$3\${APP_EXECUTABLE_FILENAME}"
     ExecWait '"$3\${APP_EXECUTABLE_FILENAME}" --dsh-installer-quit'
     Sleep 3000
-
-    # Do not gate forced cleanup on nsProcess: public preview builds can leave
-    # a process tree that its filename-only probe does not report reliably.
-    nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /T /F /IM "${APP_EXECUTABLE_FILENAME}"'
-    Pop $0
-    Sleep 1000
   ${EndIf}
+
+  # Always force-clean the process tree. Public preview builds can leave a
+  # process that both the install-path and filename probes fail to report.
+  nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /T /F /IM "${APP_EXECUTABLE_FILENAME}"'
+  Pop $0
+  Sleep 1000
 
   nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
   Pop $0

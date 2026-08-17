@@ -153,11 +153,21 @@ describe('desktop packaging configuration', () => {
     expect(windowsInstallerInclude).not.toContain('!macro customInit')
     expect(windowsInstallerInclude).toContain('!macro customCheckAppRunning')
     expect(windowsInstallerInclude).toContain('!ifdef BUILD_UNINSTALLER')
+    expect(windowsInstallerInclude).toContain(
+      'ReadRegStr $3 HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation"',
+    )
+    expect(windowsInstallerInclude).toContain(
+      'ReadRegStr $3 HKLM "${INSTALL_REGISTRY_KEY}" "InstallLocation"',
+    )
     expect(windowsInstallerInclude).toContain('StrCpy $3 "$EXEDIR"')
     expect(windowsInstallerInclude).toContain('StrCpy $3 "$INSTDIR"')
     expect(windowsInstallerInclude).toContain('ExecWait')
     expect(windowsInstallerInclude).toContain('taskkill.exe')
     expect(windowsInstallerInclude).toContain('/T /F /IM "${APP_EXECUTABLE_FILENAME}"')
+    const fileCheckStart = windowsInstallerInclude.indexOf('${If} ${FileExists}')
+    const fileCheckEnd = windowsInstallerInclude.indexOf('${EndIf}', fileCheckStart)
+    const forcedCleanup = windowsInstallerInclude.indexOf('nsExec::ExecToLog', fileCheckStart)
+    expect(forcedCleanup).toBeGreaterThan(fileCheckEnd)
     expect(windowsInstallerInclude).toContain('Pop $0')
     expect(windowsInstallerInclude).toContain('Sleep 3000')
     expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.5"')
