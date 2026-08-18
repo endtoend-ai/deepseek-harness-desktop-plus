@@ -48,16 +48,34 @@
   ${EndIf}
 
   !ifndef BUILD_UNINSTALLER
-    # Public preview uninstallers can leave their registration behind after a
-    # failed same-directory removal. Let the replacement payload repair that
-    # exact location without invoking the failed uninstaller again.
+    # A manually deleted or failed preview uninstall can leave an unusable
+    # uninstaller registration and a partial application directory behind.
+    # Repair only the dedicated product directory before the stock installer
+    # attempts to launch that stale uninstaller.
     ReadRegStr $1 SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion"
-    ${If} $1 == "0.1.0-rc.5"
-    ${OrIf} $1 == "0.1.0-rc.6"
-    ${OrIf} $1 == "0.1.0-rc.7"
-    ${OrIf} $1 == "0.1.0-rc.8"
-      ReadRegStr $2 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "InstallLocation"
-      ${If} $2 == $INSTDIR
+    ReadRegStr $2 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "InstallLocation"
+    StrCpy $4 "0"
+    ${If} $2 != ""
+      StrLen $5 "\${APP_FILENAME}"
+      StrCpy $6 "$2" $5 -$5
+      ${If} $6 == "\${APP_FILENAME}"
+        ${IfNot} ${FileExists} "$2\${APP_EXECUTABLE_FILENAME}"
+          StrCpy $4 "1"
+        ${EndIf}
+        ${IfNot} ${FileExists} "$2\${UNINSTALL_FILENAME}"
+          StrCpy $4 "1"
+        ${EndIf}
+        ${If} $1 == "0.1.0-rc.5"
+        ${OrIf} $1 == "0.1.0-rc.6"
+        ${OrIf} $1 == "0.1.0-rc.7"
+        ${OrIf} $1 == "0.1.0-rc.8"
+        ${OrIf} $1 == "0.1.0-rc.9"
+          StrCpy $4 "1"
+        ${EndIf}
+      ${EndIf}
+      ${If} $4 == "1"
+        DetailPrint "Removing an incomplete DeepSeek Harness installation at $2"
+        RMDir /r "$2"
         DeleteRegValue SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "UninstallString"
         DeleteRegValue SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "QuietUninstallString"
         SetOverwrite on

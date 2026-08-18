@@ -11,7 +11,7 @@ env:
 
 jobs:
   build-and-verify:
-    name: Build and verify install, running uninstall, and reinstall
+    name: Build and verify install, running uninstall, reinstall, and residual repair
     runs-on: windows-2025
     timeout-minutes: 60
 
@@ -194,13 +194,37 @@ jobs:
             }
           }
 
+          function Remove-ApplicationFilesButKeepRegistration(
+            [System.Diagnostics.Process] $application,
+            [string] $label
+          ) {
+            taskkill /PID $application.Id /T /F | Out-Host
+            $exitDeadline = (Get-Date).AddSeconds(30)
+            $application.Refresh()
+            while (-not $application.HasExited -and (Get-Date) -lt $exitDeadline) {
+              Start-Sleep -Seconds 1
+              $application.Refresh()
+            }
+            if (-not $application.HasExited) {
+              throw "$label application process remained before residual-install simulation."
+            }
+            Remove-Item -LiteralPath $installDirectory -Recurse -Force
+            if (Test-Path -LiteralPath $installDirectory) {
+              throw "$label installation directory remained after residual-install simulation."
+            }
+          }
+
           $freshInstallSeconds = Invoke-HarnessInstaller 'fresh'
           $freshApplication = Start-Harness 'fresh'
           Invoke-RunningUninstall $freshApplication 'fresh'
 
           $reinstallSeconds = Invoke-HarnessInstaller 'reinstall'
           $reinstalledApplication = Start-Harness 'reinstall'
-          Invoke-RunningUninstall $reinstalledApplication 'reinstall'
+          Remove-ApplicationFilesButKeepRegistration $reinstalledApplication 'reinstall'
+
+          $repairSeconds = Invoke-HarnessInstaller 'residual-repair'
+          $repairedApplication = Start-Harness 'residual-repair'
+          Invoke-RunningUninstall $repairedApplication 'residual-repair'
 
           $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           @(
@@ -209,9 +233,12 @@ jobs:
             'running_uninstall=PASS',
             'same_directory_reinstall=PASS',
             'reinstalled_packaged_host_start=PASS',
+            'manually_deleted_install_repair=PASS',
+            'repaired_packaged_host_start=PASS',
             'differential_update_blockmap=PASS',
             "fresh_install_seconds=$freshInstallSeconds",
             "reinstall_seconds=$reinstallSeconds",
+            "repair_seconds=$repairSeconds",
             "installer_sha256=$hash"
           ) | Set-Content (Join-Path $dist 'WINDOWS_INSTALLER_LIFECYCLE_VERIFICATION.txt') -Encoding ascii
 

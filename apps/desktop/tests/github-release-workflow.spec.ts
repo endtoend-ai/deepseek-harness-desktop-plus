@@ -56,12 +56,16 @@ describe('desktop GitHub Release workflow', () => {
     expect(releaseStep).not.toContain('WINDOWS_PREVIEW_VERIFICATION.txt')
   })
 
-  it('validates the Windows assisted installer through running uninstall and reinstall', () => {
+  it('validates Windows running uninstall, reinstall, and residual-install repair', () => {
     expect(installerValidationWorkflow).toContain('workflow_dispatch:')
     expect(installerValidationWorkflow).toContain('/D=$installDirectory')
     expect(installerValidationWorkflow).toContain('Invoke-RunningUninstall $freshApplication')
     expect(installerValidationWorkflow).toContain("Invoke-HarnessInstaller 'reinstall'")
+    expect(installerValidationWorkflow).toContain('Remove-ApplicationFilesButKeepRegistration')
+    expect(installerValidationWorkflow).toContain("Invoke-HarnessInstaller 'residual-repair'")
     expect(installerValidationWorkflow).toContain('same_directory_reinstall=PASS')
+    expect(installerValidationWorkflow).toContain('manually_deleted_install_repair=PASS')
+    expect(installerValidationWorkflow).toContain('repaired_packaged_host_start=PASS')
     expect(installerValidationWorkflow).toContain('differential_update_blockmap=PASS')
     expect(installerValidationWorkflow).toContain('fresh_install_seconds=')
     expect(installerValidationWorkflow).toContain('WINDOWS_INSTALLER_LIFECYCLE_VERIFICATION.txt')

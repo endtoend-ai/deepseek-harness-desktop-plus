@@ -177,10 +177,20 @@ describe('desktop packaging configuration', () => {
     expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.6"')
     expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.7"')
     expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.8"')
+    expect(windowsInstallerInclude).toContain('$1 == "0.1.0-rc.9"')
     expect(windowsInstallerInclude).toContain(
       'ReadRegStr $2 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "InstallLocation"',
     )
-    expect(windowsInstallerInclude).toContain('${If} $2 == $INSTDIR')
+    expect(windowsInstallerInclude).toContain('StrLen $5 "\\${APP_FILENAME}"')
+    expect(windowsInstallerInclude).toContain('StrCpy $6 "$2" $5 -$5')
+    expect(windowsInstallerInclude).toContain('${If} $6 == "\\${APP_FILENAME}"')
+    expect(windowsInstallerInclude).toContain(
+      '${IfNot} ${FileExists} "$2\\${APP_EXECUTABLE_FILENAME}"',
+    )
+    expect(windowsInstallerInclude).toContain(
+      '${IfNot} ${FileExists} "$2\\${UNINSTALL_FILENAME}"',
+    )
+    expect(windowsInstallerInclude).toContain('RMDir /r "$2"')
     expect(windowsInstallerInclude).toContain(
       'DeleteRegValue SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "UninstallString"',
     )
