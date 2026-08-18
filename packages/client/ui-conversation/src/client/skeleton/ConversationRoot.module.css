@@ -26,10 +26,6 @@
   --dsh-composer-dock-inset: 8px;
 }
 
-:global(html[data-dsh-desktop-platform='win32']) .root {
-  --dsh-windows-caption-controls-width: 138px;
-}
-
 .desktopTitlebarDragRegion {
   display: none;
 }
