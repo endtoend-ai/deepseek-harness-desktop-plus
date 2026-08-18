@@ -58,6 +58,9 @@ describe('desktop GitHub Release workflow', () => {
 
   it('validates Windows running uninstall, reinstall, and residual-install repair', () => {
     expect(installerValidationWorkflow).toContain('workflow_dispatch:')
+    expect(installerValidationWorkflow).toContain(
+      'pnpm exec tsc -b packages/identity/anonymous-user-id --force',
+    )
     expect(installerValidationWorkflow).toContain('/D=$installDirectory')
     expect(installerValidationWorkflow).toContain('Invoke-RunningUninstall $freshApplication')
     expect(installerValidationWorkflow).toContain("Invoke-HarnessInstaller 'reinstall'")
