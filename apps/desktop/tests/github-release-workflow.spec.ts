@@ -47,6 +47,10 @@ describe('desktop GitHub Release workflow', () => {
   it('keeps preview diagnostics in Actions and exposes only the Windows installer', () => {
     expect(previewWorkflow).toContain('Preserve verified Windows preview as an Actions artifact')
     expect(previewWorkflow).toContain('apps/desktop/dist/WINDOWS_PREVIEW_VERIFICATION.txt')
+    expect(previewWorkflow).toContain('Remove-ApplicationFilesButKeepRegistration')
+    expect(previewWorkflow).toContain("Invoke-HarnessInstaller 'residual-repair'")
+    expect(previewWorkflow).toContain('manually_deleted_install_repair=PASS')
+    expect(previewWorkflow).toContain('repaired_uninstaller=PASS')
     const releaseStep = previewWorkflow.slice(previewWorkflow.indexOf(
       '- name: Attach verified Windows installer to the existing release',
     ))
@@ -58,9 +62,6 @@ describe('desktop GitHub Release workflow', () => {
 
   it('validates Windows running uninstall, reinstall, and residual-install repair', () => {
     expect(installerValidationWorkflow).toContain('workflow_dispatch:')
-    expect(installerValidationWorkflow).toContain(
-      'pnpm exec tsc -b packages/identity/anonymous-user-id --force',
-    )
     expect(installerValidationWorkflow).toContain('/D=$installDirectory')
     expect(installerValidationWorkflow).toContain('Invoke-RunningUninstall $freshApplication')
     expect(installerValidationWorkflow).toContain("Invoke-HarnessInstaller 'reinstall'")

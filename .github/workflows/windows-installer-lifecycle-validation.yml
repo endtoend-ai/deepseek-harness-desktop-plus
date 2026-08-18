@@ -46,8 +46,6 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $env:DSH_DESKTOP_TARGET_PLATFORM = 'win32'
           $env:DSH_DESKTOP_TARGET_ARCH = 'x64'
-          pnpm exec tsc -b packages/identity/anonymous-user-id --force
-          if ($LASTEXITCODE -ne 0) { throw "Anonymous user ID build exited with $LASTEXITCODE." }
           pnpm run build
           if ($LASTEXITCODE -ne 0) { throw "Workspace build exited with $LASTEXITCODE." }
           pnpm --dir apps/desktop exec node --import tsx scripts/stage-runtime.ts
