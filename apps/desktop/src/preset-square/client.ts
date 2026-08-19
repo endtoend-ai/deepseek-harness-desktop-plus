@@ -22,13 +22,18 @@ import {
 } from './bundled-catalog.ts'
 
 const PRESET_SQUARE_ORIGIN = 'https://www.dshdesktop.com'
+const PRESET_SQUARE_ALLOWED_ORIGINS = new Set([
+  PRESET_SQUARE_ORIGIN,
+  'https://dshdesktop.com',
+])
 const PRESET_SQUARE_ROOT = `${PRESET_SQUARE_ORIGIN}/preset/`
 const MAX_METADATA_BYTES = 512 * 1024
 const MAX_ARCHIVE_BYTES = 16 * 1024 * 1024
 const REQUEST_TIMEOUT_MS = 10_000
 
 function assertSquareUrl(url: URL): void {
-  if (url.protocol !== 'https:' || url.origin !== PRESET_SQUARE_ORIGIN || !url.pathname.startsWith('/preset/')) {
+  if (url.protocol !== 'https:' || !PRESET_SQUARE_ALLOWED_ORIGINS.has(url.origin)
+    || !url.pathname.startsWith('/preset/')) {
     throw new Error('Preset Square request left the fixed HTTPS origin')
   }
 }

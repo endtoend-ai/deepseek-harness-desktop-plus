@@ -106,6 +106,23 @@ describe('Plugin Discovery page', () => {
     expect(await screen.findByText(zh.githubMapped)).toBeTruthy()
   })
 
+  it('expands a fresh cold-start batch through one background refresh', async () => {
+    const first = catalogResult({ catalogKind: 'plugin', scope: 'public', query: '', limit: 48 })
+    const refresh = vi.fn(async (query: CatalogListQuery) => catalogResult(query))
+    render(<PluginDiscoveryPage {...props({
+      list: async () => ({
+        ...first,
+        sections: { featured: [entries().featured], popular: [], recent: [] },
+      }),
+      refresh,
+    })} />)
+
+    expect(await screen.findByRole('heading', { name: 'Workspace tools' })).toBeTruthy()
+    await waitFor(() => { expect(refresh).toHaveBeenCalledOnce() })
+    expect(await screen.findByText('Agent Flow')).toBeTruthy()
+    expect(screen.getByText('Visual Kit')).toBeTruthy()
+  })
+
   it('hands a natural-language requirement to the Agent plugin finder', async () => {
     const findWithAgent = vi.fn<PluginDiscoveryPageProps['findWithAgent']>(async () => 'needs-model')
     render(<PluginDiscoveryPage {...props({ findWithAgent })} />)

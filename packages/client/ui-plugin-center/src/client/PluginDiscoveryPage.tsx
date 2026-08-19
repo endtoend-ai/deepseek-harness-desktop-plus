@@ -696,7 +696,8 @@ export function PluginDiscoveryPage({
         setView({ status: 'ready', result })
         if (criteria.query !== '' || initialRefreshStarted.current) return
         initialRefreshStarted.current = true
-        if (result.source === 'network' && result.freshness === 'fresh') return
+        if (result.source === 'network' && result.freshness === 'fresh'
+          && uniqueEntries(result).length >= criteria.limit) return
         void Promise.resolve().then(() => refresh(criteria)).then(
           (next) => { if (current) setView({ status: 'ready', result: next }) },
           () => {},

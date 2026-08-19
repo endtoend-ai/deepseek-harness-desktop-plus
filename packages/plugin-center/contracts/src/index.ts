@@ -1081,6 +1081,10 @@ const REGISTRY_ERRORS = REGISTRY_ERROR_CODES
 const INSTALLATION_ID = /^[0-9a-f]{32,64}$/u
 const OBJECT_KEY_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u
 const PRESET_SQUARE_ORIGIN = 'https://www.dshdesktop.com'
+const PRESET_SQUARE_ALLOWED_ORIGINS = new Set([
+  PRESET_SQUARE_ORIGIN,
+  'https://dshdesktop.com',
+])
 const PRESET_SQUARE_PATH_PREFIX = '/preset/'
 const PRESET_SORTS = PRESET_SQUARE_SORTS
 const PRESET_WARNINGS = PRESET_ARCHIVE_WARNINGS
@@ -1226,7 +1230,8 @@ function presetSquareUrl(value: unknown, path: string): string {
   let parsed: URL
   try { parsed = new URL(decoded) } catch { return fail(path, 'must be an absolute URL') }
   if (parsed.protocol !== 'https:' || parsed.username !== '' || parsed.password !== '' || parsed.hash !== ''
-    || parsed.origin !== PRESET_SQUARE_ORIGIN || !parsed.pathname.startsWith(PRESET_SQUARE_PATH_PREFIX)) {
+    || !PRESET_SQUARE_ALLOWED_ORIGINS.has(parsed.origin)
+    || !parsed.pathname.startsWith(PRESET_SQUARE_PATH_PREFIX)) {
     return fail(path, 'must use the fixed Preset Square HTTPS origin')
   }
   return decoded

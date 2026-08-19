@@ -43,6 +43,15 @@ describe('Preset Square contracts', () => {
       .toEqual({ slug: ITEM.slug, targetId: ITEM.presetId })
     expect(decodePresetRuntimeRequest({ presetId: 'product-video-director' }))
       .toEqual({ presetId: 'product-video-director' })
+    expect(decodePresetSquareListResponse({
+      items: [{
+        ...ITEM,
+        artifact: { ...ITEM.artifact, downloadUrl: ITEM.artifact.downloadUrl.replace('www.', '') },
+        detailUrl: ITEM.detailUrl.replace('www.', ''),
+      }],
+      total: 1,
+      sort: 'downloads',
+    }).items[0]).toMatchObject({ slug: ITEM.slug, source: 'community' })
   })
 
   it('preserves the first-party catalog provenance without changing local trust', () => {
