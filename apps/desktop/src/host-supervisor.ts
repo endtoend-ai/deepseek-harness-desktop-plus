@@ -388,7 +388,16 @@ export function spawnDshWeb(options: SpawnDshWebOptions): HostChild {
   const env = options.electronRunAsNode
     ? { ...options.env, ELECTRON_RUN_AS_NODE: '1' }
     : options.env
-  const process = spawn(options.nodeExecutable, ['--expose-internals', options.cliEntry, 'web', '--host', '127.0.0.1', '--port', '0'], {
+  const process = spawn(options.nodeExecutable, [
+    '--expose-internals',
+    options.cliEntry,
+    'web',
+    '--no-open',
+    '--host',
+    '127.0.0.1',
+    '--port',
+    '0',
+  ], {
     cwd: options.cwd,
     env,
     stdio: ['ignore', 'pipe', 'pipe'],

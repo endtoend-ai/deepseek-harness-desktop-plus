@@ -95,7 +95,7 @@ describe('plugin center release environment', () => {
     expect(systemComponents.entryIds.length).toBeGreaterThan(100)
 
     const policyHash = createHash('sha256').update(JSON.stringify(systemComponents)).digest('hex')
-    expect(policyHash).toBe('b0bab25e730fc089bf359a543f12a6907f5f342be7807275cc5f807a18a2909b')
+    expect(policyHash).toBe('4f78ee84e5243080258ff8f8956a7688915beb283657c52603df00fd6704d976')
 
     const fingerprint = resolveCompatibilityFingerprint({
       desktopVersion: manifestVersion(desktopManifest),
@@ -111,8 +111,8 @@ describe('plugin center release environment', () => {
       activeOperation: false,
     })
     expect(fingerprint).toMatchObject({
-      desktopVersion: '0.1.0-rc.8',
-      dshVersion: '0.1.0-rc.5',
+      desktopVersion: '0.1.0-rc.11',
+      dshVersion: '0.1.0-rc.8',
       nodeVersion: '22.22.0',
       platform: 'darwin-arm64',
       catalogEtag: 'catalog-v1',

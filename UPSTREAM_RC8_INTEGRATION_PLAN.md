@@ -259,10 +259,10 @@
 |---|---|
 | 代码差异与临时合并审计 | `completed` |
 | 本计划确认 | `approved` |
-| 阶段 0：冻结与保护基线 | `in-progress` |
-| 阶段 1：建立上游同步关系 | `not-started` |
-| 阶段 2：升级 Harness 核心 | `not-started` |
-| 阶段 3：融合共享 Web UI | `not-started` |
-| 阶段 4：恢复 Studio 产品扩展 | `not-started` |
+| 阶段 0：冻结与保护基线 | `completed` |
+| 阶段 1：建立上游同步关系 | `completed` |
+| 阶段 2：升级 Harness 核心 | `completed` |
+| 阶段 3：融合共享 Web UI | `completed` |
+| 阶段 4：恢复 Studio 产品扩展 | `in-progress` |
 | 阶段 5：真实 Electron 验收 | `not-started` |
 | 阶段 6：统一打包与发布 | `not-started` |

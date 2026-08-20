@@ -46,6 +46,9 @@
 }
 
 .content {
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+
   width: min(1000px, calc(100% - 56px));
   margin: 0 auto;
   padding: 16px 0 72px;

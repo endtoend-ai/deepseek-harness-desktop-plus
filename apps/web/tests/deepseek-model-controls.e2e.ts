@@ -89,6 +89,7 @@ describe.skipIf(MODE === 'record')('web e2e: DeepSeek model controls use Chinese
     await expect.poll(async () => levels.allTextContents(), { timeout: 10_000 })
       .toEqual([
         '关闭思考不启用深度思考',
+        'Low',
         '深度思考启用深度思考，适合大多数开发任务',
         '最大思考使用最高推理强度，适合复杂任务',
       ])
