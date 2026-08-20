@@ -264,6 +264,36 @@ describe('Preset Square shared surface', () => {
     await waitFor(() => { expect(listPresetSquare).toHaveBeenLastCalledWith({ query: '', sort: 'newest' }) })
   })
 
+  it('uses an already installed Preset from details instead of offering a conflicting reinstall', async () => {
+    const previewPresetInstall = vi.fn<PresetSquareInjected['previewPresetInstall']>()
+    const useLocalPreset = vi.fn<PresetSquareInjected['useLocalPreset']>(async () => 'opened')
+    render(<PresetSquarePanel {...props({
+      listPresetSquare: async () => ({
+        items: [LLM_WIKI_ITEM], total: 1, sort: 'downloads', fetchedAt: '2026-08-17T08:00:00.000Z',
+      }),
+      detailPresetSquare: async () => ({
+        item: LLM_WIKI_ITEM, fetchedAt: '2026-08-17T08:00:00.000Z',
+      }),
+      listLocalPresets: async () => ({
+        presets: [{ id: LLM_WIKI_ITEM.presetId, trust: 'user', isDefault: false }], authorable: true,
+      }),
+      previewPresetInstall,
+      useLocalPreset,
+    })} t={t} />)
+
+    const card = (await screen.findByText(LLM_WIKI_ITEM.title)).closest('article')
+    if (card === null) throw new Error('LLM Wiki Producer 卡片未渲染')
+    fireEvent.click(within(card).getByRole('button', { name: zh.details }))
+
+    const dialog = await screen.findByRole('dialog', { name: LLM_WIKI_ITEM.title })
+    expect(within(dialog).queryByLabelText(zh.presetTargetId)).toBeNull()
+    expect(within(dialog).queryByText(zh.presetConflict)).toBeNull()
+    fireEvent.click(within(dialog).getByRole('button', { name: zh.presetUse }))
+
+    await waitFor(() => { expect(useLocalPreset).toHaveBeenCalledWith(LLM_WIKI_ITEM.presetId) })
+    expect(previewPresetInstall).not.toHaveBeenCalled()
+  })
+
   it('previews, confirms, installs, and refreshes the local roster without leaving the page', async () => {
     let installed = false
     const previewPresetInstall = vi.fn<PresetSquareInjected['previewPresetInstall']>(async request => ({

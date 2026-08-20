@@ -657,6 +657,7 @@ export function PresetSquarePanel({
   const selectedItem = detail === null
     ? null
     : detail.status === 'ready' ? detail.item : detail.fallback
+  const selectedInstalled = selectedItem === null ? undefined : localById.get(selectedItem.presetId)
   const selectedSetup = selectedItem === null ? undefined : setupForPreset(selectedItem.presetId)
   const selectedCapabilities = selectedItem === null ? undefined : capabilitiesForPreset(selectedItem.presetId)
   const selectedRuntime = selectedSetup?.runtimeId === undefined
@@ -909,7 +910,7 @@ export function PresetSquarePanel({
                 <button
                   type="button"
                   className={css.primary}
-                  disabled={!presetMutationsEnabled}
+                  disabled={!presetMutationsEnabled || local.status !== 'ready'}
                   onClick={() => { startPreview(item) }}
                 >
                   {t('install')}
@@ -1275,76 +1276,102 @@ export function PresetSquarePanel({
                 <p>{t('presetSecurityWarning')}</p>
               </div>
 
-              {preview.status === 'idle' ? (
-                <button
-                  type="button"
-                  className={css.primaryWide}
-                  disabled={!presetMutationsEnabled}
-                  onClick={() => { startPreview(selectedItem) }}
-                >
-                  {t('presetPreview')}
-                </button>
-              ) : null}
-              {preview.status === 'loading' ? <p className={css.status}>{t('presetPreviewing')}</p> : null}
-              {preview.status === 'error' ? (
-                <div className={css.failure} role="alert">
-                  <span>{t('presetInstallFailed')}</span>
-                  <button type="button" onClick={() => { startPreview(selectedItem, targetId || null) }}>{t('retry')}</button>
-                </div>
-              ) : null}
-              {preview.status === 'ready' ? (
-                <div className={css.preview}>
-                  <label>
-                    <span>{t('presetTargetId')}</span>
-                    <input
-                      type="text"
-                      value={targetId}
-                      disabled={installing}
-                      onChange={(event) => {
-                        setTargetId(event.currentTarget.value)
-                        setAcknowledged(false)
-                      }}
-                    />
-                  </label>
-                  <div className={css.previewFacts}>
-                    <span>{t('presetFiles')}: {preview.value.fileCount}</span>
-                    <span>{formatBytes(selectedItem.artifact.sizeBytes)}</span>
-                  </div>
-                  {preview.value.warnings.length === 0 ? null : (
-                    <ul className={css.warnings}>
-                      {preview.value.warnings.map(warning => <li key={warning}>{t(WARNING_KEYS[warning])}</li>)}
-                    </ul>
+              {selectedInstalled !== undefined ? (
+                <>
+                  {selectedInstalled.broken === undefined ? null : (
+                    <p className={css.failureText} role="alert">{t('presetBroken')}</p>
                   )}
-                  {preview.value.conflict ? <p className={css.conflict} role="alert">{t('presetConflict')}</p> : null}
-                  {targetId !== preview.value.targetId ? (
+                  <button
+                    type="button"
+                    className={css.primaryWide}
+                    disabled={!presetMutationsEnabled || selectedInstalled.broken !== undefined
+                      || runtimeInstallTarget === selectedSetup?.runtimeId}
+                    onClick={() => { usePreset(selectedInstalled.id) }}
+                  >
+                    {t(actionKeyForInstalled(selectedSetup))}
+                  </button>
+                </>
+              ) : local.status === 'loading' ? (
+                <p className={css.status}>{t('presetLoading')}</p>
+              ) : local.status === 'error' ? (
+                <div className={css.failure} role="alert">
+                  <span>{t('presetLocalError')}</span>
+                  <button type="button" onClick={() => { setLocalRevision(value => value + 1) }}>{t('retry')}</button>
+                </div>
+              ) : (
+                <>
+                  {preview.status === 'idle' ? (
                     <button
                       type="button"
-                      className={css.secondaryWide}
-                      disabled={installing || targetId.trim() === ''}
-                      onClick={() => { startPreview(selectedItem, targetId.trim()) }}
+                      className={css.primaryWide}
+                      disabled={!presetMutationsEnabled}
+                      onClick={() => { startPreview(selectedItem) }}
                     >
                       {t('presetPreview')}
                     </button>
                   ) : null}
-                  <label className={css.acknowledge}>
-                    <input
-                      type="checkbox"
-                      checked={acknowledged}
-                      disabled={installing || preview.value.conflict || targetId !== preview.value.targetId}
-                      onChange={(event) => { setAcknowledged(event.currentTarget.checked) }}
-                    />
-                    <span>{t('presetTrustAcknowledge')}</span>
-                  </label>
-                  <button
-                    type="button"
-                    className={css.primaryWide}
-                    disabled={installing || !acknowledged || preview.value.conflict || targetId !== preview.value.targetId}
-                    onClick={confirmInstall}
-                  >
-                    {installing ? t('presetInstalling') : t('confirmInstall')}
-                  </button>
-                </div>
-              ) : null}
+                  {preview.status === 'loading' ? <p className={css.status}>{t('presetPreviewing')}</p> : null}
+                  {preview.status === 'error' ? (
+                    <div className={css.failure} role="alert">
+                      <span>{t('presetInstallFailed')}</span>
+                      <button type="button" onClick={() => { startPreview(selectedItem, targetId || null) }}>{t('retry')}</button>
+                    </div>
+                  ) : null}
+                  {preview.status === 'ready' ? (
+                    <div className={css.preview}>
+                      <label>
+                        <span>{t('presetTargetId')}</span>
+                        <input
+                          type="text"
+                          value={targetId}
+                          disabled={installing}
+                          onChange={(event) => {
+                            setTargetId(event.currentTarget.value)
+                            setAcknowledged(false)
+                          }}
+                        />
+                      </label>
+                      <div className={css.previewFacts}>
+                        <span>{t('presetFiles')}: {preview.value.fileCount}</span>
+                        <span>{formatBytes(selectedItem.artifact.sizeBytes)}</span>
+                      </div>
+                      {preview.value.warnings.length === 0 ? null : (
+                        <ul className={css.warnings}>
+                          {preview.value.warnings.map(warning => <li key={warning}>{t(WARNING_KEYS[warning])}</li>)}
+                        </ul>
+                      )}
+                      {preview.value.conflict ? <p className={css.conflict} role="alert">{t('presetConflict')}</p> : null}
+                      {targetId !== preview.value.targetId ? (
+                        <button
+                          type="button"
+                          className={css.secondaryWide}
+                          disabled={installing || targetId.trim() === ''}
+                          onClick={() => { startPreview(selectedItem, targetId.trim()) }}
+                        >
+                          {t('presetPreview')}
+                        </button>
+                      ) : null}
+                      <label className={css.acknowledge}>
+                        <input
+                          type="checkbox"
+                          checked={acknowledged}
+                          disabled={installing || preview.value.conflict || targetId !== preview.value.targetId}
+                          onChange={(event) => { setAcknowledged(event.currentTarget.checked) }}
+                        />
+                        <span>{t('presetTrustAcknowledge')}</span>
+                      </label>
+                      <button
+                        type="button"
+                        className={css.primaryWide}
+                        disabled={installing || !acknowledged || preview.value.conflict || targetId !== preview.value.targetId}
+                        onClick={confirmInstall}
+                      >
+                        {installing ? t('presetInstalling') : t('confirmInstall')}
+                      </button>
+                    </div>
+                  ) : null}
+                </>
+              )}
             </div>
           </section>
         </div>
