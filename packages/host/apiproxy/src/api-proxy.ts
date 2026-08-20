@@ -5,6 +5,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { mkdir, stat } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
 import { dirname } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
@@ -118,6 +119,7 @@ import {
 
 /** Page size when history is called without maxMessages. */
 const DEFAULT_MAX_MESSAGES = 50
+const DSH_PACKAGE_VERSION = (createRequire(import.meta.url)('../package.json') as { readonly version: string }).version
 
 /** Provider work budget: at most 100 calls and 2,000 inspected hits. */
 const SESSION_SEARCH_PROVIDER_CALL_LIMIT = 100
@@ -3018,7 +3020,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         try {
           const preview = await importPresetArchive(presets, data, {
             ...options,
-            currentDshVersion: '0.1.0-rc.5',
+            currentDshVersion: DSH_PACKAGE_VERSION,
           }, signal)
           return Response.json({ ok: true, ...preview } satisfies { readonly ok: true } & PresetArchivePreview, {
             headers: { 'cache-control': 'no-store' },

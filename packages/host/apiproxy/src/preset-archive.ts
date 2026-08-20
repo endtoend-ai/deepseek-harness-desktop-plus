@@ -92,7 +92,7 @@ function archiveWarnings(files: Readonly<Record<string, Uint8Array>>): readonly 
     }
     const text = strFromU8(data)
     if (/(?:^|[\s"'(:=])(?:\/Users\/|\/home\/)/mu.test(text)
-      || /[A-Za-z]:[\\/]/u.test(text)
+      || /(?:^|[^A-Za-z0-9])[A-Za-z]:[\\/]/u.test(text)
       || /\\\\[^\\\s]+[\\/]/u.test(text)) {
       hasAbsolutePath = true
     }

@@ -38,7 +38,7 @@ Desktop 持有插件中心发现、兼容与包变更权威。公开发现会合
 
 Desktop 持有 Preset 广场的网络访问权威，只接受渲染器提交的闭合排序、搜索文本、slug 和可选本地目标 id。它仅从 `https://www.dshdesktop.com/preset/` 读取元数据和归档，拒绝重定向，限制响应大小，安装前重新解析详情，并在把字节发送给环回 Host 导入器前校验公开的归档大小与 SHA-256。渲染器不能提交 URL、归档、文件系统路径或 Host origin。
 
-应用在 `resources/preset-square/presets/` 内随包交付六套精简能力包，目录来源统一显示为 **赋范官方**：AI WebApp、PPT Office、视频生成、内容工厂、AI 报表和飞书数字员工。“赋范官方”表示由赋范桌面端开发团队维护，不代表 DeepSeek Harness 官方。Desktop 从只读资源生成确定且经完整性校验的归档，Host 仍把它们安装到可写的用户 Preset 根目录，因此可删除和重新安装。
+应用在 `resources/preset-square/presets/` 内随包交付七套精简能力包，目录来源统一显示为 **赋范官方**：AI WebApp、PPT Office、视频生成、内容工厂、AI 报表、飞书数字员工和 LLM Wiki Producer；最后一套会安装用于分阶段开发与验证企业知识库项目的「LLM Wiki 全栈工程师」Agent Preset。“赋范官方”表示由赋范桌面端开发团队维护，不代表 DeepSeek Harness 官方。Desktop 从只读资源生成确定且经完整性校验的归档，Host 仍把它们安装到可写的用户 Preset 根目录，因此可删除和重新安装。
 
 未提交日志在普通 Host 启动前进入恢复。变更副作用会持久记录前后边界，因此 Host 停止、Profile 或包变更、Host 启动和页面重连前后的中断都进入同一恢复路径。恢复控制器校验旧快照、重建旧包状态并核对旧 Host、客户端和 Skill 证据；失败时只打开受保护恢复页，允许同事务重试和脱敏诊断导出。损坏或未来版本日志不会被猜测执行。公开变更仍需等待 Windows x64 包体崩溃验收。
 

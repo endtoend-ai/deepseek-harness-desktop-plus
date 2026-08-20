@@ -23,6 +23,13 @@ const FFMPEG_INSTALLER_VERSION = '1.1.0'
 const FFPROBE_INSTALLER_VERSION = '2.1.2'
 const PROCESS_TIMEOUT_MS = 10 * 60_000
 const MAX_OUTPUT_CHARS = 32_768
+const PLAYWRIGHT_CHROMIUM_PROBE = [
+  "const { existsSync } = require('node:fs')",
+  "const { chromium } = require('playwright')",
+  'const executable = chromium.executablePath()',
+  'if (!existsSync(executable)) process.exit(1)',
+  'process.stdout.write(executable)',
+].join(';')
 const TRUSTED_BUILD_PACKAGES = [
   '@ffmpeg-installer/darwin-arm64',
   '@ffmpeg-installer/win32-x64',
@@ -530,7 +537,7 @@ export class PresetRuntimeController {
     const playwright = readPackageVersion(this.paths, 'playwright') === PLAYWRIGHT_VERSION
       ? PLAYWRIGHT_VERSION
       : undefined
-    const chromium = this.chromiumVersion()
+    const chromium = await this.chromiumVersion()
     return [
       this.dependency('node', node, true),
       this.dependency('python', python?.version, false),
@@ -559,18 +566,10 @@ export class PresetRuntimeController {
     return undefined
   }
 
-  private chromiumVersion(): string | undefined {
+  private async chromiumVersion(): Promise<string | undefined> {
     if (readPackageVersion(this.paths, 'playwright') !== PLAYWRIGHT_VERSION) return undefined
-    try {
-      const require = createRequire(join(this.paths.packages, 'package.json'))
-      const value = require('playwright') as unknown
-      const chromium = (value as { chromium?: { executablePath?: () => unknown } } | null)?.chromium
-      const executable = chromium?.executablePath?.()
-      return typeof executable === 'string' && existsSync(executable) ? 'installed' : undefined
-    } catch {
-      // A partial Playwright install remains missing until the confirmed retry repairs it.
-      return undefined
-    }
+    const executable = await this.probe(this.options.nodeExecutable, ['-e', PLAYWRIGHT_CHROMIUM_PROBE])
+    return executable === undefined ? undefined : 'installed'
   }
 
   private async probe(command: string, args: readonly string[]): Promise<string | undefined> {

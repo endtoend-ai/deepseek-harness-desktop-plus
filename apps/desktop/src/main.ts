@@ -81,6 +81,7 @@ import {
 import { reloadWithHeldFrame, type HeldReloadFrame } from './window-reload-transition.ts'
 import { PresetSquareClient } from './preset-square/client.ts'
 import { ResourcePresetSquareCatalog } from './preset-square/bundled-catalog.ts'
+import { migrateLegacyBundledContentPreset } from './preset-square/legacy-bundled-preset-migration.ts'
 import {
   PresetRuntimeController,
   withPresetRuntimeEnvironment,
@@ -745,6 +746,12 @@ async function initializePluginOperations(backend: PluginCenterBackend): Promise
       })
       for (const item of compatibility.deactivated) {
         console.warn(`disabled incompatible plugin before Host start: ${item.pluginId}@${item.version}`)
+      }
+      if (await migrateLegacyBundledContentPreset({
+        homeDirectory: dshHome,
+        bundledPresetRoot: bundledPresetRoot(),
+      })) {
+        console.warn('migrated legacy bundled content Preset before Host start')
       }
       return await currentHost.start()
     },

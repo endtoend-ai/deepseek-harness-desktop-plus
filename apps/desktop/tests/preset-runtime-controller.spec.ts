@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -28,7 +29,16 @@ async function home(): Promise<string> {
 function processAdapter(): PresetRuntimeProcessAdapter {
   return {
     async run(request) {
-      if (request.command === '/desktop/node') return { code: 0, stdout: 'v24.0.0\n', stderr: '' }
+      if (request.command === '/desktop/node' && request.args[0] === '--version') {
+        return { code: 0, stdout: 'v24.0.0\n', stderr: '' }
+      }
+      if (request.command === '/desktop/node' && request.args[0] === '-e') {
+        const browserRoot = request.env.PLAYWRIGHT_BROWSERS_PATH
+        const browser = browserRoot === undefined ? undefined : join(browserRoot, 'chromium-fixture')
+        return browser !== undefined && existsSync(browser)
+          ? { code: 0, stdout: `${browser}\n`, stderr: '' }
+          : { code: 1, stdout: '', stderr: 'managed Chromium is missing' }
+      }
       if (request.command === 'ffmpeg') return { code: 0, stdout: 'ffmpeg version 8.1\n', stderr: '' }
       if (request.command === 'ffprobe') return { code: 0, stdout: 'ffprobe version 8.1\n', stderr: '' }
       throw Object.assign(new Error(`missing ${request.command}`), { code: 'ENOENT' })
@@ -71,12 +81,17 @@ class FixtureInstaller implements PresetRuntimeInstaller {
   }
 }
 
-function controller(directory: string, installer: FixtureInstaller): PresetRuntimeController {
+function controller(
+  directory: string,
+  installer: FixtureInstaller,
+  platform: NodeJS.Platform = 'darwin',
+): PresetRuntimeController {
   return new PresetRuntimeController({
     homeDirectory: directory,
     nodeExecutable: '/desktop/node',
     packageManagerEntry: '/desktop/pnpm.cjs',
     electronRunAsNode: false,
+    platform,
     inheritedEnvironment: { PATH: '' },
     processAdapter: processAdapter(),
     installer,
@@ -104,7 +119,7 @@ describe('Preset runtime controller', () => {
   it('installs the managed report libraries but keeps missing Python as an explicit manual requirement', async () => {
     const directory = await home()
     const installer = new FixtureInstaller(directory)
-    const runtime = controller(directory, installer)
+    const runtime = controller(directory, installer, 'win32')
 
     const result = await runtime.install('ai-report-analyst')
     expect(installer.installs).toEqual(['ai-report-analyst'])

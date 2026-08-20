@@ -39,6 +39,9 @@ const INSTALLED_STORAGE_KEY = 'dsh.plugin-center.development-installed.v1'
 const OPERATION_INTERVAL_MS = 180
 
 const FUFAN_PRESET_FIXTURES = [{
+  slug: 'fufan-llm-wiki-producer', presetId: 'llm-wiki-fullstack', title: 'LLM Wiki Producer',
+  description: '1 套 Agent Preset + 1 个 Skill，面向企业知识库项目按阶段完成开发、验证与交付。',
+}, {
   slug: 'fufan-ai-webapp', presetId: 'ai-product-developer', title: 'AI WebApp',
   description: '1 套 Agent Preset + 3 个 Skills，覆盖需求澄清、规格整理与 TDD 的 Web 产品开发流程。',
 }, {
@@ -60,7 +63,9 @@ const FUFAN_PRESET_FIXTURES = [{
 
 const PRESET_FIXTURES: readonly PresetSquareItem[] = [
   ...FUFAN_PRESET_FIXTURES.map((entry, index): PresetSquareItem => ({
-    id: `fufan-case-0${String(index + 1)}`,
+    id: entry.presetId === 'llm-wiki-fullstack'
+      ? 'fufan-case-07-llm-wiki-producer'
+      : `fufan-case-0${String(index)}`,
     ...entry,
     source: 'fufan-official',
     publisher: { username: '赋范官方' },
@@ -69,12 +74,14 @@ const PRESET_FIXTURES: readonly PresetSquareItem[] = [
       sha256: String(index + 1).repeat(64),
       sizeBytes: 48_000 + index * 1_000,
       formatVersion: 1,
-      sourceDshVersion: '0.1.0-rc.7',
+      sourceDshVersion: '0.1.0-rc.8',
     },
     detailUrl: `https://www.dshdesktop.com/preset/p/${entry.slug}`,
     downloadCount: 0,
-    visualVariant: index,
-    createdAt: `2026-08-17T06:0${String(index + 1)}:00.000Z`,
+    visualVariant: entry.presetId === 'llm-wiki-fullstack' ? 6 : index - 1,
+    createdAt: entry.presetId === 'llm-wiki-fullstack'
+      ? '2026-08-17T06:07:00.000Z'
+      : `2026-08-17T06:0${String(index)}:00.000Z`,
   })),
   {
     id: '17d84963-a192-4d25-b918-0d454bc3da4e',

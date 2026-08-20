@@ -71,6 +71,7 @@ interface PresetSquarePanelProps extends PresetSquareInjected {
 }
 
 type PresetView = 'official' | 'community' | 'installed'
+type CatalogLayout = 'grid' | 'list'
 
 type RemoteState =
   | { readonly status: 'loading' }
@@ -114,6 +115,13 @@ interface PresetSetup {
   readonly credentials?: readonly PresetCredentialField[]
 }
 
+interface PresetCapabilitySummary {
+  readonly agentKey: PluginCenterLocaleKey
+  readonly skillsKey: PluginCenterLocaleKey
+  readonly toolsKey: PluginCenterLocaleKey
+  readonly runtimeKey: PluginCenterLocaleKey
+}
+
 const WARNING_KEYS = {
   'absolute-paths': 'presetWarningAbsolute',
   'possible-secrets': 'presetWarningSecrets',
@@ -141,7 +149,17 @@ const PRESET_SETUPS = {
   'feishu-digital-employee': {
     kind: 'credentials', detailKey: 'presetSetupFeishuDetail', credentials: FEISHU_CREDENTIALS,
   },
+  'llm-wiki-fullstack': { kind: 'ready', detailKey: 'presetSetupReadyDetail' },
 } as const satisfies Readonly<Record<string, PresetSetup>>
+
+const PRESET_CAPABILITIES = {
+  'llm-wiki-fullstack': {
+    agentKey: 'presetLlmWikiAgent',
+    skillsKey: 'presetLlmWikiSkills',
+    toolsKey: 'presetLlmWikiTools',
+    runtimeKey: 'presetLlmWikiRuntime',
+  },
+} as const satisfies Readonly<Record<string, PresetCapabilitySummary>>
 
 const SETUP_BADGE_KEYS = {
   ready: 'presetSetupReady',
@@ -166,6 +184,10 @@ const MANAGED_RUNTIME_IDS = ['product-video-director', 'ai-report-analyst'] as c
 
 function setupForPreset(id: string): PresetSetup | undefined {
   return PRESET_SETUPS[id as keyof typeof PRESET_SETUPS]
+}
+
+function capabilitiesForPreset(id: string): PresetCapabilitySummary | undefined {
+  return PRESET_CAPABILITIES[id as keyof typeof PRESET_CAPABILITIES]
 }
 
 function runtimeBadgeKey(snapshot: PresetRuntimeSnapshot | undefined): PluginCenterLocaleKey {
@@ -198,6 +220,23 @@ function formatBytes(value: number): string {
   return `${(value / 1_048_576).toFixed(1)} MB`
 }
 
+function CatalogLayoutGlyph({ layout }: { readonly layout: CatalogLayout }): ReactNode {
+  return layout === 'grid' ? (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.35" aria-hidden="true">
+      <rect x="2.25" y="2.25" width="4.25" height="4.25" rx="1" />
+      <rect x="9.5" y="2.25" width="4.25" height="4.25" rx="1" />
+      <rect x="2.25" y="9.5" width="4.25" height="4.25" rx="1" />
+      <rect x="9.5" y="9.5" width="4.25" height="4.25" rx="1" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.35" aria-hidden="true">
+      <rect x="2.25" y="2.5" width="11.5" height="3" rx="1" />
+      <rect x="2.25" y="6.5" width="11.5" height="3" rx="1" />
+      <rect x="2.25" y="10.5" width="11.5" height="3" rx="1" />
+    </svg>
+  )
+}
+
 function OfficialPresetGlyph({ presetId }: { readonly presetId: string }): ReactNode {
   const common = {
     viewBox: '0 0 32 32',
@@ -211,47 +250,67 @@ function OfficialPresetGlyph({ presetId }: { readonly presetId: string }): React
     case 'ai-product-developer':
       return (
         <svg {...common}>
+          <rect x="3.5" y="5" width="25" height="22" rx="4" fill="currentColor" opacity=".14" stroke="none" />
           <rect x="4.5" y="6" width="23" height="20" rx="3" />
-          <path d="M4.5 11h23M13 16l-3 3 3 3M19 16l3 3-3 3" />
+          <path d="M4.5 11.5h23M12.5 16l-3 3 3 3M19.5 16l3 3-3 3" />
+          <circle cx="8" cy="8.75" r="1" fill="currentColor" stroke="none" />
         </svg>
       )
     case 'dsh-motion-deck-studio':
       return (
         <svg {...common}>
+          <rect x="5" y="4" width="21" height="18" rx="3.5" fill="currentColor" opacity=".14" stroke="none" />
           <rect x="6" y="5" width="19" height="16" rx="2.5" />
-          <path d="M10 26h12M16 21v5M12.5 10.5l7 3.5-7 3.5z" />
+          <path d="M10 27h12M16 21v6M12.5 10.5l7 3.5-7 3.5z" />
+          <path d="M9.5 8.5h4" opacity=".7" />
         </svg>
       )
     case 'product-video-director':
       return (
         <svg {...common}>
-          <rect x="4.5" y="7" width="23" height="18" rx="3" />
-          <path d="M9 7v18M23 7v18M4.5 12h4.5M23 12h4.5M4.5 20h4.5M23 20h4.5M13.5 12.5l6 3.5-6 3.5z" />
+          <rect x="4" y="8" width="24" height="18" rx="3.5" fill="currentColor" opacity=".14" stroke="none" />
+          <path d="M5 9h22v16H5zM5 14h22M10 9l3 5M18 9l3 5M13 18l6 3.5-6 3.5z" />
+          <path d="M6 4.5h20l-2.5 4.5H3.5z" fill="currentColor" opacity=".34" />
         </svg>
       )
     case 'ai-content-image-studio':
       return (
         <svg {...common}>
+          <rect x="3.5" y="5" width="22" height="22" rx="4" fill="currentColor" opacity=".14" stroke="none" />
           <rect x="4.5" y="6" width="20" height="20" rx="3" />
           <circle cx="10.5" cy="12" r="2" />
           <path d="M7.5 22l5-5 3.5 3 3-3 5.5 5M25 4v6M22 7h6" />
+          <circle cx="25" cy="7" r="2.2" fill="currentColor" opacity=".24" stroke="none" />
         </svg>
       )
     case 'ai-report-analyst':
       return (
         <svg {...common}>
+          <path d="M5 4h19a3 3 0 013 3v20H5z" fill="currentColor" opacity=".14" stroke="none" />
           <path d="M6 5v21h21M10 21v-5M15 21V10M20 21v-8M9 12l5-4 5 2 7-6" />
+          <circle cx="14" cy="8" r="1.5" fill="currentColor" stroke="none" />
         </svg>
       )
     case 'feishu-digital-employee':
       return (
         <svg {...common}>
+          <circle cx="16" cy="16" r="5.5" fill="currentColor" opacity=".18" stroke="none" />
           <circle cx="16" cy="16" r="3.5" />
-          <circle cx="7" cy="9" r="2.5" />
-          <circle cx="25" cy="9" r="2.5" />
-          <circle cx="7" cy="24" r="2.5" />
-          <circle cx="25" cy="24" r="2.5" />
-          <path d="M9.2 10.5l3.8 3M22.8 10.5l-3.8 3M9.3 22.2l3.7-3.1M22.7 22.2L19 19.1" />
+          <circle cx="7" cy="8" r="2.5" fill="currentColor" opacity=".34" />
+          <circle cx="25" cy="8" r="2.5" fill="currentColor" opacity=".34" />
+          <circle cx="7" cy="24" r="2.5" fill="currentColor" opacity=".34" />
+          <circle cx="25" cy="24" r="2.5" fill="currentColor" opacity=".34" />
+          <path d="M9 9.7l4 3.3M23 9.7L19 13M9.1 22.2l3.9-3.1M22.9 22.2L19 19.1" />
+        </svg>
+      )
+    case 'llm-wiki-fullstack':
+      return (
+        <svg {...common}>
+          <path d="M4.5 5.5h9.2c2.2 0 3.5 1.2 3.5 3.3V27c0-2.1-1.3-3.3-3.5-3.3H4.5z" fill="currentColor" opacity=".15" stroke="none" />
+          <path d="M27.5 5.5h-9.2c-2.2 0-3.5 1.2-3.5 3.3V27c0-2.1 1.3-3.3 3.5-3.3h9.2z" fill="currentColor" opacity=".25" stroke="none" />
+          <path d="M5.5 6.5h8.2c2 0 3.3 1.2 3.3 3.3V26c0-2.1-1.3-3.3-3.3-3.3H5.5zM26.5 6.5h-8.2" />
+          <path d="M26.5 6.5v16.2h-8.2M9 11h4.5M9 15h4.5M23 11h-4.5M23 15h-4.5" />
+          <circle cx="22" cy="20" r="2.4" fill="currentColor" opacity=".38" />
         </svg>
       )
     default:
@@ -331,7 +390,7 @@ function PresetArtwork({ item, compact = false, local = false }: {
   return (
     <span
       className={`${css.artwork}${compact ? ` ${css.artworkCompact}` : ''}${local ? ` ${css.artworkLocal}` : ''}`}
-      data-variant={String(item.visualVariant % 6)}
+      data-variant={String(item.source === 'fufan-official' ? item.visualVariant : item.visualVariant % 6)}
       data-artwork={item.source === 'fufan-official' ? item.presetId : 'community-fallback'}
       aria-hidden="true"
     >
@@ -361,6 +420,7 @@ export function PresetSquarePanel({
   t,
 }: PresetSquarePanelProps): ReactNode {
   const [view, setView] = useState<PresetView>('official')
+  const [catalogLayout, setCatalogLayout] = useState<CatalogLayout>('grid')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<PresetSquareSort>('downloads')
   const [remoteRevision, setRemoteRevision] = useState(0)
@@ -438,7 +498,10 @@ export function PresetSquarePanel({
   const visible = useMemo(() => remote.status === 'ready'
     ? remote.result.items.filter(item => matches(item, query))
     : [], [query, remote])
-  const officialVisible = useMemo(() => visible.filter(item => item.source === 'fufan-official'), [visible])
+  const officialVisible = useMemo(() => visible
+    .filter(item => item.source === 'fufan-official')
+    .sort((left, right) => Number(right.presetId === 'llm-wiki-fullstack')
+      - Number(left.presetId === 'llm-wiki-fullstack')), [visible])
   const communityVisible = useMemo(() => visible.filter(item => item.source === 'community'), [visible])
   const officialCount = remote.status === 'ready'
     ? remote.result.items.filter(item => item.source === 'fufan-official').length
@@ -595,6 +658,7 @@ export function PresetSquarePanel({
     ? null
     : detail.status === 'ready' ? detail.item : detail.fallback
   const selectedSetup = selectedItem === null ? undefined : setupForPreset(selectedItem.presetId)
+  const selectedCapabilities = selectedItem === null ? undefined : capabilitiesForPreset(selectedItem.presetId)
   const selectedRuntime = selectedSetup?.runtimeId === undefined
     ? undefined
     : runtimeSnapshots[selectedSetup.runtimeId]
@@ -814,7 +878,7 @@ export function PresetSquarePanel({
   }
 
   const renderCards = (items: readonly PresetSquareItem[]): ReactNode => (
-    <div className={css.grid}>
+    <div className={css.grid} data-layout={catalogLayout}>
       {items.map((item) => {
         const installed = localById.get(item.presetId)
         const setup = setupForPreset(item.presetId)
@@ -1019,21 +1083,37 @@ export function PresetSquarePanel({
                 <h2 id="square-presets-heading">{catalogTitle}</h2>
                 <p>{catalogHint}</p>
               </div>
-              {view === 'community' ? <div className={css.sort} aria-label={t('presetSquareTitle')}>
-                {(['downloads', 'newest'] as const).map(value => (
-                  <button
-                    key={value}
-                    type="button"
-                    aria-pressed={sort === value}
-                    onClick={() => { setSort(value) }}
-                  >
-                    {t(value === 'downloads' ? 'presetSortDownloads' : 'presetSortNewest')}
-                  </button>
-                ))}
-              </div> : null}
+              <div className={css.catalogControls}>
+                {view === 'community' ? <div className={css.sort} aria-label={t('presetSquareTitle')}>
+                  {(['downloads', 'newest'] as const).map(value => (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={sort === value}
+                      onClick={() => { setSort(value) }}
+                    >
+                      {t(value === 'downloads' ? 'presetSortDownloads' : 'presetSortNewest')}
+                    </button>
+                  ))}
+                </div> : null}
+                <div className={css.layoutSwitch} role="group" aria-label={t('presetLayout')}>
+                  {(['grid', 'list'] as const).map(layout => (
+                    <button
+                      key={layout}
+                      type="button"
+                      aria-label={t(layout === 'grid' ? 'presetGridView' : 'presetListView')}
+                      title={t(layout === 'grid' ? 'presetGridView' : 'presetListView')}
+                      aria-pressed={catalogLayout === layout}
+                      onClick={() => { setCatalogLayout(layout) }}
+                    >
+                      <CatalogLayoutGlyph layout={layout} />
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             {remote.status === 'loading' ? (
-              <div className={css.grid} role="status" aria-label={t('presetLoading')}>
+              <div className={css.grid} data-layout={catalogLayout} role="status" aria-label={t('presetLoading')}>
                 {[0, 1, 2, 3].map(value => <span key={value} className={css.cardSkeleton} />)}
               </div>
             ) : null}
@@ -1077,6 +1157,32 @@ export function PresetSquarePanel({
                   <p>{t('presetFufanOfficialDisclaimer')}</p>
                 </div>
               ) : null}
+              {selectedCapabilities === undefined ? null : (
+                <section className={css.capabilitiesPanel} aria-labelledby="preset-capabilities-title">
+                  <header>
+                    <strong id="preset-capabilities-title">{t('presetCapabilitiesTitle')}</strong>
+                    <p>{t('presetCapabilitiesHint')}</p>
+                  </header>
+                  <dl>
+                    <div>
+                      <dt>{t('presetCapabilityAgent')}</dt>
+                      <dd>{t(selectedCapabilities.agentKey)}</dd>
+                    </div>
+                    <div>
+                      <dt>{t('presetCapabilitySkills')}</dt>
+                      <dd>{t(selectedCapabilities.skillsKey)}</dd>
+                    </div>
+                    <div>
+                      <dt>{t('presetCapabilityTools')}</dt>
+                      <dd>{t(selectedCapabilities.toolsKey)}</dd>
+                    </div>
+                    <div>
+                      <dt>{t('presetCapabilityRuntime')}</dt>
+                      <dd>{t(selectedCapabilities.runtimeKey)}</dd>
+                    </div>
+                  </dl>
+                </section>
+              )}
               {selectedSetup === undefined ? null : (
                 <section className={css.setupNotice} data-kind={selectedSetup.kind} aria-labelledby="preset-setup-title">
                   <header>

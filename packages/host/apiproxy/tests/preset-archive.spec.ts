@@ -61,6 +61,18 @@ describe('Preset archive import', () => {
     expect(result.warnings).toEqual(['version-mismatch'])
   })
 
+  it('does not mistake an HTTPS URL scheme for a Windows absolute path', () => {
+    const parsed = parsePresetArchive(archive({
+      'preset/scripts/search.mjs': strToU8("const registry = 'https://registry.npmjs.org'\n"),
+    }))
+    const windowsPath = parsePresetArchive(archive({
+      'preset/config.yml': strToU8('workspace: C:\\Users\\example\\work\n'),
+    }))
+
+    expect(parsed.warnings).toEqual([])
+    expect(windowsPath.warnings).toEqual(['absolute-paths'])
+  })
+
   it.each([
     ['missing composition', zipSync({
       'manifest.json': strToU8(JSON.stringify({ format: 'dsh-preset', version: 1, id: 'fixture-preset' })),

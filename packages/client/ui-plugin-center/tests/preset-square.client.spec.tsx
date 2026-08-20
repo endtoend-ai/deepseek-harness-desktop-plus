@@ -55,11 +55,27 @@ const FEISHU_ITEM = {
   presetId: 'feishu-digital-employee',
   title: '飞书数字员工',
   description: '1 套 Agent Preset + 1 个 Skill，并接入飞书 MCP 与时间解析 MCP。',
+  visualVariant: 5,
   artifact: {
     ...OFFICIAL_ITEM.artifact,
     downloadUrl: 'https://www.dshdesktop.com/preset/api/v1/presets/fufan-feishu-digital-employee/download',
   },
   detailUrl: 'https://www.dshdesktop.com/preset/p/fufan-feishu-digital-employee',
+} as const satisfies PresetSquareItem
+
+const LLM_WIKI_ITEM = {
+  ...OFFICIAL_ITEM,
+  id: 'fufan-case-07-llm-wiki-producer',
+  slug: 'fufan-llm-wiki-producer',
+  presetId: 'llm-wiki-fullstack',
+  title: 'LLM Wiki Producer',
+  description: '面向企业知识库项目按阶段完成开发、验证与交付。',
+  visualVariant: 6,
+  artifact: {
+    ...OFFICIAL_ITEM.artifact,
+    downloadUrl: 'https://www.dshdesktop.com/preset/api/v1/presets/fufan-llm-wiki-producer/download',
+  },
+  detailUrl: 'https://www.dshdesktop.com/preset/p/fufan-llm-wiki-producer',
 } as const satisfies PresetSquareItem
 
 const VIDEO_ITEM = {
@@ -75,6 +91,37 @@ const VIDEO_ITEM = {
   },
   detailUrl: 'https://www.dshdesktop.com/preset/p/fufan-video-generation',
 } as const satisfies PresetSquareItem
+
+const OFFICIAL_ARTWORK_ITEMS = [
+  OFFICIAL_ITEM,
+  {
+    ...OFFICIAL_ITEM,
+    id: 'fufan-case-02-ppt-office',
+    slug: 'fufan-ppt-office',
+    presetId: 'dsh-motion-deck-studio',
+    title: 'PPT Office',
+    visualVariant: 1,
+  },
+  VIDEO_ITEM,
+  {
+    ...OFFICIAL_ITEM,
+    id: 'fufan-case-04-content-factory',
+    slug: 'fufan-content-factory',
+    presetId: 'ai-content-image-studio',
+    title: '内容工厂',
+    visualVariant: 3,
+  },
+  {
+    ...OFFICIAL_ITEM,
+    id: 'fufan-case-05-ai-report',
+    slug: 'fufan-ai-report',
+    presetId: 'ai-report-analyst',
+    title: 'AI 报表',
+    visualVariant: 4,
+  },
+  FEISHU_ITEM,
+  LLM_WIKI_ITEM,
+] as const satisfies readonly PresetSquareItem[]
 
 function props(values: Partial<PresetSquareInjected> = {}): PresetSquareInjected {
   return {
@@ -139,12 +186,12 @@ function props(values: Partial<PresetSquareInjected> = {}): PresetSquareInjected
 
 describe('Preset Square shared surface', () => {
   it('defaults to 赋范官方, switches sources as tabs, and renders semantic SVG artwork', async () => {
-    render(<PresetSquarePanel {...props({
+    const { container } = render(<PresetSquarePanel {...props({
       listPresetSquare: async () => ({
-        items: [OFFICIAL_ITEM, ITEM], total: 2, sort: 'downloads', fetchedAt: '2026-08-17T08:00:00.000Z',
+        items: [...OFFICIAL_ARTWORK_ITEMS, ITEM], total: 8, sort: 'downloads', fetchedAt: '2026-08-17T08:00:00.000Z',
       }),
       detailPresetSquare: async query => ({
-        item: query.slug === OFFICIAL_ITEM.slug ? OFFICIAL_ITEM : ITEM,
+        item: OFFICIAL_ARTWORK_ITEMS.find(item => item.slug === query.slug) ?? ITEM,
         fetchedAt: '2026-08-17T08:00:00.000Z',
       }),
     })} t={t} />)
@@ -152,11 +199,25 @@ describe('Preset Square shared surface', () => {
     expect((await screen.findByRole('tab', {
       name: new RegExp(zh.presetFufanOfficialTitle),
     })).getAttribute('aria-selected')).toBe('true')
-    const officialCard = (await screen.findByText(OFFICIAL_ITEM.title)).closest('article')
+    const llmWikiCard = (await screen.findByText(LLM_WIKI_ITEM.title)).closest('article')
+    if (llmWikiCard === null) throw new Error('LLM Wiki Producer 卡片未渲染')
+    const officialCards = container.querySelectorAll('[data-layout="grid"] article')
+    expect(officialCards.item(0).textContent).toContain(LLM_WIKI_ITEM.title)
+
+    const officialCard = screen.getByText(OFFICIAL_ITEM.title).closest('article')
     if (officialCard === null) throw new Error('赋范官方卡片未渲染')
     expect(within(officialCard).getByText(zh.presetFufanOfficialBadge)).toBeTruthy()
-    expect(officialCard.querySelector('[data-artwork="ai-product-developer"] svg')).toBeTruthy()
+    for (const item of OFFICIAL_ARTWORK_ITEMS) {
+      expect(container.querySelector(`[data-artwork="${item.presetId}"] svg`)).toBeTruthy()
+    }
+    expect(llmWikiCard.querySelector('[data-variant="6"]')).toBeTruthy()
     expect(screen.queryByText(ITEM.title)).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: zh.presetListView }))
+    expect(screen.getByRole('button', { name: zh.presetListView }).getAttribute('aria-pressed')).toBe('true')
+    expect(container.querySelector('[data-layout="list"]')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: zh.presetGridView }))
+    expect(container.querySelector('[data-layout="grid"]')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('tab', { name: new RegExp(zh.presetCommunityTitle) }))
     const communityCard = (await screen.findByText(ITEM.title)).closest('article')
@@ -168,7 +229,19 @@ describe('Preset Square shared surface', () => {
     const restoredOfficialCard = (await screen.findByText(OFFICIAL_ITEM.title)).closest('article')
     if (restoredOfficialCard === null) throw new Error('赋范官方卡片未恢复')
     fireEvent.click(within(restoredOfficialCard).getByRole('button', { name: zh.details }))
-    expect(await screen.findByText(zh.presetFufanOfficialDisclaimer)).toBeTruthy()
+    const officialDialog = await screen.findByRole('dialog', { name: OFFICIAL_ITEM.title })
+    expect(within(officialDialog).getByText(zh.presetFufanOfficialDisclaimer)).toBeTruthy()
+    fireEvent.click(within(officialDialog).getByRole('button', { name: zh.close }))
+
+    const restoredLlmWikiCard = screen.getByText(LLM_WIKI_ITEM.title).closest('article')
+    if (restoredLlmWikiCard === null) throw new Error('LLM Wiki Producer 卡片未恢复')
+    fireEvent.click(within(restoredLlmWikiCard).getByRole('button', { name: zh.details }))
+    const llmWikiDialog = await screen.findByRole('dialog', { name: LLM_WIKI_ITEM.title })
+    expect(within(llmWikiDialog).getByText(zh.presetCapabilitiesTitle)).toBeTruthy()
+    expect(within(llmWikiDialog).getByText(zh.presetLlmWikiAgent)).toBeTruthy()
+    expect(within(llmWikiDialog).getByText(zh.presetLlmWikiSkills)).toBeTruthy()
+    expect(within(llmWikiDialog).getByText(zh.presetLlmWikiTools)).toBeTruthy()
+    expect(within(llmWikiDialog).getByText(zh.presetLlmWikiRuntime)).toBeTruthy()
   })
 
   it('filters the complete fetched list locally and keeps server sorting explicit', async () => {

@@ -433,6 +433,29 @@ describe('ui-agent-preset apply', () => {
     await vi.waitFor(() => { expect(calls).toContain('select:minimal') })
   })
 
+  it('shows a blank-session preset selected from another surface', async () => {
+    const { ctx, slots } = await bench()
+    declareRoot(slots)
+    declareConversation(slots)
+    ctx.provide('conversation', {} as never)
+    const sessions = sessionsDouble({
+      current: 's1',
+      byId: { s1: { id: 's1', blank: true, agentPreset: 'standard' } },
+    })
+    ctx.provide('sessions', sessions as never)
+    ctx.provide('workspaces', workspacesDouble() as never)
+    await ctx.plugin({ inject: [...inject, 'conversation', 'sessions', 'workspaces'], apply }).await()
+    const chip = (slots.entries('conversation.hero.agentPreset')[0]!
+      .inject as unknown as () => AgentPresetSeatInjected)()
+
+    await chip.load()
+    sessions.noteAgentPreset('s1', 'minimal')
+
+    await vi.waitFor(() => {
+      expect(chip.hooks.agentPresetSeat.getSnapshot().current).toBe('minimal')
+    })
+  })
+
   it('applies the stage to a session that records no preset of its own', async () => {
     const { ctx, slots, calls } = await bench()
     declareRoot(slots)

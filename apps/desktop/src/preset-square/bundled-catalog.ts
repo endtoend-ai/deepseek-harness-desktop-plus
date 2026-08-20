@@ -11,7 +11,7 @@ import { zipSync, type Zippable } from 'fflate'
 
 const ARCHIVE_MTIME = new Date('2026-08-17T00:00:00.000Z')
 const PUBLISHER = '赋范官方'
-const SOURCE_DSH_VERSION = '0.1.0-rc.7'
+const SOURCE_DSH_VERSION = '0.1.0-rc.8'
 
 interface BundledPresetDefinition {
   readonly id: string
@@ -24,6 +24,14 @@ interface BundledPresetDefinition {
 }
 
 const DEFINITIONS = [{
+  id: 'fufan-case-07-llm-wiki-producer',
+  slug: 'fufan-llm-wiki-producer',
+  presetId: 'llm-wiki-fullstack',
+  title: 'LLM Wiki Producer',
+  description: '1 套 Agent Preset + 1 个 Skill，面向企业知识库项目按阶段完成开发、验证与交付。',
+  visualVariant: 6,
+  createdAt: '2026-08-17T06:07:00.000Z',
+}, {
   id: 'fufan-case-01-ai-webapp',
   slug: 'fufan-ai-webapp',
   presetId: 'ai-product-developer',
