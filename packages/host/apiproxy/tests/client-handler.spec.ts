@@ -137,6 +137,8 @@ function scriptedApi(overrides: {
           { id: 'openrouter', name: 'OpenRouter', configured: false, defaultModel: 'openai/gpt-4.1-mini', apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true },
         ],
       }),
+      route: r => ok(r, { mode: 'off', modelProvider: r.payload.modelProvider, model: r.payload.model }),
+      activate: r => ok(r, { mode: 'native', modelProvider: r.payload.modelProvider, model: r.payload.model }),
       test: r => ok(r, { provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' }),
       enable: r => ok(r, { provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' }),
     },

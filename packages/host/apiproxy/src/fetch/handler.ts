@@ -64,7 +64,10 @@ import {
   credentialsDescribeRequestSchema, credentialsSetRequestSchema, credentialsUnsetRequestSchema,
 } from '../api/credentials.schema.ts'
 import { llmDiscoverModelsRequestSchema, llmModelsRequestSchema, llmProvidersRequestSchema } from '../api/llm.schema.ts'
-import { visionEnableRequestSchema, visionStatusRequestSchema, visionTestRequestSchema } from '../api/vision.schema.ts'
+import {
+  visionActivateRequestSchema, visionEnableRequestSchema, visionRouteRequestSchema,
+  visionStatusRequestSchema, visionTestRequestSchema,
+} from '../api/vision.schema.ts'
 import {
   subagentHistoryRequestSchema,
   subagentInterruptRequestSchema,
@@ -143,6 +146,8 @@ const UNARY_ROUTES: UnaryRoutes = {
   'llm.models': { schema: llmModelsRequestSchema, invoke: (api, r) => api.llm.models(r) },
   'llm.discoverModels': { schema: llmDiscoverModelsRequestSchema, invoke: (api, r, signal) => api.llm.discoverModels(r, signal) },
   'vision.status': { schema: visionStatusRequestSchema, invoke: (api, r) => api.vision.status(r) },
+  'vision.route': { schema: visionRouteRequestSchema, invoke: (api, r) => api.vision.route(r) },
+  'vision.activate': { schema: visionActivateRequestSchema, invoke: (api, r) => api.vision.activate(r) },
   'vision.test': { schema: visionTestRequestSchema, invoke: (api, r, signal) => api.vision.test(r, signal) },
   'vision.enable': { schema: visionEnableRequestSchema, invoke: (api, r, signal) => api.vision.enable(r, signal) },
 }

@@ -287,6 +287,12 @@ export class FakeApiClient implements IApiClient {
         { id: 'openrouter', name: 'OpenRouter', configured: false, defaultModel: 'openai/gpt-4.1-mini', apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true },
       ],
     }))),
+    route: payload => this.record('vision.route', payload, Promise.resolve(ok({
+      mode: 'off', modelProvider: payload.modelProvider, model: payload.model,
+    }))),
+    activate: payload => this.record('vision.activate', payload, Promise.resolve(ok({
+      mode: 'native', modelProvider: payload.modelProvider, model: payload.model,
+    }))),
     test: payload => this.record('vision.test', payload, Promise.resolve(ok({ provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' }))),
     enable: payload => this.record('vision.enable', payload, Promise.resolve(ok({ provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' }))),
   }

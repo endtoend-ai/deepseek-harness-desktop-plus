@@ -585,6 +585,8 @@ describe('settings domain', () => {
       ...DEFAULTS,
       visionEnhancement: {
         isEnabled: () => false,
+        route: (modelProvider, model) => Promise.resolve({ mode: 'off', modelProvider, model }),
+        activate: (modelProvider, model) => Promise.resolve({ mode: 'native', modelProvider, model }),
         status: () => Promise.resolve({
           enabled: false, configured: true, provider: 'bailian', model: 'qwen3.8-max',
           apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key',

@@ -3068,6 +3068,16 @@ function createFixtureWorld(options: FixtureOptions): FixtureWorld {
           { id: 'openrouter', name: 'OpenRouter', configured: fixtureCredentials.has('DSH_VISION_OPENROUTER_API_KEY') || fixtureCredentials.has('OPENROUTER_API_KEY'), defaultModel: 'openai/gpt-4.1-mini', apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true },
         ],
       }),
+      route: request => ok(request, {
+        mode: 'off',
+        modelProvider: request.payload.modelProvider,
+        model: request.payload.model,
+      }),
+      activate: request => ok(request, {
+        mode: 'native',
+        modelProvider: request.payload.modelProvider,
+        model: request.payload.model,
+      }),
       test: request => ok(request, {
         provider: 'bailian',
         model: 'qwen3.8-max',
@@ -3251,6 +3261,8 @@ export class FixtureApiClient extends AbstractApiClient {
       case 'llm.models': return this.api.llm.models(request)
       case 'llm.discoverModels': return this.api.llm.discoverModels(request, signal)
       case 'vision.status': return this.api.vision.status(request)
+      case 'vision.route': return this.api.vision.route(request)
+      case 'vision.activate': return this.api.vision.activate(request)
       case 'vision.test': return this.api.vision.test(request, signal)
       case 'vision.enable': return this.api.vision.enable(request, signal)
     }

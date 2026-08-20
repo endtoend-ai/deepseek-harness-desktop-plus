@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/Desktop-App-2563EB" alt="Desktop App">
   <img src="https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white" alt="Electron Desktop">
   <img src="https://img.shields.io/badge/Plugin%20Center-online-22C55E" alt="Public Plugin Center is online">
-  <img src="https://img.shields.io/badge/Vision-Qwen3.8-7C3AED" alt="Qwen3.8 vision enhancement">
+  <img src="https://img.shields.io/badge/Vision-Auto%20Routing-7C3AED" alt="Automatic vision routing">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-studio?color=22C55E" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
 </p>
@@ -24,7 +24,7 @@
 
 <p align="center">Automatically discover and surface new ecosystem plugins, with AI recommendations for useful capabilities; search, verify, install, enable, disable, and uninstall without the command line.</p>
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.11/DeepSeek-Harness-Desktop-0.1.0-rc.11-macos-arm64-preview.zip"><strong>Download the macOS arm64 development preview</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.11/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.11-Setup.exe"><strong>Download the Windows x64 development preview</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.12/DeepSeek-Harness-Desktop-0.1.0-rc.12-macos-arm64-preview.zip"><strong>Download the macOS arm64 development preview</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.12/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.12-Setup.exe"><strong>Download the Windows x64 development preview</strong></a></p>
 
 <p align="center">
   <img src="assets/plugin-discovery-hero.jpg" alt="DeepSeek Harness Studio vision enhancement, Plugin Store, zero-code activation, automatic plugin delivery, and AI recommendations" width="100%">
@@ -39,7 +39,7 @@
 | **Plugin Discovery and recommendations** | ✅ | Read the public catalog automatically, browse featured, recently updated, ecosystem-popular, and scenario-based recommendations, and search by name, capability, or publisher. |
 | **Public Plugin Center** | ✅ | Inspect exact versions, capabilities, permissions, compatibility, and risk, install online, and manage plugin enablement, updates, disabling, and removal. |
 | **Desktop development workspace** | ✅ | Open local projects, manage sessions and workspaces, use Harness models, tools, Skills, and plugins, and modify the complete source code directly. |
-| **Vision enhancement** | ✅ | Add image understanding to a text-based DeepSeek workflow by reading conversation attachments and workspace images, then providing traceable observations to the Agent. |
+| **Vision enhancement** | ✅ | Use one switch to select native image input or a verified Bailian/OpenRouter-compatible vision route automatically, with the active path visible in the composer. |
 | **Chinese DeepSeek controls** | ✅ | Choose Chinese permission levels and DeepSeek-specific thinking modes directly in the composer for the current session. |
 | **Built-in skins and custom backgrounds** | ✅ | Start with the whale-maid skin, switch to Cloud Cat, or choose a local image and let the app adapt its interface palette. |
 | **Standalone MCP, Skills, and tool management** | 🗓️ | Add discovery and connection management for MCP servers, Skills, and tools that are not distributed as Bundles, then compose Agent capabilities per project. |
@@ -64,9 +64,19 @@ Desktop installers are published only through this repository's GitHub Releases 
 - **Plugin Discovery and recommendations**: read the online catalog and use featured, recently updated, ecosystem-popular, scenario filters, and search to find plugins worth trying.
 - **Agent-assisted plugin search**: describe a need in natural language and let the Agent search the public `dsh-plugin` catalog, rank relevant candidates, and explain each recommendation.
 - **Public Plugin Center**: locate published DSH Bundles by short package name, full npm name, or an explicit GitHub repository; verify exact identity, artifact integrity, Bundle declaration, and local compatibility before installation. Aggregate Bundles may reuse DSH modules packaged with the current Desktop Host, while genuinely missing third-party dependencies remain blocked.
-- **Composer vision enhancement**: enable Bailian Qwen3.8 image understanding in one click for screenshots, photos, charts, OCR, and workspace images without replacing the current DeepSeek model.
+- **Composer vision enhancement**: keep one switch; send original images when exact-model metadata declares image support, otherwise use a verified Bailian or OpenRouter-compatible vision route, with each image entering exactly one path.
 - **Desktop appearance settings**: built-in Whale Maid and Cloud Cat skins, plus local backgrounds, subject focus, and interface glass controls.
 - **Complete development source**: desktop app, Web interface, CLI, capability packages, native helpers, Python SDK, examples, and build scripts are kept in the repository.
+
+## DeepSeek Harness rc.8 compatibility
+
+Studio `0.1.0-rc.12` integrates the core and Web capabilities from DeepSeek Harness `0.1.0-rc.8` while retaining Beyondata's Plugin Center, Plugin Discovery, Preset Square, Application Center, themes, and desktop recovery flows. Studio and upstream Harness versions are managed independently.
+
+- **Models and vision**: supports DeepSeek's `low` reasoning effort, exact-model native image capability declarations, and automatic routing between native and compatible vision behind one switch.
+- **Attachments and references**: supports persistent image attachments, `@` file or session references, and image-bearing `/goal` and `/plan` input.
+- **Plugins and settings**: renders plugin-provided dynamic settings cards while keeping installation, configuration, enablement, disabling, and removal in the existing Plugin Center flow.
+- **Jobs and runtime**: integrates subagent jobs, concurrent Web Search, faster history forks, and persistent PowerShell PTY sessions on Windows.
+- **Desktop compatibility**: starts the Desktop Host with `--no-open` to avoid opening an extra browser and retains native directory selection, plugin transaction recovery, and existing user-data locations.
 
 ## Plugin ecosystem: discover what is worth installing, then manage it
 
@@ -129,21 +139,22 @@ Open **Settings → Background** to switch built-in skins. For a custom image, t
 ## Chinese permissions and DeepSeek model controls
 
 - **Permission selection**: the composer uses the Chinese `只读`, `工作区写入`, and `完全访问` labels for the current session. General settings affect only new sessions, and enabling Full access requires an explicit risk confirmation.
-- **Model and thinking modes**: the model and API key remain managed in Settings. The composer shows the current DeepSeek model and offers `关闭思考`, `深度思考`, and `最大思考` without inventing a speed setting that DeepSeek does not expose.
+- **Model and thinking modes**: the model and API key remain managed in Settings. The composer shows the current DeepSeek model and offers `关闭思考`, `低强度思考`, `深度思考`, and `最大思考`.
 
 ## Vision enhancement: let DeepSeek understand images
 
-The text-based DeepSeek model used by the desktop workflow cannot interpret images directly. When vision enhancement is enabled, the built-in Bailian `qwen3.8-max` capability first reads image attachments or PNG, JPEG, WebP, and GIF files in the workspace, then gives the Agent a traceable visual observation. The existing DeepSeek model, permission level, and session flow remain unchanged.
+When vision enhancement is enabled, the Host selects one route from the current exact model's capabilities: a model that declares image support receives the original image; otherwise, a configured and verified Bailian or OpenRouter-compatible provider supplies a traceable observation to the Agent. The routes are mutually exclusive, so each image is processed once.
 
 - **Available in the composer**: use the “视觉增强” shortcut on the left side of the input bar; hover to see its purpose and current state.
-- **Enabled through real verification**: the first activation verifies a Bailian API key with a real image; the credential remains in the protected local credential file.
+- **Automatic path selection**: the shortcut reports `原生` or `兼容 · 提供方`; native vision needs no extra key, while compatible vision requires a verified provider.
+- **Explicitly off**: disabling the switch keeps images out of model-visible context while retaining attachment history in the interface.
 - **Built for development work**: understand product screenshots, error dialogs, designs, charts, photos, and text in images, or inspect an image by its workspace path.
 
 ## Download the desktop app
 
 > GitHub Releases provides Electron-validated macOS Apple Silicon and Windows x64 development previews. Running either desktop build requires no separate Node.js or pnpm installation. These remain development-preview assets; formal releases will provide platform-signed macOS `.dmg` and Windows x64 `.exe` installers.
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.11/DeepSeek-Harness-Desktop-0.1.0-rc.11-macos-arm64-preview.zip"><strong>Download the macOS arm64 preview</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.11/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.11-Setup.exe"><strong>Download the Windows x64 installer</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.12/DeepSeek-Harness-Desktop-0.1.0-rc.12-macos-arm64-preview.zip"><strong>Download the macOS arm64 preview</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.12/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.12-Setup.exe"><strong>Download the Windows x64 installer</strong></a></p>
 
 Development previews use a separate pre-release tag without triggering the formal installer workflow. Their public download area contains only the macOS ZIP and Windows installer; checksums, blockmaps, and platform-verification records remain in the corresponding GitHub Actions artifact so users do not mistake development files for installers. The formal workflow accepts only a `desktop-v*` tag that exactly matches the Desktop version, and publishes the macOS and Windows installers with `SHA256SUMS` only after both platform signatures pass verification.
 

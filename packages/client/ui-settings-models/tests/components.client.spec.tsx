@@ -478,6 +478,54 @@ describe('ModelsSection', () => {
     })
   })
 
+  it('declares native image capability on the exact DeepSeek model without adding a route selector', async () => {
+    const { mutate } = await mountDeepSeekCard({
+      mutate: vi.fn(() => Promise.resolve(ok(wireNamespaces()[0]))),
+    })
+    fireEvent.click(screen.getByText(en.customized))
+    expandRow(1)
+
+    const nativeImage = screen.getByLabelText<HTMLInputElement>(`${en.nativeImageInput} 1`)
+    expect(nativeImage.checked).toBe(false)
+    expect(screen.getByText(en.nativeImageInputHint)).toBeTruthy()
+    fireEvent.click(nativeImage)
+    expect(nativeImage.checked).toBe(true)
+    fireEvent.click(screen.getByText(en.apply))
+
+    await waitFor(() => { expect(mutate).toHaveBeenCalledTimes(1) })
+    expect(mutate.mock.calls[0]?.[0]).toEqual({
+      ns: 'llm-deepseek',
+      ops: [{
+        op: 'set',
+        path: ['models'],
+        value: [
+          { ...DEFAULT_DEEPSEEK_MODELS[0], inputModalities: ['text', 'image'] },
+          DEFAULT_DEEPSEEK_MODELS[1],
+        ],
+      }],
+      expectedRevision: 0,
+    })
+  })
+
+  it('removes only image capability and keeps the required text modality', () => {
+    const onChange = vi.fn()
+    render(<DeepSeekModelsEditor
+      models={[{ id: 'vision-model', inputModalities: ['image', 'text'] }]}
+      overridden={true}
+      defaultContextWindow={undefined}
+      defaultMaxTokens={undefined}
+      t={t}
+      disabled={false}
+      onChange={onChange}
+      onReset={vi.fn()}
+    />)
+    expandRow(1)
+    const nativeImage = screen.getByLabelText<HTMLInputElement>(`${en.nativeImageInput} 1`)
+    expect(nativeImage.checked).toBe(true)
+    fireEvent.click(nativeImage)
+    expect(onChange).toHaveBeenCalledWith([{ id: 'vision-model', inputModalities: ['text'] }])
+  })
+
   it('rejects duplicate DeepSeek model ids before writing', async () => {
     const { mutate } = await mountDeepSeekCard()
     fireEvent.click(screen.getByText(en.customized))

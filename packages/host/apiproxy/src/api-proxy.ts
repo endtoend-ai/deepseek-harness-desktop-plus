@@ -2227,12 +2227,17 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
             const pendingImage = [...found.agent.inbox.nextTurn, ...found.agent.inbox.nextStep]
               .some(message => contentHasImage(message.content))
             if (pendingImage || messagesHaveImage(found.agent.session.deriveMessages())) {
-              const info = await ctx.llm.resolveModelInfo(resolved.provider, resolved.model)
-              if (!defaults.visionEnhancement?.isEnabled()
-                && info.inputModalities !== undefined && !info.inputModalities.includes('image')) {
+              let unavailable: boolean
+              if (defaults.visionEnhancement === undefined) {
+                const info = await ctx.llm.resolveModelInfo(resolved.provider, resolved.model)
+                unavailable = info.inputModalities !== undefined && !info.inputModalities.includes('image')
+              } else {
+                unavailable = (await defaults.visionEnhancement.route(resolved.provider, resolved.model)).mode === 'unavailable'
+              }
+              if (unavailable) {
                 return err(request, {
                   code: 'model-unavailable',
-                  message: `Model "${resolved.model}" does not accept image input, but this session already contains images; select an image-capable model.`,
+                  message: `Model "${resolved.model}" cannot process this session's images; enable a configured compatible visual provider or select an image-capable model.`,
                   details: { provider, model },
                 })
               }
@@ -2417,12 +2422,23 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           try {
             if (hasImage) {
               const current = selectionFor(agent).current
-              const modelInfo = await ctx.llm.resolveModelInfo(current.provider, current.model)
-              if (!defaults.visionEnhancement?.isEnabled()
-                && modelInfo.inputModalities !== undefined && !modelInfo.inputModalities.includes('image')) {
+              const route = defaults.visionEnhancement === undefined
+                ? undefined
+                : await defaults.visionEnhancement.route(current.provider, current.model)
+              let unavailable: boolean
+              if (route === undefined) {
+                const modelInfo = await ctx.llm.resolveModelInfo(current.provider, current.model)
+                unavailable = modelInfo.inputModalities !== undefined && !modelInfo.inputModalities.includes('image')
+              } else {
+                unavailable = route.mode === 'off' || route.mode === 'unavailable'
+              }
+              if (unavailable) {
+                const message = route?.mode === 'off'
+                  ? '视觉增强已关闭，请先开启后再发送图片。'
+                  : `Model "${current.model}" does not support native image input and no compatible visual provider is available.`
                 return err(request, {
                   code: 'attachment-error',
-                  message: `Model "${current.model}" does not support image input.`,
+                  message,
                   details: { reason: 'MODEL_DOES_NOT_SUPPORT_IMAGES' },
                 })
               }
@@ -3386,6 +3402,38 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           return err(request, { code: 'internal', message: '视觉能力增强服务未安装。', details: {} })
         }
         return ok(request, await defaults.visionEnhancement.status())
+      },
+
+      async route(request) {
+        if (defaults.visionEnhancement === undefined) {
+          return err(request, { code: 'internal', message: '视觉能力增强服务未安装。', details: {} })
+        }
+        try {
+          const { modelProvider, model } = request.payload
+          return ok(request, await defaults.visionEnhancement.route(modelProvider, model))
+        } catch (error: unknown) {
+          return err(request, {
+            code: 'internal',
+            message: error instanceof Error ? error.message : String(error),
+            details: {},
+          })
+        }
+      },
+
+      async activate(request) {
+        if (defaults.visionEnhancement === undefined) {
+          return err(request, { code: 'internal', message: '视觉能力增强服务未安装。', details: {} })
+        }
+        try {
+          const { modelProvider, model } = request.payload
+          return ok(request, await defaults.visionEnhancement.activate(modelProvider, model))
+        } catch (error: unknown) {
+          return err(request, {
+            code: 'internal',
+            message: error instanceof Error ? error.message : String(error),
+            details: {},
+          })
+        }
       },
 
       async test(request, signal) {

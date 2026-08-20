@@ -44,7 +44,8 @@ export type {
   RpcRequest, RpcResponse, RpcResult, SessionId, SessionModels, SessionSearchItem,
   SessionSummary, SettingsNamespaceView, SettingsPathOpView, SkillEntry, StreamChunk,
   SubagentAddress, SubagentCatalog, JobView, ToolCallView, ToolEventView, ToolResultView,
-  VisionProvider, VisionProviderView, VisionStatusView, VisionTestView, WorkspaceId, WorkspaceView,
+  VisionProvider, VisionProviderView, VisionRouteMode, VisionRouteView, VisionStatusView,
+  VisionTestView, WorkspaceId, WorkspaceView,
 } from '@deepseek-ai/dsh-client-connection/client'
 export type {} from '@deepseek-ai/dsh-api-gateway/client'
 export type {} from '@deepseek-ai/dsh-cordis-host-runner/remote'

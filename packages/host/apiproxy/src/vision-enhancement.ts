@@ -8,23 +8,30 @@ import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import type { ImageMediaType } from '@deepseek-ai/dsh-attachment'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ContentBlock, GenerateOptions, Message } from '@deepseek-ai/dsh-llm'
-import type { Session, SessionId } from '@deepseek-ai/dsh-session'
+import type { Session } from '@deepseek-ai/dsh-session'
 import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
 import { createScope } from '@deepseek-ai/dsh-scope'
 import type {} from '@deepseek-ai/dsh-fs'
 import type {} from '@deepseek-ai/dsh-skill'
 
+/** Settings namespace persisted for the Studio visual-enhancement bridge. */
 export const VISION_SETTINGS_NAMESPACE = settingsNamespace('vision-enhancement')
+/** Compatible visual providers supported by the Studio bridge. */
 export type VisionProvider = 'bailian' | 'openrouter'
 
 /** Writable application-owned credential refs; ambient provider vars remain read-only fallbacks. */
 export const BAILIAN_API_KEY_REF = credentialRef('DSH_VISION_BAILIAN_API_KEY')
+/** Application-owned OpenRouter credential ref used by the Studio visual bridge. */
 export const OPENROUTER_API_KEY_REF = credentialRef('DSH_VISION_OPENROUTER_API_KEY')
 const BAILIAN_FALLBACK_API_KEY_REF = credentialRef('DASHSCOPE_API_KEY')
 const OPENROUTER_FALLBACK_API_KEY_REF = credentialRef('OPENROUTER_API_KEY')
+/** Default verified Bailian visual model. */
 export const BAILIAN_VISION_MODEL = 'qwen3.8-max'
+/** Default verified OpenRouter visual model. */
 export const OPENROUTER_VISION_MODEL = 'openai/gpt-4.1-mini'
+/** Help page used to obtain a Bailian API key. */
 export const BAILIAN_API_KEY_URL = 'https://help.aliyun.com/zh/model-studio/get-api-key'
+/** OpenRouter page used to manage API keys. */
 export const OPENROUTER_API_KEY_URL = 'https://openrouter.ai/settings/keys'
 const BAILIAN_CHAT_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
 const OPENROUTER_CHAT_URL = 'https://openrouter.ai/api/v1/chat/completions'
@@ -77,6 +84,7 @@ const VISION_PROVIDER_SPECS: Record<VisionProvider, VisionProviderSpec> = {
 }
 const VISION_PROVIDER_ORDER: readonly VisionProvider[] = ['bailian', 'openrouter']
 
+/** Persisted visual-enhancement settings. */
 export interface VisionSettings {
   enabled?: boolean
   provider?: VisionProvider
@@ -88,6 +96,7 @@ const VisionSettingsSchema: z<VisionSettings> = z.object({
   model: z.string().default(BAILIAN_VISION_MODEL),
 })
 
+/** Canonical image probe submitted for real provider verification. */
 export interface VisionTestInput {
   mediaType: ImageMediaType
   data: string
@@ -95,12 +104,14 @@ export interface VisionTestInput {
   name?: string
 }
 
+/** Image probe plus optional provider selection submitted when enabling. */
 export interface VisionEnableInput extends VisionTestInput {
   apiKey?: string
   provider?: VisionProvider
   model?: string
 }
 
+/** Value-free provider status exposed to the client. */
 export interface VisionProviderStatus {
   id: VisionProvider
   name: string
@@ -110,6 +121,7 @@ export interface VisionProviderStatus {
   modelEditable: boolean
 }
 
+/** Host-authoritative visual-enhancement status. */
 export interface VisionStatus {
   enabled: boolean
   configured: boolean
@@ -119,15 +131,33 @@ export interface VisionStatus {
   providers: readonly VisionProviderStatus[]
 }
 
+/** Verified visual description returned for one image probe. */
 export interface VisionTestResult { provider: VisionProvider; model: string; description: string }
 
+/** Automatic image route selected for one exact session model. */
+export type VisionRouteMode = 'off' | 'native' | 'compatible' | 'unavailable'
+
+/** Exact image path selected for one current provider/model route. */
+export interface VisionRoute {
+  mode: VisionRouteMode
+  modelProvider: string
+  model: string
+  provider?: VisionProvider
+  providerName?: string
+  visionModel?: string
+}
+
+/** Runtime surface installed into the Host. */
 export interface VisionEnhancementRuntime {
   status(): Promise<VisionStatus>
+  route(modelProvider: string, model: string): Promise<VisionRoute>
+  activate(modelProvider: string, model: string): Promise<VisionRoute>
   test(input: VisionTestInput, signal?: AbortSignal): Promise<VisionTestResult>
   enable(input: VisionEnableInput, signal?: AbortSignal): Promise<VisionTestResult>
   isEnabled(): boolean
 }
 
+/** Durable observation recorded when an image is converted for a text-only model. */
 export interface VisionObservationEventData {
   attachmentId: string
   question: string
@@ -142,7 +172,13 @@ declare module '@deepseek-ai/dsh-session/types' {
   }
 }
 
-/** Ensure one exact model-visible visual observation exists in the durable Session log. */
+/**
+ * Ensure one exact model-visible visual observation exists in the durable Session log.
+ * @param session - Session that owns the durable observation event.
+ * @param input - Attachment, question, and model identity used for de-duplication.
+ * @param analyze - Deferred provider call used only when no observation exists.
+ * @returns The existing or newly generated visual description.
+ */
 export async function ensureLoggedVisionObservation(
   session: Session,
   input: Omit<VisionObservationEventData, 'description'>,
@@ -346,6 +382,24 @@ async function transformMessages(
   return transformed
 }
 
+function suppressImageBlocks(blocks: readonly ContentBlock[]): ContentBlock[] {
+  return blocks.map((block): ContentBlock => {
+    if (block.type === 'image') {
+      return { type: 'text', text: '[图片未发送：视觉增强已关闭。]' }
+    }
+    if (block.type === 'tool-result' && hasImage(block.content)) {
+      return { ...block, content: suppressImageBlocks(block.content) }
+    }
+    return block
+  })
+}
+
+function suppressMessageImages(messages: readonly Message[]): Message[] {
+  return messages.map(message => hasImage(message.content)
+    ? { ...message, content: suppressImageBlocks(message.content) }
+    : message)
+}
+
 function imageMediaType(path: string): ImageMediaType | undefined {
   switch (extname(path).toLowerCase()) {
     case '.png': return 'image/png'
@@ -357,14 +411,40 @@ function imageMediaType(path: string): ImageMediaType | undefined {
   }
 }
 
-/** Install settings, global Skill/Tool and the text-model image bridge. */
+/**
+ * Install settings, global Skill and Tool surfaces, and the text-model image bridge.
+ * @param ctx - Host context that owns settings, credentials, agents, and attachments.
+ * @returns The installed visual-enhancement runtime.
+ */
 export function installVisionEnhancement(ctx: Context): VisionEnhancementRuntime {
   let current: () => VisionSettings = () => ({ enabled: false })
   let credentialValidated = true
+  let compatibleProviderReady = false
+  let compatibilityRefreshGeneration = 0
   let enabling = false
   let enableQueue: Promise<void> = Promise.resolve()
   const observationCache = new Map<string, Promise<string>>()
   const mountedAgents = new Map<Agent, () => void>()
+
+  const resolveRoute = async (modelProvider: string, model: string): Promise<VisionRoute> => {
+    if (current().enabled !== true) return { mode: 'off', modelProvider, model }
+    const info = await ctx.llm.resolveModelInfo(modelProvider, model)
+    if (info.inputModalities?.includes('image') === true) {
+      return { mode: 'native', modelProvider, model }
+    }
+    const selection = resolveVisionSelection(current())
+    if (!credentialValidated || !await providerConfigured(ctx, selection.spec)) {
+      return { mode: 'unavailable', modelProvider, model }
+    }
+    return {
+      mode: 'compatible',
+      modelProvider,
+      model,
+      provider: selection.provider,
+      providerName: selection.spec.name,
+      visionModel: selection.model,
+    }
+  }
 
   const visionTool = defineTool({
     name: 'vision_analyze',
@@ -411,7 +491,7 @@ export function installVisionEnhancement(ctx: Context): VisionEnhancementRuntime
     mountedAgents.get(agent)?.()
     mountedAgents.delete(agent)
   }
-  const isOperational = (): boolean => current().enabled === true && credentialValidated
+  const isOperational = (): boolean => current().enabled === true && compatibleProviderReady
   const mountAgent = (agent: Agent): void => {
     if (!isOperational() || mountedAgents.has(agent)) return
     // Reuse the Agent's existing scope key while inheriting this plugin's
@@ -455,10 +535,25 @@ export function installVisionEnhancement(ctx: Context): VisionEnhancementRuntime
     }
   }
 
+  const refreshCompatibleProvider = async (): Promise<void> => {
+    const generation = ++compatibilityRefreshGeneration
+    const selection = resolveVisionSelection(current())
+    const ready = credentialValidated && await providerConfigured(ctx, selection.spec)
+    if (generation !== compatibilityRefreshGeneration) return
+    compatibleProviderReady = ready
+    reconcileAgentMounts()
+  }
+  const scheduleCompatibleProviderRefresh = (): void => {
+    void refreshCompatibleProvider().catch((error: unknown) => {
+      ctx.logger.warn('vision-enhancement: failed to refresh compatible provider state: %s', error instanceof Error ? error.message : String(error))
+    })
+  }
+
   installSettingsSection(ctx, VISION_SETTINGS_NAMESPACE, VisionSettingsSchema, { enabled: false }, {
     setSource: (source) => { current = source },
-    onChange: reconcileAgentMounts,
+    onChange: scheduleCompatibleProviderRefresh,
   })
+  scheduleCompatibleProviderRefresh()
 
   ctx.on('agent/created', ({ agent }) => { mountAgent(agent) })
   ctx.on('agent/disposed', ({ agent }) => { unmountAgent(agent) })
@@ -470,9 +565,11 @@ export function installVisionEnhancement(ctx: Context): VisionEnhancementRuntime
     const active = resolveVisionSelection(current()).spec
     if (ref !== active.credentialRef && ref !== active.fallbackCredentialRef) return
     observationCache.clear()
-    if (enabling) return
     credentialValidated = false
+    compatibilityRefreshGeneration++
+    compatibleProviderReady = false
     reconcileAgentMounts()
+    if (enabling) return
     if (current().enabled) {
       void ctx.settings.update(VISION_SETTINGS_NAMESPACE, { enabled: false }).catch((error: unknown) => {
         ctx.logger.warn('vision-enhancement: failed to disable after credential change: %s', error instanceof Error ? error.message : String(error))
@@ -516,11 +613,23 @@ export function installVisionEnhancement(ctx: Context): VisionEnhancementRuntime
   }
 
   ctx.on('llm/stream', (options: GenerateOptions, next) => {
-    if (!isOperational() || !options.messages.some(message => hasImage(message.content))) return next()
+    if (!options.messages.some(message => hasImage(message.content))) return next()
     return (async function* () {
+      const route = await resolveRoute(options.provider, options.model)
+      if (route.mode === 'native') {
+        yield* next()
+        return
+      }
+      if (route.mode === 'off') {
+        yield* ctx.llm.stream({ ...options, messages: suppressMessageImages(options.messages) })
+        return
+      }
+      if (route.mode === 'unavailable') {
+        throw new Error('当前模型不支持原生图片，且尚未配置可用的兼容视觉提供方。')
+      }
       const selection = resolveVisionSelection(current())
       const agent = ctx.agents.currentInitiator()
-        ?? (options.sessionId === undefined ? undefined : ctx.agents.get(options.sessionId as SessionId))
+        ?? (options.sessionId === undefined ? undefined : ctx.agents.get(options.sessionId))
       if (agent === undefined) {
         throw new Error('视觉能力增强无法定位当前 Session，因此拒绝发送未记录的视觉结果。')
       }
@@ -532,7 +641,22 @@ export function installVisionEnhancement(ctx: Context): VisionEnhancementRuntime
   }, { global: true })
 
   return {
-    isEnabled: isOperational,
+    isEnabled: () => current().enabled === true,
+    route: resolveRoute,
+    async activate(modelProvider, model) {
+      if (current().enabled !== true) {
+        const info = await ctx.llm.resolveModelInfo(modelProvider, model)
+        if (info.inputModalities?.includes('image') !== true) {
+          const selection = resolveVisionSelection(current())
+          if (!credentialValidated || !await providerConfigured(ctx, selection.spec)) {
+            throw new Error('当前模型不支持原生图片，请先配置并验证兼容视觉提供方。')
+          }
+        }
+        await ctx.settings.update(VISION_SETTINGS_NAMESPACE, { enabled: true })
+        reconcileAgentMounts()
+      }
+      return await resolveRoute(modelProvider, model)
+    },
     async status() {
       const selection = resolveVisionSelection(current())
       const providers = await Promise.all(VISION_PROVIDER_ORDER.map(async (id): Promise<VisionProviderStatus> => {
@@ -585,6 +709,7 @@ export function installVisionEnhancement(ctx: Context): VisionEnhancementRuntime
             data, mediaType: input.mediaType, ...input.question === undefined ? {} : { question: input.question },
           }, signal)
           credentialValidated = true
+          compatibleProviderReady = true
           await ctx.settings.update(VISION_SETTINGS_NAMESPACE, {
             enabled: true,
             provider: selection.provider,

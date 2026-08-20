@@ -29,7 +29,8 @@ export type {
   GoalsApi, GoalRef,
   SettingsApi, SettingsNamespaceView, SettingsPathOpView, SettingsSecretView,
   CredentialsApi, CredentialView, ConfigurableProviderView, DiscoveredModelView, LlmApi,
-  VisionApi, VisionProvider, VisionProviderView, VisionStatusView, VisionTestView,
+  VisionApi, VisionProvider, VisionProviderView, VisionRouteMode, VisionRouteView,
+  VisionStatusView, VisionTestView,
 } from './api.ts'
 export {
   RpcId,

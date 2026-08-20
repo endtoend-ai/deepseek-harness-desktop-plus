@@ -17,7 +17,7 @@ import styles from './ModelsSection.module.css'
 export type DeepSeekModelDraft = Record<string, unknown>
 
 /** The catalog fields this editor writes. */
-type CatalogField = 'id' | 'name' | 'contextWindow' | 'maxTokens'
+type CatalogField = 'id' | 'name' | 'contextWindow' | 'maxTokens' | 'inputModalities'
 
 /** The two token counts edited as K/M-suffixed text behind a row's disclosure. */
 type CapacityField = 'contextWindow' | 'maxTokens'
@@ -210,6 +210,17 @@ export function DeepSeekModelsEditor(props: DeepSeekModelsEditorProps): ReactNod
     })
   }
 
+  /** Declare whether one exact model endpoint accepts original image blocks. */
+  const setNativeImageInput = (model: DeepSeekModelDraft, index: number, enabled: boolean): void => {
+    const current = Array.isArray(model['inputModalities'])
+      ? model['inputModalities'].filter((modality): modality is string => typeof modality === 'string')
+      : []
+    const next = current.filter(modality => modality !== 'image')
+    if (!next.includes('text')) next.unshift('text')
+    if (enabled) next.push('image')
+    update(index, 'inputModalities', next)
+  }
+
   /** The field's text: its live keystrokes, else the stored count spelled short. */
   const capacityText = (model: DeepSeekModelDraft, index: number, field: CapacityField): string => {
     const typed = editing.get(`${String(index)}:${field}`)
@@ -343,6 +354,22 @@ export function DeepSeekModelsEditor(props: DeepSeekModelsEditorProps): ReactNod
                     <div className={styles['modelAdvanced']}>
                       {capacityField(model, index, 'contextWindow', props.defaultContextWindow)}
                       {capacityField(model, index, 'maxTokens', props.defaultMaxTokens)}
+                      <label className={styles['modelCapability']}>
+                        <input
+                          type="checkbox"
+                          checked={Array.isArray(model['inputModalities'])
+                            && model['inputModalities'].includes('image')}
+                          aria-label={`${props.t('nativeImageInput')} ${String(index + 1)}`}
+                          disabled={props.disabled}
+                          onChange={(event) => {
+                            setNativeImageInput(model, index, event.target.checked)
+                          }}
+                        />
+                        <span className={styles['modelCapabilityCopy']}>
+                          <span className={styles['modelCapabilityTitle']}>{props.t('nativeImageInput')}</span>
+                          <span className={styles['modelCapabilityHint']}>{props.t('nativeImageInputHint')}</span>
+                        </span>
+                      </label>
                     </div>
                   )
                   : null}

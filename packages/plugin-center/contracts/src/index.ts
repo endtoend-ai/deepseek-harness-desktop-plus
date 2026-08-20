@@ -1912,7 +1912,11 @@ export function decodePluginOwnedDataRemovalResult(value: unknown): PluginOwnedD
   }
 }
 
-/** Decode one current committed-uninstall owned-data offer across the Desktop bridge. */
+/**
+ * Decode one current committed-uninstall owned-data offer across the Desktop bridge.
+ * @param value - Untrusted owned-data offer.
+ * @returns The validated offer and its bounded declarations.
+ */
 export function decodePluginOwnedDataOffer(value: unknown): PluginOwnedDataOffer {
   const source = record(value, '$offer')
   exact(source, '$offer', ['operationId', 'pluginId', 'packageName', 'version', 'declarations'])
@@ -1929,7 +1933,11 @@ export function decodePluginOwnedDataOffer(value: unknown): PluginOwnedDataOffer
   }
 }
 
-/** Decode the explicit retain decision that closes one committed uninstall offer. */
+/**
+ * Decode the explicit retain decision that closes one committed uninstall offer.
+ * @param value - Untrusted owned-data retention request.
+ * @returns The validated explicit retention decision.
+ */
 export function decodePluginOwnedDataRetentionRequest(value: unknown): PluginOwnedDataRetentionRequest {
   const source = record(value, '$request')
   exact(source, '$request', ['operationId', 'pluginId', 'confirmation'])
@@ -1943,7 +1951,11 @@ export function decodePluginOwnedDataRetentionRequest(value: unknown): PluginOwn
   }
 }
 
-/** Decode the bounded acknowledgement returned after retaining owned data. */
+/**
+ * Decode the bounded acknowledgement returned after retaining owned data.
+ * @param value - Untrusted owned-data retention result.
+ * @returns The validated retention acknowledgement.
+ */
 export function decodePluginOwnedDataRetentionResult(value: unknown): PluginOwnedDataRetentionResult {
   const source = record(value, '$result')
   exact(source, '$result', ['operationId', 'pluginId', 'retained'])

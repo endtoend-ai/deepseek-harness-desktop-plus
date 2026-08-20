@@ -117,6 +117,8 @@ const PRIVILEGED_METHODS = new Set([
   'credentials.unset',
   'llm.discoverModels',
   'vision.status',
+  'vision.route',
+  'vision.activate',
   'vision.test',
   'vision.enable',
 ])

@@ -23,6 +23,7 @@ const t: ComponentProps<typeof ModelSelect>['t'] = (key, params) => {
 const reasoning = {
   efforts: [
     { id: 'off', name: 'Off' },
+    { id: 'low', name: 'Low' },
     { id: 'high', name: 'High' },
     { id: 'max', name: 'Max' },
   ],
@@ -79,6 +80,7 @@ describe('ModelSelect reasoning effort', () => {
     expect(screen.getAllByRole('menuitemradio').map(item => item.textContent))
       .toEqual([
         '关闭思考不启用深度思考',
+        '低强度思考减少推理消耗，适合简单任务',
         '深度思考启用深度思考，适合大多数开发任务',
         '最大思考使用最高推理强度，适合复杂任务',
       ])

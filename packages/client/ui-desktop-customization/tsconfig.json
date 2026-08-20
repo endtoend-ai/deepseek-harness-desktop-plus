@@ -15,6 +15,7 @@
     { "path": "../ui-theme" },
     { "path": "../ui-settings" },
     { "path": "../ui-layout" },
+    { "path": "../ui-model-selection" },
     { "path": "../ui-conversation" },
     { "path": "../ui-primitives" },
     { "path": "../../runtime-diagnostics/invariants" },

@@ -40,7 +40,7 @@
           - textbox "显示名称 1":
             - /placeholder: 显示名称
             - text: DeepSeek-V4-Pro
-          - button "容量 1":
+          - button "高级设置 1":
             - img
           - button "删除模型 1":
             - img
@@ -50,7 +50,7 @@
           - textbox "显示名称 2":
             - /placeholder: 显示名称
             - text: Private Preview
-          - button "容量 2" [expanded]:
+          - button "高级设置 2" [expanded]:
             - img
           - button "删除模型 2":
             - img
@@ -62,6 +62,8 @@
           - textbox "最大输出 token 数 2":
             - /placeholder: 256K
             - text: 64K
+          - checkbox "允许原生图片请求 2"
+          - text: 允许原生图片请求 仅当该模型接口明确支持图片输入时开启；视觉增强会据此自动选择原生路径。
           - button "添加模型":
             - img
             - text: 添加模型

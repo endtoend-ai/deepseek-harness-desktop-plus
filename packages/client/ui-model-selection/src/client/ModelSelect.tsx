@@ -3,7 +3,7 @@
  * Two-level selection per figma 496:26454's MenuDropdown: the root menu is
  * the Model / reasoning row pair (label + current value + a right chevron),
  * each opening a side card on hover, focus, or click — the provider-grouped model list over
- * the shared directory, and the adapter levels. DeepSeek's off/high/max ids
+ * the shared directory, and the adapter levels. DeepSeek's off/low/high/max ids
  * render as localized thinking modes; other routes keep adapter-owned names.
  * The trigger (313:14108's ToggleButton) shows both values.
  * Data and submission ride the SAME per-session ModelDirectory as the
@@ -48,6 +48,7 @@ function isDeepSeekProvider(id: string, name: string): boolean {
 
 function deepSeekEffortLabel(id: string, t: ModelTranslate): string | undefined {
   if (id === 'off') return t('deepseek.effort.off')
+  if (id === 'low') return t('deepseek.effort.low')
   if (id === 'high') return t('deepseek.effort.high')
   if (id === 'max') return t('deepseek.effort.max')
   return undefined
@@ -55,6 +56,7 @@ function deepSeekEffortLabel(id: string, t: ModelTranslate): string | undefined 
 
 function deepSeekEffortDescription(id: string, t: ModelTranslate): string | undefined {
   if (id === 'off') return t('deepseek.effort.offDescription')
+  if (id === 'low') return t('deepseek.effort.lowDescription')
   if (id === 'high') return t('deepseek.effort.highDescription')
   if (id === 'max') return t('deepseek.effort.maxDescription')
   return undefined

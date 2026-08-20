@@ -293,6 +293,20 @@ function fakeApi(overrides: Partial<{ muxFrames: MuxFrame[]; hostFrames: HostFra
           ],
         } } }
       },
+      async route(request) {
+        return { rpcId: request.rpcId, result: { ok: true, value: {
+          mode: 'off' as const,
+          modelProvider: request.payload.modelProvider,
+          model: request.payload.model,
+        } } }
+      },
+      async activate(request) {
+        return { rpcId: request.rpcId, result: { ok: true, value: {
+          mode: 'native' as const,
+          modelProvider: request.payload.modelProvider,
+          model: request.payload.model,
+        } } }
+      },
       async test(request) {
         return { rpcId: request.rpcId, result: { ok: true, value: { provider: 'bailian', model: 'qwen3.8-max', description: 'fixture image' } } }
       },

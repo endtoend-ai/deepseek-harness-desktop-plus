@@ -5,6 +5,7 @@ import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from '@deepseek-ai/dsh-client-ui-model-selection/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 import { AppearanceController } from './appearance-controller.ts'
@@ -15,7 +16,9 @@ import { en, zh, type DesktopCustomizationKey } from './locales.ts'
 import { UpdateSection } from './UpdateSection.tsx'
 import { VisionEnhancementRow } from './VisionEnhancementRow.tsx'
 import { VisionEnhancementShortcut } from './VisionEnhancementShortcut.tsx'
-import type { VisionEnhancementInjected } from './VisionEnhancementShortcut.tsx'
+import type {
+  VisionEnhancementInjected, VisionEnhancementShortcutInjected,
+} from './VisionEnhancementShortcut.tsx'
 import {
   VISION_SETTINGS_NAMESPACE, VisionEnhancementController,
 } from './vision-enhancement-controller.ts'
@@ -30,7 +33,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const NS = 'desktop.customization'
 
 /** Services required by the Desktop customization client plugin. */
-export const inject = ['slots', 'locale', 'theme', 'connection', 'remote']
+export const inject = ['slots', 'locale', 'theme', 'connection', 'remote', 'modelDirectories']
 
 /** Register appearance, updates, and the team attribution overlay. */
 export function apply(ctx: ClientContext): void {
@@ -89,7 +92,22 @@ export function apply(ctx: ClientContext): void {
     name: 'conversation.input.left',
     id: 'vision-enhancement',
     order: 20,
-    inject: visionInjected,
+    inject: (sessionId): VisionEnhancementShortcutInjected => {
+      const shared = visionInjected()
+      const directory = ctx.modelDirectories.directoryFor(sessionId)
+      return {
+        ...shared,
+        hooks: {
+          ...shared.hooks,
+          visionModelDirectory: directory.store,
+        },
+        loadModelDirectory: () => {
+          void directory.load().catch(() => { /* model selector owns the visible retry surface */ })
+        },
+        resolveRoute: (modelProvider, model) => vision.route(modelProvider, model),
+        activateRoute: (modelProvider, model) => vision.activate(modelProvider, model),
+      }
+    },
   }, VisionEnhancementShortcut))
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',

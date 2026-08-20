@@ -1,7 +1,7 @@
 /** Shared browser state for the Desktop visual-enhancement controls. */
 
 import type {
-  ConnectionHandle, VisionProvider, VisionProviderView,
+  ConnectionHandle, VisionProvider, VisionProviderView, VisionRouteView,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import {
   createSnapshotStore, type SnapshotStore,
@@ -151,6 +151,49 @@ export class VisionEnhancementController {
         state.enabled = false
         state.error = null
       })
+    } catch (error) {
+      if (generation === this.generation) this.fail(error)
+      throw error
+    } finally {
+      this.flushPendingRefresh()
+    }
+  }
+
+  /**
+   * Resolve the Host-authoritative image path for one selected LLM route.
+   * @param modelProvider - Provider id for the selected session model.
+   * @param model - Exact selected model id.
+   * @returns The automatic image route selected by the Host.
+   */
+  async route(modelProvider: string, model: string): Promise<VisionRouteView> {
+    const response = await this.api.vision.route({ modelProvider, model })
+    if (!response.result.ok) throw new Error(response.result.error.message)
+    return response.result.value
+  }
+
+  /**
+   * Enable automatic routing without requiring a compatible-provider key for native vision.
+   * @param modelProvider - Provider id for the selected session model.
+   * @param model - Exact selected model id.
+   * @returns The activated image route selected by the Host.
+   */
+  async activate(modelProvider: string, model: string): Promise<VisionRouteView> {
+    const generation = ++this.generation
+    this.store.update((state) => {
+      state.status = 'saving'
+      state.error = null
+    })
+    try {
+      const response = await this.api.vision.activate({ modelProvider, model })
+      if (!response.result.ok) throw new Error(response.result.error.message)
+      if (generation === this.generation) {
+        this.store.update((state) => {
+          state.status = 'ready'
+          state.enabled = true
+          state.error = null
+        })
+      }
+      return response.result.value
     } catch (error) {
       if (generation === this.generation) this.fail(error)
       throw error

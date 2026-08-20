@@ -518,6 +518,42 @@
   line-height: 18px;
 }
 
+.modelCapability {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-layer-1);
+  cursor: pointer;
+}
+
+.modelCapability > input {
+  flex: none;
+  margin: 3px 0 0;
+  accent-color: var(--dsw-alias-brand-primary);
+}
+
+.modelCapabilityCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.modelCapabilityTitle {
+  color: var(--dsw-alias-label-primary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.modelCapabilityHint {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
 .modelEmpty {
   padding: 12px;
   border: 1px dashed var(--dsw-alias-border-l3);
