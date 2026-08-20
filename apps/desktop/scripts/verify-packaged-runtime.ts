@@ -23,8 +23,8 @@ const REQUIRED_HOST_FILES = [
 const REQUIRED_WINDOWS_HOST_FILES = [
   ['@koromix', 'koffi-win32-x64', 'win32_x64', 'koffi.node'],
   ['node-addon-require-builtin-win32-x64-msvc', 'prebuilt', 'win32-x64-msvc-napi-v9.node'],
-  ['node-pty', 'prebuilds', 'win32-x64', 'pty.node'],
   ['node-pty', 'prebuilds', 'win32-x64', 'conpty.node'],
+  ['node-pty', 'prebuilds', 'win32-x64', 'conpty_console_list.node'],
 ] as const
 
 interface GenericUpdateConfiguration {

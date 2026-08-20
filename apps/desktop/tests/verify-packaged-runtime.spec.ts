@@ -147,8 +147,8 @@ describe('packaged desktop runtime verification', () => {
         ['pnpm', 'bin', 'pnpm.cjs'],
         ['@koromix', 'koffi-win32-x64', 'win32_x64', 'koffi.node'],
         ['node-addon-require-builtin-win32-x64-msvc', 'prebuilt', 'win32-x64-msvc-napi-v9.node'],
-        ['node-pty', 'prebuilds', 'win32-x64', 'pty.node'],
         ['node-pty', 'prebuilds', 'win32-x64', 'conpty.node'],
+        ['node-pty', 'prebuilds', 'win32-x64', 'conpty_console_list.node'],
         ['@img', 'sharp-win32-x64', 'lib', 'sharp-win32-x64-test.node'],
       ]
       for (const segments of required) {
@@ -159,7 +159,7 @@ describe('packaged desktop runtime verification', () => {
       await writeFile(join(modules, 'pnpm/package.json'), JSON.stringify({ version: '11.7.0' }))
 
       await expect(afterPack(context(appOutDir, 'win32'))).resolves.toBeUndefined()
-      await rm(join(modules, 'node-pty', 'prebuilds', 'win32-x64', 'conpty.node'))
+      await rm(join(modules, 'node-pty', 'prebuilds', 'win32-x64', 'conpty_console_list.node'))
       await expect(afterPack(context(appOutDir, 'win32'))).rejects.toMatchObject({ code: 'ENOENT' })
     } finally {
       await rm(appOutDir, { recursive: true, force: true })
