@@ -198,6 +198,20 @@ function npmPluginId(name: string): string {
   return `npm.${normalized}.${digest}`
 }
 
+function packageFromModuleSpecifier(specifier: string): string {
+  if (specifier.includes('\\')) throw new Error(`npm Bundle references invalid module ${specifier}`)
+  const segments = specifier.split('/')
+  const packageSegments = specifier.startsWith('@') ? segments.slice(0, 2) : segments.slice(0, 1)
+  const subpathSegments = segments.slice(packageSegments.length)
+  const packageNameValue = packageSegments.join('/')
+  if (!PACKAGE_NAME.test(packageNameValue)
+    || subpathSegments.some(segment => segment === '' || segment === '.' || segment === '..'
+      || !/^[A-Za-z0-9._-]+$/u.test(segment))) {
+    throw new Error(`npm Bundle references invalid module ${specifier}`)
+  }
+  return packageNameValue
+}
+
 function authorName(metadata: Record<string, unknown>, fallback: string): string {
   const author = metadata['author']
   if (typeof author === 'string') return trimmedString(author, 120) ?? fallback
@@ -670,17 +684,17 @@ function verifyBundleModuleDependencies(
   }
   const referenced = new Map<string, string>()
   for (const moduleName of moduleNames) {
-    if (moduleName === packageNameValue) continue
-    if (!PACKAGE_NAME.test(moduleName)) throw new Error(`npm Bundle references invalid module ${moduleName}`)
-    const declared = dependencies[moduleName]
+    const referencedPackageName = packageFromModuleSpecifier(moduleName)
+    if (referencedPackageName === packageNameValue) continue
+    const declared = dependencies[referencedPackageName]
     if (typeof declared !== 'string') {
-      if (hostProvidedModules.has(moduleName)) continue
-      throw new Error(`npm Bundle references undeclared dependency ${moduleName}`)
+      if (hostProvidedModules.has(referencedPackageName)) continue
+      throw new Error(`npm Bundle references undeclared dependency ${referencedPackageName}`)
     }
     if (!EXACT_VERSION.test(declared)) {
-      throw new Error(`npm Bundle dependency ${moduleName} must use an exact version`)
+      throw new Error(`npm Bundle dependency ${referencedPackageName} must use an exact version`)
     }
-    referenced.set(moduleName, declared)
+    referenced.set(referencedPackageName, declared)
   }
   return referenced
 }

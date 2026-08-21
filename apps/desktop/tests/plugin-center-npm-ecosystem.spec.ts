@@ -22,16 +22,21 @@ function tarOctal(block: Buffer, offset: number, length: number, value: number):
   tarField(block, offset, length, `${value.toString(8).padStart(length - 1, '0')}\0`)
 }
 
-function aggregateTarball(dependencyVersion: string | undefined, patchOverride?: string): Buffer {
+function aggregateTarball(
+  dependencyVersion: string | undefined,
+  patchOverride?: string,
+  packageName = '@fixture/dsh-aggregate',
+  packageVersion = '1.0.0',
+): Buffer {
   const manifest = JSON.stringify({
-    name: '@fixture/dsh-aggregate',
-    version: '1.0.0',
+    name: packageName,
+    version: packageVersion,
     ...(dependencyVersion === undefined ? {} : { dependencies: { '@fixture/dsh-child': dependencyVersion } }),
     dsh: { bundle: { patch: './cordis.patch.yml' } },
   })
   const patch = patchOverride ?? `- insert:
     - id: fixture.aggregate
-      name: '@fixture/dsh-aggregate'
+      name: '${packageName}'
     - id: fixture.child
       name: '@fixture/dsh-child'
 `
@@ -522,13 +527,17 @@ describe('npm DSH ecosystem catalog', () => {
   )
 
   it.each([
-    ['an undeclared module', undefined, 'references undeclared dependency @fixture/dsh-child'],
-    ['a non-exact dependency', '^1.0.0', 'dependency @fixture/dsh-child must use an exact version'],
-  ])('rejects an aggregate Bundle that references %s', async (_label, dependencyVersion, message) => {
+    ['an undeclared module', undefined, undefined, 'references undeclared dependency @fixture/dsh-child'],
+    ['a non-exact dependency', '^1.0.0', undefined, 'dependency @fixture/dsh-child must use an exact version'],
+    ['an unsafe package subpath', undefined, `- insert:
+    - id: fixture.aggregate
+      name: '@fixture/dsh-aggregate/../escape'
+`, 'references invalid module @fixture/dsh-aggregate/../escape'],
+  ])('rejects an aggregate Bundle that references %s', async (_label, dependencyVersion, patch, message) => {
     const root = await temporaryRoot()
     const name = '@fixture/dsh-aggregate'
     const version = '1.0.0'
-    const bytes = aggregateTarball(dependencyVersion)
+    const bytes = aggregateTarball(dependencyVersion, patch)
     const integrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`
     const tarballUrl = 'https://registry.npmjs.org/@fixture/dsh-aggregate/-/dsh-aggregate-1.0.0.tgz'
     const fetcher: typeof fetch = async (input) => {
@@ -558,6 +567,59 @@ describe('npm DSH ecosystem catalog', () => {
     const summary = result.sections.featured[0]!
 
     await expect(repository.detail({ pluginId: summary.pluginId, version })).rejects.toThrow(message)
+  })
+
+  it('accepts the exported package subpaths used by dsh-builtin-browser', async () => {
+    const root = await temporaryRoot()
+    const name = 'dsh-builtin-browser'
+    const version = '0.1.15'
+    const patch = `- insert:
+    - id: browser
+      name: dsh-builtin-browser/browser
+    - id: browser-electron
+      name: dsh-builtin-browser/browser-electron
+      config:
+        viewHost: !!js ctx.get('electronViewHost')
+    - id: tool-browser
+      name: dsh-builtin-browser/tool-browser
+`
+    const bytes = aggregateTarball(undefined, patch, name, version)
+    const integrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`
+    const tarballUrl = `https://registry.npmjs.org/${name}/-/${name}-${version}.tgz`
+    const fetcher: typeof fetch = async (input) => {
+      const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
+      if (url.pathname === '/-/v1/search') {
+        return new Response(JSON.stringify({
+          total: 1,
+          objects: [{ package: {
+            name,
+            version,
+            date: '2026-08-15T21:48:30.045Z',
+            keywords: ['dsh-plugin', 'browser'],
+            publisher: { username: 'fixture' },
+          } }],
+        }), { status: 200 })
+      }
+      if (url.href === tarballUrl) return new Response(new Uint8Array(bytes), { status: 200 })
+      return new Response(JSON.stringify({
+        name,
+        version,
+        keywords: ['dsh-plugin', 'browser'],
+        engines: { node: '>=22.19' },
+        dsh: { bundle: { patch: './cordis.patch.yml' } },
+        dist: { tarball: tarballUrl, integrity },
+      }), { status: 200 })
+    }
+    const repository = new NpmEcosystemCatalogRepository(new CatalogCache(root), fetcher, () => NOW)
+    const result = await repository.list({ ...QUERY, query: name })
+    const summary = result.sections.featured[0]!
+
+    await expect(repository.detail({ pluginId: summary.pluginId, version })).resolves.toMatchObject({
+      detail: {
+        expectedEntries: ['browser', 'browser-electron', 'tool-browser'],
+        eligible: true,
+      },
+    })
   })
 
   it('accepts a Bundle reference supplied by the closed Desktop Host runtime', async () => {
