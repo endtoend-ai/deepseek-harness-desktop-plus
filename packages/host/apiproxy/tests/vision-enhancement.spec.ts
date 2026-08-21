@@ -3,7 +3,9 @@ import { Context } from '@deepseek-ai/cordis'
 import AgentRegistry from '@deepseek-ai/dsh-agent'
 import { AttachmentStore, type ImageAttachmentRef, type SaveImageAttachment, type StoredImageAttachment } from '@deepseek-ai/dsh-attachment'
 import {
-  CredentialProvider, credentialRef, type CredentialInfo, type CredentialRef, type ResolvedCredential,
+  CredentialProvider, credentialRef,
+  type CredentialInfo, type CredentialKey, type CredentialRecord, type CredentialRecordEntry,
+  type CredentialRecordInfo, type CredentialRef, type ResolvedCredential,
 } from '@deepseek-ai/dsh-credentials'
 import LlmRuntime, { LlmAdapter } from '@deepseek-ai/dsh-llm'
 import type { GenerateOptions, LlmResolvedModelInfo, StreamChunk } from '@deepseek-ai/dsh-llm'
@@ -50,13 +52,36 @@ class MemoryCredentials extends CredentialProvider {
 
   set(ref: CredentialRef, value: string): Promise<void> {
     this.values.set(ref, value)
-    this.ctx.emit('credentials/updated', ref)
+    this.ctx.emit('credentials/reference-updated', ref)
     return Promise.resolve()
   }
 
   unset(ref: CredentialRef): Promise<void> {
     this.values.delete(ref)
-    this.ctx.emit('credentials/updated', ref)
+    this.ctx.emit('credentials/reference-updated', ref)
+    return Promise.resolve()
+  }
+
+  readRecord(_key: CredentialKey): Promise<CredentialRecord | undefined> {
+    return Promise.resolve(undefined)
+  }
+
+  describeRecord(_key: CredentialKey): Promise<CredentialRecordInfo> {
+    return Promise.resolve({ configured: false, writable: true })
+  }
+
+  listRecords(): Promise<readonly CredentialRecordEntry[]> {
+    return Promise.resolve([])
+  }
+
+  modifyRecord(
+    _key: CredentialKey,
+    mutate: (current: CredentialRecord | undefined) => Promise<CredentialRecord | undefined>,
+  ): Promise<CredentialRecord | undefined> {
+    return mutate(undefined)
+  }
+
+  deleteRecord(_key: CredentialKey): Promise<void> {
     return Promise.resolve()
   }
 }

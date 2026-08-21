@@ -1,5 +1,5 @@
 {"type":"session","version":0,"id":"{{sessionId}}","createdAt":0,"cwd":"{{cwd}}","delegationDepth":0,"agentPreset":"minimal"}
-{"type":"permission/preset","seq":0,"time":0,"data":{"preset":"workspace-write"}}
+{"type":"permission/preset","seq":0,"time":0,"data":{"preset":"workspace-write","origin":"default"}}
 {"type":"sandbox/mode","seq":1,"time":0,"data":{"mode":"workspace-write"}}
 {"type":"approval/policy","seq":2,"time":0,"data":{"policy":"ask"}}
 {"type":"agent/inbox/spliced","seq":3,"time":0,"data":{"target":"next-turn","start":0,"inserted":[{"content":[{"type":"text","text":"请告诉我这张图片的主体是什么。"},{"type":"image","attachment":{"attachmentId":"sha256:063f367ce2eaf57388ce71c319cfb1bbff8509663be1920a5baaeca34fb70a9f","mediaType":"image/webp","width":1920,"height":1080,"bytes":216534,"name":"default-cat.webp"}}],"source":{"kind":"user"},"role":"user","id":"{{sessionId}}"}]}}

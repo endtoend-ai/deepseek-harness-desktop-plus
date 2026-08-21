@@ -182,8 +182,8 @@ export interface VisionProviderStatus {
   apiKeyUrl: string
   modelEditable: boolean
   defaultBaseUrl?: string
-  baseUrlEditable: boolean
-  apiKeyRequired: boolean
+  baseUrlEditable?: boolean
+  apiKeyRequired?: boolean
 }
 
 /** Host-authoritative visual-enhancement status. */
@@ -685,7 +685,7 @@ export function installVisionEnhancement(ctx: Context): VisionEnhancementRuntime
     for (const agent of [...mountedAgents.keys()]) unmountAgent(agent)
   }, 'visionEnhancement.agentMounts()')
 
-  ctx.on('credentials/updated', (ref) => {
+  ctx.on('credentials/reference-updated', (ref) => {
     const active = resolveVisionSelection(current()).spec
     if (ref !== active.credentialRef && ref !== active.fallbackCredentialRef) return
     observationCache.clear()
