@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/Preset%20Square-online-6366F1" alt="Preset 广场已上线">
   <img src="https://img.shields.io/badge/Application%20Center-online-0F9D8A" alt="应用中心已上线">
   <img src="https://img.shields.io/badge/Vision-Auto%20Routing-7C3AED" alt="视觉增强自动路由">
+  <img src="https://img.shields.io/badge/Local%20Models-Ollama%20%7C%20vLLM%20%7C%20SGLang-0EA5E9" alt="支持 Ollama、vLLM 和 SGLang 本地模型服务">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/fufankeji/deepseek-harness-studio?color=22C55E" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-supported-3B82F6" alt="macOS and Windows">
 </p>
@@ -22,11 +23,11 @@
 
 <p align="center"><strong>赋范空间出品 · DeepSeek Harness 的零代码桌面增强</strong></p>
 
-<p align="center"><strong>视觉增强 + 插件市场 + Preset 广场 · 0 代码一键部署和使用</strong></p>
+<p align="center"><strong>视觉增强 + 本地模型 + 插件市场 + Preset 广场 · 0 代码一键部署和使用</strong></p>
 
 <p align="center">自动发现并推送生态新插件，AI 智能推荐值得安装的能力；无需命令行即可完成搜索、校验、安装、启停与卸载。</p>
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.15/DeepSeek-Harness-Desktop-0.1.0-rc.15-macos-arm64-preview.zip"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.15/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.15-Setup.exe"><strong>下载 Windows x64 开发预览版</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.16/DeepSeek-Harness-Desktop-0.1.0-rc.16-macos-arm64-preview.zip"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.16/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.16-Setup.exe"><strong>下载 Windows x64 开发预览版</strong></a></p>
 
 <p align="center">
   <img src="assets/plugin-discovery-hero.jpg" alt="DeepSeek Harness Studio 视觉增强、插件市场、Preset 广场、零代码一键部署、插件自动推送与 AI 智能推荐" width="100%">
@@ -49,7 +50,8 @@ https://github.com/user-attachments/assets/0717f7c7-a872-4d2b-acc2-3a1c4874c732
 | **Preset 广场与内置工作流** | ✅ | 浏览赋范官方与社区 Agent Preset，查看能力组成后完成一键安装，并从“已安装”直接用于新会话；当前内置七套真实场景工作流。 |
 | **应用中心与内置 AI 应用** | ✅ | 从独立一级入口启动拥有专属界面、数据和运行流程的完整 AI 应用；首个内置应用 FF–LLM Wiki 提供企业文档、Wiki、知识图谱、溯源问答与质量评估。 |
 | **桌面开发工作区** | ✅ | 在本地打开项目、管理会话与工作区，调用 Harness 的模型、工具、Skills 和插件能力，并直接修改完整源码。 |
-| **视觉增强** | ✅ | 一个开关自动选择原生图片输入，或已验证的百炼／OpenRouter 兼容视觉，并显示当前实际路径。 |
+| **视觉增强** | ✅ | 一个开关自动选择 DeepSeek 原生图片输入，或已验证的云端／自托管兼容视觉，并显示当前实际路径。 |
+| **本地模型与自托管推理** | ✅ | 对话模型可通过 OpenAI-compatible 接口连接 Ollama、vLLM、SGLang 或自定义服务；视觉增强提供对应本地框架的预设地址与真实图片验证。 |
 | **中文 DeepSeek 控制** | ✅ | 使用中文权限选项和适配 DeepSeek 的思考模式，在输入区直接完成会话级选择。 |
 | **内置皮肤与自由换肤** | ✅ | 默认使用“大肥鱼拟人”皮肤，可切换“官方原版”或“云端猫咪”，也可选择本地图片并自动适配界面配色。 |
 | **独立 MCP、Skills 与工具管理** | 🗓️ | 后续提供不依赖 Bundle 包装的 MCP Server、Skills 与工具发现和连接管理，按项目自由组合 Agent 能力。 |
@@ -77,18 +79,19 @@ DeepSeek Harness Studio 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 - **Preset 广场**：从独立一级页面浏览赋范官方与社区 Agent Preset，查看 Skill、工具和环境要求后安全安装，并从已安装列表直接用于新会话。
 - **应用中心**：集中启动由赋范桌面端内置维护的完整 AI 应用；应用拥有独立界面、数据目录和运行流程，并可按需显示在左侧导航。
 - **对话区视觉增强**：保留一个开关；确切模型声明支持图片时发送原图，否则使用已验证的云端或自托管兼容视觉，同一张图片只进入一条链路。
+- **本地模型接入**：通过标准 OpenAI-compatible 接口连接 Ollama、vLLM、SGLang 或自定义推理服务；Studio 负责模型路由和配置，不会代替用户下载或启动模型。
 - **桌面外观设置**：内置“官方原版”“大肥鱼拟人”和“云端猫咪”三套外观，也支持本地背景图片、主体焦点和界面玻璃层调节。
 - **完整开发源码**：仓库同时包含桌面应用、Web 界面、CLI、功能包、原生辅助模块、Python SDK、示例和构建脚本。
 
 ## DeepSeek Harness v0.1.1-rc.2 兼容能力
 
-当前开发源码 `0.1.0-rc.16` 已整合 DeepSeek Harness `0.1.1-rc.2` 的核心与 Web 能力，同时保留赋范的插件中心、插件发现、Preset 广场、应用中心、主题皮肤和桌面恢复链路。Studio 版本号与 Harness 上游版本号分别管理；页面顶部仍指向已经发布并完成验收的 `0.1.0-rc.15` 安装包。
+Studio `0.1.0-rc.16` 已整合 DeepSeek Harness `0.1.1-rc.2` 的核心与 Web 能力，同时保留赋范的插件中心、插件发现、Preset 广场、应用中心、主题皮肤和桌面恢复链路。Studio 版本号与 Harness 上游版本号分别管理；页面顶部下载链接与本版本一致。
 
 - **模型与视觉**：Pro／Flash 作为文本主模型；点击“视觉增强”时，当前会话切换到 `DeepSeek-V4-Flash-Vision-Exp` 图文模型，复用现有 DeepSeek API Key；文本模型仍可使用已经验证的云端或自托管兼容视觉路线。
 - **附件与引用**：接入可持久化图片附件、`@` 文件／会话引用，以及可携带图片的 `/goal` 与 `/plan` 输入；DeepSeek 原生图片通过 Files API 上传复用，失效引用会有界重传，解析失败时整次请求回退为受限内联图片。
 - **插件与设置**：接入插件动态设置卡片，并沿用插件中心的安装、配置、启停和卸载链路。
 - **任务与运行时**：接入子 Agent Job、并发 Web Search、历史分叉性能改进和 Windows 持久 PowerShell PTY。
-- **桌面兼容**：Desktop Host 使用 `--no-open` 避免额外打开浏览器，并继续使用原生目录选择、插件事务恢复和现有用户数据目录。
+- **桌面兼容**：Desktop Host 使用 `--no-open` 避免额外打开浏览器，并继续使用原生目录选择、插件事务恢复和现有用户数据目录；旧冻结锁文件恢复失败时会自动进入不改写锁文件的兼容恢复，避免桌面端永久卡在恢复页。
 
 ## 插件生态：先发现值得装的，再完成安装与管理
 
@@ -309,6 +312,21 @@ FF–LLM Wiki 面向企业文档分散、知识关系难整理、问答结果无
 - **权限选择**：输入区使用 `只读`、`工作区写入` 和 `完全访问` 三档中文权限，作用于当前会话；通用设置只决定后续新会话的默认权限，启用完全访问前必须确认风险。
 - **模型与思考模式**：模型和 API Key 仍在设置页统一管理；右侧模型选择器显示当前主模型，点击“视觉增强”后会直接变为 `DeepSeek-V4-Flash-Vision-Exp`。
 
+## 本地模型与自托管推理
+
+Studio 已支持通过标准 OpenAI-compatible 接口接入本机或局域网中的模型服务。用户负责先启动推理服务并准备模型；Studio 不会自动下载模型、占用额外磁盘部署权重，也不会替用户管理 GPU 运行参数。
+
+| 框架 | 默认 API Base | 接入方式 |
+| --- | --- | --- |
+| **Ollama** | `http://127.0.0.1:11434/v1` | 使用 Ollama 的 OpenAI compatibility 接口，填写实际模型 ID；本地 API Key 可留空。 |
+| **vLLM** | `http://127.0.0.1:8000/v1` | 连接 vLLM OpenAI-compatible server，填写已加载的模型 ID 和可选 API Key。 |
+| **SGLang** | `http://127.0.0.1:30000/v1` | 连接 SGLang OpenAI-compatible endpoint，填写已启动的模型 ID 和可选 API Key。 |
+| **自定义服务** | 用户填写 | 支持其他兼容 `/v1/chat/completions` 的 HTTP(S) 服务。 |
+
+- **普通对话模型**：在 **设置 → 模型** 中添加或编辑兼容提供方，配置 API Base、模型 ID 和可选凭据。
+- **本地视觉模型**：从“视觉增强”配置选择 Ollama、vLLM、SGLang 或自定义服务；验证图片成功后才保存配置。
+- **不静默上云**：自托管路线失败时不会自动把图片转发到百炼、OpenRouter 或其他云端提供方。
+
 ## 视觉增强：让 DeepSeek 看懂图片
 
 `DeepSeek-V4-Flash-Vision-Exp` 是与 Pro／Flash 分开的图文模型，同时接收文本与图片，并沿用设置页中现有的 DeepSeek API Key。它不是给 Pro／Flash 单独返回图片描述的旁路；发送图片前，当前会话必须切换到该模型。纯文本模型仍可使用已完成配置与验证的百炼、OpenRouter、Ollama、vLLM、SGLang 或自定义 OpenAI-compatible 兼容视觉服务。
@@ -324,7 +342,7 @@ FF–LLM Wiki 面向企业文档分散、知识关系难整理、问答结果无
 
 > GitHub Releases 已提供经过真实 Electron 验收的 macOS Apple Silicon 预览 ZIP 和 Windows x64 预览安装程序，运行桌面端无需另行安装 Node.js 或 pnpm。当前均为开发预览资产；正式版本仍将提供完成平台签名的 macOS `.dmg` 和 Windows x64 `.exe`。
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.15/DeepSeek-Harness-Desktop-0.1.0-rc.15-macos-arm64-preview.zip"><strong>下载 macOS arm64 预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.15/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.15-Setup.exe"><strong>下载 Windows x64 安装程序</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.16/DeepSeek-Harness-Desktop-0.1.0-rc.16-macos-arm64-preview.zip"><strong>下载 macOS arm64 预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.16/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.16-Setup.exe"><strong>下载 Windows x64 安装程序</strong></a></p>
 
 ### macOS arm64
 
@@ -339,7 +357,7 @@ open "/Applications/DeepSeek Harness.app"
 
 ### Windows x64
 
-下载 `DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.15-Setup.exe` 后直接运行安装程序。Release 的公开下载区只保留 macOS ZIP 和 Windows 安装程序；校验文件、blockmap 与平台验收记录保留在对应 GitHub Actions 构建中，避免普通用户误下载开发文件。
+下载 `DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.16-Setup.exe` 后直接运行安装程序。Release 的公开下载区只保留 macOS ZIP 和 Windows 安装程序；校验文件、blockmap 与平台验收记录保留在对应 GitHub Actions 构建中，避免普通用户误下载开发文件。
 
 开发预览版使用独立 Pre-release 标签，不触发正式安装器发布。正式流程只接受与 Desktop 版本完全一致的 `desktop-v*` 标签；macOS 与 Windows 安装包分别完成平台签名验证后，GitHub 才会同时公开安装文件和 `SHA256SUMS`。
 

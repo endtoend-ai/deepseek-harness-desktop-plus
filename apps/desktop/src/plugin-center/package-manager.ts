@@ -184,6 +184,27 @@ function createPackageRestoreInvocation(
   }
 }
 
+/** Build a recovery-only install that preserves an unusable historical lockfile. */
+function createLockfileFreeRestoreInvocation(
+  options: TrustedPackageManagerOptions,
+): PackageManagerInvocation {
+  const invocation = createPackageRestoreInvocation(options, false)
+  return {
+    ...invocation,
+    args: [
+      options.packageManagerEntry,
+      'install',
+      '--no-frozen-lockfile',
+      '--lockfile=false',
+      ...invocation.args.slice(3),
+    ],
+  }
+}
+
+function packageManagerFailure(result: PackageManagerProcessResult): string {
+  return result.stderr.trim() || result.stdout.trim() || `signal ${String(result.signal)}`
+}
+
 /** Native no-shell process adapter with bounded output and joined termination. */
 const nativePackageManagerProcess: PackageManagerProcessAdapter = {
   run(invocation) {
@@ -262,10 +283,16 @@ export async function restoreTrustedProfilePackages(
   options: TrustedPackageManagerOptions,
   frozenLockfile: boolean,
 ): Promise<void> {
-  const invocation = createPackageRestoreInvocation(options, frozenLockfile)
-  const result = await (options.processAdapter ?? nativePackageManagerProcess).run(invocation)
-  if (result.code !== 0) {
-    const detail = result.stderr.trim() || result.stdout.trim() || `signal ${String(result.signal)}`
-    throw new PackageManagerInvocationError(`package-manager Profile restore failed: ${detail}`)
+  const processAdapter = options.processAdapter ?? nativePackageManagerProcess
+  const primary = await processAdapter.run(createPackageRestoreInvocation(options, frozenLockfile))
+  if (primary.code === 0) return
+  if (!frozenLockfile) {
+    throw new PackageManagerInvocationError(`package-manager Profile restore failed: ${packageManagerFailure(primary)}`)
   }
+  const compatible = await processAdapter.run(createLockfileFreeRestoreInvocation(options))
+  if (compatible.code === 0) return
+  throw new PackageManagerInvocationError(
+    `package-manager Profile restore failed with the frozen lock (${packageManagerFailure(primary)})`
+    + ` and lockfile-free compatibility mode (${packageManagerFailure(compatible)})`,
+  )
 }
