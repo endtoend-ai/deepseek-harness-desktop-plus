@@ -80,7 +80,7 @@ function hoverContent(
   const routeDescription = !state.enabled
     ? `点击后，右侧主模型将切换为 ${DEEPSEEK_NATIVE_VISION_MODEL}。`
     : route?.mode === 'native'
-      ? `当前模型 ${route.model} 原生接收图片，不会重复调用兼容视觉服务。`
+      ? `当前模型 ${route.model} 原生接收图片；优先通过 DeepSeek Files API 安全上传并复用，必要时在请求上限内回退为内联图片，不会重复调用兼容视觉服务。`
       : route?.mode === 'compatible'
         ? `当前模型不原生接收图片，改由 ${route.providerName ?? route.provider ?? providerName} · ${route.visionModel ?? state.model} 读取。`
         : route?.mode === 'unavailable'

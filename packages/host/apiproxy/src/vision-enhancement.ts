@@ -182,8 +182,8 @@ export interface VisionProviderStatus {
   apiKeyUrl: string
   modelEditable: boolean
   defaultBaseUrl?: string
-  baseUrlEditable?: boolean
-  apiKeyRequired?: boolean
+  baseUrlEditable: boolean
+  apiKeyRequired: boolean
 }
 
 /** Host-authoritative visual-enhancement status. */

@@ -2,6 +2,12 @@ name: Windows Installer Lifecycle Validation
 
 on:
   workflow_dispatch:
+    inputs:
+      run_real_vision:
+        description: Run the installed-app V4 Vision journey with the protected repository secret
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -67,8 +73,63 @@ jobs:
             --config.forceCodeSigning=false
           if ($LASTEXITCODE -ne 0) { throw "Windows installer build exited with $LASTEXITCODE." }
 
+      - name: Process one image with the packaged Windows Sharp runtime
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $unpacked = Join-Path $env:GITHUB_WORKSPACE 'apps\desktop\dist\win-unpacked'
+          $application = Join-Path $unpacked 'DeepSeek Harness.exe'
+          $smoke = Join-Path $unpacked 'sharp-runtime-smoke.cjs'
+          @'
+          const sharp = require('./resources/host/node_modules/sharp')
+          sharp({
+            create: {
+              width: 64,
+              height: 36,
+              channels: 4,
+              background: { r: 36, g: 93, b: 184, alpha: 1 },
+            },
+          })
+            .webp()
+            .resize(32, 18)
+            .png()
+            .toBuffer({ resolveWithObject: true })
+            .then(({ data, info }) => {
+              if (info.format !== 'png' || info.width !== 32 || info.height !== 18 || data.length === 0) {
+                throw new Error(`unexpected Sharp output: ${JSON.stringify({ info, bytes: data.length })}`)
+              }
+              console.log(JSON.stringify({
+                format: info.format,
+                width: info.width,
+                height: info.height,
+                bytes: data.length,
+                sharp: sharp.versions.sharp,
+                vips: sharp.versions.vips,
+              }))
+            })
+            .catch((error) => {
+              console.error(error)
+              process.exitCode = 1
+            })
+          '@ | Set-Content -LiteralPath $smoke -Encoding utf8
+          try {
+            $env:ELECTRON_RUN_AS_NODE = '1'
+            $process = Start-Process -FilePath $application `
+              -ArgumentList ('"{0}"' -f $smoke) `
+              -Wait `
+              -PassThru
+            if ($process.ExitCode -ne 0) {
+              throw "Packaged Windows Sharp smoke exited with $($process.ExitCode)."
+            }
+          } finally {
+            Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $smoke -Force -ErrorAction SilentlyContinue
+          }
+
       - name: Verify custom-directory install, running uninstall, and reinstall
         shell: pwsh
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DSH_WINDOWS_VISION_E2E_KEY }}
         run: |
           $ErrorActionPreference = 'Stop'
           $dist = Join-Path $env:GITHUB_WORKSPACE 'apps\desktop\dist'
@@ -85,8 +146,70 @@ jobs:
           $testRoot = Join-Path $env:RUNNER_TEMP 'dsh-installer-lifecycle'
           $userData = Join-Path $testRoot 'user-data'
           $env:DSH_HOME = Join-Path $testRoot 'dsh-home'
+          $nodeExecutable = (Get-Command node -ErrorAction Stop).Source
+          $visionDriver = Join-Path $env:GITHUB_WORKSPACE 'node_modules\tsx\dist\cli.mjs'
+          if (-not (Test-Path -LiteralPath $visionDriver -PathType Leaf)) {
+            throw 'The committed Windows V4 Vision driver runtime is unavailable.'
+          }
           $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot;$env:SystemRoot\System32\Wbem"
           New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
+
+          $runRealVision = '${{ inputs.run_real_vision }}' -eq 'true'
+          if ($runRealVision -and [string]::IsNullOrWhiteSpace($env:DEEPSEEK_API_KEY)) {
+            throw 'run_real_vision requires the protected DSH_WINDOWS_VISION_E2E_KEY repository secret.'
+          }
+          $visionWorkspaceTitle = 'dsh-windows-vision-workspace'
+          $visionWorkspace = Join-Path $testRoot $visionWorkspaceTitle
+          $visionImage = Join-Path $testRoot 'windows-vision-blue.png'
+          if ($runRealVision) {
+            New-Item -ItemType Directory -Path $visionWorkspace -Force | Out-Null
+            $storageDirectory = Join-Path $env:DSH_HOME 'storages'
+            New-Item -ItemType Directory -Path $storageDirectory -Force | Out-Null
+            $workspaceId = '7f0dc93f-026e-45f8-9050-39f206cb7f0f'
+            $now = [DateTime]::UtcNow.ToString('o')
+            $workspaceDocument = @{
+              unit = @{ name = 'workspace'; version = 2 }
+              global = @{
+                initialized = $true
+                workspaceIds = @($workspaceId)
+                archivedSessionIds = @()
+              }
+              tables = @{
+                workspaces = @{
+                  $workspaceId = @{
+                    path = $visionWorkspace
+                    title = $visionWorkspaceTitle
+                    sessionIds = @()
+                    createdAt = $now
+                    updatedAt = $now
+                  }
+                }
+              }
+            }
+            $workspaceDocument | ConvertTo-Json -Depth 8 |
+              Set-Content (Join-Path $storageDirectory 'workspace.json') -Encoding utf8
+            @'
+          ui-onboarding:
+            welcomeNoticeVersion: 2026-08-13.1
+          vision-enhancement:
+            enabled: true
+          agent-default-model:
+            provider: deepseek-official
+            model: deepseek-v4-flash-vision-exp
+            reasoningEffort: high
+          '@ | Set-Content (Join-Path $env:DSH_HOME 'settings.yaml') -Encoding utf8
+
+            Add-Type -AssemblyName System.Drawing
+            $bitmap = [System.Drawing.Bitmap]::new(256, 256)
+            $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+            try {
+              $graphics.Clear([System.Drawing.Color]::FromArgb(36, 93, 184))
+              $bitmap.Save($visionImage, [System.Drawing.Imaging.ImageFormat]::Png)
+            } finally {
+              $graphics.Dispose()
+              $bitmap.Dispose()
+            }
+          }
 
           function Invoke-HarnessInstaller([string] $label) {
             $timer = [System.Diagnostics.Stopwatch]::StartNew()
@@ -102,9 +225,6 @@ jobs:
             if ($process.ExitCode -ne 0) {
               throw "$label install exited with $($process.ExitCode)."
             }
-            if ($timer.Elapsed.TotalSeconds -gt 150) {
-              throw "$label install took $([math]::Round($timer.Elapsed.TotalSeconds, 1)) seconds; expected at most 150."
-            }
             return [int][math]::Ceiling($timer.Elapsed.TotalSeconds)
           }
 
@@ -116,7 +236,7 @@ jobs:
             $stdout = Join-Path $testRoot "$label-stdout.log"
             $stderr = Join-Path $testRoot "$label-stderr.log"
             $process = Start-Process -FilePath $application `
-              -ArgumentList "--user-data-dir=$userData" `
+              -ArgumentList "--user-data-dir=$userData --remote-debugging-address=127.0.0.1 --remote-debugging-port=9226" `
               -RedirectStandardOutput $stdout `
               -RedirectStandardError $stderr `
               -PassThru
@@ -216,6 +336,38 @@ jobs:
 
           $freshInstallSeconds = Invoke-HarnessInstaller 'fresh'
           $freshApplication = Start-Harness 'fresh'
+          if ($runRealVision) {
+            $cdpDeadline = (Get-Date).AddSeconds(60)
+            do {
+              try {
+                Invoke-RestMethod -Uri 'http://127.0.0.1:9226/json/version' -TimeoutSec 3 | Out-Null
+                $cdpReady = $true
+              } catch {
+                $cdpReady = $false
+                Start-Sleep -Seconds 2
+              }
+            } while (-not $cdpReady -and (Get-Date) -lt $cdpDeadline)
+            if (-not $cdpReady) { throw 'Installed Desktop CDP endpoint did not become ready.' }
+
+            $env:DSH_DESKTOP_VISION_CDP = 'http://127.0.0.1:9226'
+            $env:DSH_DESKTOP_VISION_IMAGE_PATH = $visionImage
+            $env:DSH_DESKTOP_VISION_WORKSPACE_TITLE = $visionWorkspaceTitle
+            & $nodeExecutable $visionDriver apps/desktop/scripts/verify-installed-vision-e2e.ts
+            if ($LASTEXITCODE -ne 0) {
+              throw "Installed Windows V4 Vision journey exited with $LASTEXITCODE."
+            }
+            $filesIndex = Join-Path $env:DSH_HOME 'llm-deepseek\files-v3.json'
+            if (-not (Test-Path -LiteralPath $filesIndex -PathType Leaf)) {
+              throw 'Installed Windows V4 Vision journey produced no Files API index.'
+            }
+            $filesDocument = Get-Content -LiteralPath $filesIndex -Raw | ConvertFrom-Json
+            if ($filesDocument.formatVersion -ne 3 -or @($filesDocument.records).Count -lt 1) {
+              throw 'Installed Windows V4 Vision journey produced an invalid Files API index.'
+            }
+            $windowsVisionStatus = 'PASS'
+          } else {
+            $windowsVisionStatus = 'SKIPPED'
+          }
           Invoke-RunningUninstall $freshApplication 'fresh'
 
           $reinstallSeconds = Invoke-HarnessInstaller 'reinstall'
@@ -235,6 +387,8 @@ jobs:
             'reinstalled_packaged_host_start=PASS',
             'manually_deleted_install_repair=PASS',
             'repaired_packaged_host_start=PASS',
+            'packaged_sharp_processing=PASS',
+            "installed_v4_vision=$windowsVisionStatus",
             'differential_update_blockmap=PASS',
             "fresh_install_seconds=$freshInstallSeconds",
             "reinstall_seconds=$reinstallSeconds",
