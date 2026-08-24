@@ -24,6 +24,7 @@ const DEFAULT_LOCAL_PROVIDER: LocalProviderPreset = {
   displayName: 'Ollama',
   baseURL: 'http://127.0.0.1:11434/v1',
   protocol: LOCAL_PROVIDER_PROTOCOL,
+  allowUnauthenticated: true,
 }
 
 /** Local inference presets in the order shown to users. */
@@ -35,6 +36,7 @@ export const LOCAL_PROVIDER_PRESETS: readonly LocalProviderPreset[] = [
     displayName: 'vLLM',
     baseURL: 'http://127.0.0.1:8000/v1',
     protocol: LOCAL_PROVIDER_PROTOCOL,
+    allowUnauthenticated: true,
   },
   {
     id: 'sglang',
@@ -42,6 +44,7 @@ export const LOCAL_PROVIDER_PRESETS: readonly LocalProviderPreset[] = [
     displayName: 'SGLang',
     baseURL: 'http://127.0.0.1:30000/v1',
     protocol: LOCAL_PROVIDER_PROTOCOL,
+    allowUnauthenticated: true,
   },
   {
     id: 'openai-compatible',
@@ -49,6 +52,7 @@ export const LOCAL_PROVIDER_PRESETS: readonly LocalProviderPreset[] = [
     displayName: 'OpenAI-compatible',
     baseURL: 'http://127.0.0.1:8000/v1',
     protocol: LOCAL_PROVIDER_PROTOCOL,
+    allowUnauthenticated: true,
   },
 ]
 

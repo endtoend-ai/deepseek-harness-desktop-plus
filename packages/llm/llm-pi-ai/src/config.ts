@@ -146,6 +146,12 @@ export interface PiAiProviderProfile {
   defaultInput?: PiAiModality[]
   /** Provider request headers; Harness attribution wins reserved names. */
   headers?: Record<string, string>
+  /**
+   * Allow an OpenAI-compatible endpoint to operate without a user credential.
+   * The adapter supplies a fixed non-secret SDK placeholder only when no real
+   * key resolves; endpoints that require authentication still reject it.
+   */
+  allowUnauthenticated?: boolean
   /** Provider-neutral pi-ai reasoning level. */
   reasoning?: ModelThinkingLevel
   /** Token budgets used by reasoning providers that support them. */
@@ -316,6 +322,7 @@ const profile = z.object({
   defaultMaxTokens: z.number().step(1).min(1).default(DEFAULT_MAX_TOKENS),
   defaultInput: z.array(z.union(MODALITIES)).default([...DEFAULT_INPUT]),
   headers: z.dict(z.string()),
+  allowUnauthenticated: z.boolean().default(false),
   reasoning: z.union(THINKING_LEVELS),
   thinkingBudgets,
   cacheRetention: z.union(['none', 'short', 'long']),
@@ -392,6 +399,13 @@ export function resolveProfiles(
     }
     if (source.displayName !== undefined && source.displayName.length === 0) {
       throw new Error(`llm-pi-ai: provider "${provider}" has an empty displayName`)
+    }
+    if (source.allowUnauthenticated === true
+      && source.api !== 'openai-completions'
+      && source.api !== 'openai-responses') {
+      throw new Error(
+        `llm-pi-ai: provider "${provider}" may allow unauthenticated requests only with an explicit OpenAI-compatible api`,
+      )
     }
     const streamIdleTimeoutMs = source.streamIdleTimeoutMs ?? DEFAULT_STREAM_IDLE_TIMEOUT_MS
     if (!Number.isFinite(streamIdleTimeoutMs)

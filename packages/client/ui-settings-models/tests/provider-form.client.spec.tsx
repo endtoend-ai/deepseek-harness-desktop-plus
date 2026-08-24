@@ -720,6 +720,7 @@ describe('guided local providers', () => {
           api: 'openai-completions',
           baseURL: 'http://127.0.0.1:8000/v1',
           models: [{ id: 'local-model' }],
+          allowUnauthenticated: true,
         },
       }],
       expectedRevision: 3,

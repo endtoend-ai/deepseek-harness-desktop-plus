@@ -61,6 +61,9 @@ import type { ResolvedPiAiProviderProfile } from './config.ts'
 import { toPiContext } from './context.ts'
 import { toStreamChunks } from './stream.ts'
 
+/** Non-secret value required by OpenAI SDK clients for explicitly keyless local routes. */
+const UNAUTHENTICATED_API_KEY_PLACEHOLDER = 'dsh-local'
+
 /** One resolution's frozen view: the profiles and the collection built from them. */
 interface PiAiSnapshot {
   /** The resolved profiles this collection was built from, used as its identity. */
@@ -338,6 +341,8 @@ export class PiAiAdapter extends LlmAdapter {
       options.reasoningEffort ?? profile.reasoning,
     )
     const apiKey = await this.config.resolveApiKey(options.provider, profile)
+    const requestApiKey = apiKey
+      ?? (profile.allowUnauthenticated ? UNAUTHENTICATED_API_KEY_PLACEHOLDER : undefined)
 
     const consumer = new AbortController()
     const upstream = options.signal === undefined
@@ -365,7 +370,7 @@ export class PiAiAdapter extends LlmAdapter {
           maxBytes: profile.requestImageMaxBytes,
         })
       const events = snapshot.models.streamSimple(model, context, {
-        ...profileOptions(profile, reasoning, apiKey),
+        ...profileOptions(profile, reasoning, requestApiKey),
         ...options.temperature === undefined ? {} : { temperature: options.temperature },
         ...options.maxTokens === undefined ? {} : { maxTokens: options.maxTokens },
         ...options.sessionId === undefined ? {} : { sessionId: String(options.sessionId) },

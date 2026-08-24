@@ -76,6 +76,27 @@ describe('login flows in a real composition', () => {
 })
 
 describe('request-level dynamic profiles', () => {
+  it('serves an explicitly keyless local OpenAI-compatible route without a stored credential', async () => {
+    const server = await mockServer([{ events: textEvents }])
+    const ctx = await boot(await home(), {
+      providers: {
+        ollama: {
+          displayName: 'Ollama',
+          api: 'openai-completions',
+          baseURL: `${server.url}/v1`,
+          models: [{ id: 'local-model' }],
+          allowUnauthenticated: true,
+        },
+      },
+    })
+
+    const result = await assemble(ctx, { provider: 'ollama', model: 'local-model', messages: [] })
+
+    expect(result.message.content).toEqual([{ type: 'text', text: 'hello' }])
+    expect(server.paths).toEqual(['/v1/chat/completions'])
+    expect(server.headers[0]?.authorization).toBe('Bearer dsh-local')
+  })
+
   it('mounts bare and dormant, then registers routes the moment settings supply providers', async () => {
     vi.stubEnv('PI_DYNAMIC_KEY', '')
     const dir = await home()

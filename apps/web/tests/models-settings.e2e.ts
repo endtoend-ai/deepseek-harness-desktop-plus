@@ -33,6 +33,7 @@ const DECLARED_EDIT_EXPECTED = join(SNAPSHOT_DIR, 'declared-edit.expected.md')
 const MODEL_PICKER_EXPECTED = join(SNAPSHOT_DIR, 'model-picker.expected.md')
 const NATIVE_DELETE_EXPECTED = join(SNAPSHOT_DIR, 'native-delete.expected.md')
 const DELETE_EXPECTED = join(SNAPSHOT_DIR, 'delete.expected.md')
+const LOCAL_EXPECTED = join(SNAPSHOT_DIR, 'local.expected.md')
 const MODE = webSnapshotMode()
 
 describe('web e2e: Models settings page configures a dormant provider', () => {
@@ -314,10 +315,37 @@ describe('web e2e: Models settings page configures a dormant provider', () => {
     expect(tripwire.pageErrors).toEqual([])
   }, 60_000)
 
+  it('creates a keyless Ollama route with its explicit unauthenticated posture', async () => {
+    onTestFailed(() => saveFailureShot(page, 'web-e2e-models-local'))
+    await page.getByRole('button', { name: '设置', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: '设置' })
+    await dialog.waitFor({ timeout: 10_000 })
+    await dialog.getByRole('button', { name: '模型' }).click()
+    await dialog.getByRole('button', { name: '添加本地模型', exact: true }).click()
+    await dialog.getByRole('button', { name: '添加模型', exact: true }).click()
+    await dialog.getByLabel('模型 ID 1').fill('qwen3')
+    await dialog.getByRole('button', { name: '添加本地模型', exact: true }).click()
+    await expect.poll(
+      async () => dialog.getByRole('radiogroup', { name: '本地推理框架' }).count(),
+      { timeout: 10_000 },
+    ).toBe(0)
+
+    await expect.poll(
+      async () => readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8'),
+      { timeout: 10_000 },
+    ).toContain('ollama:')
+    const document = await readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8')
+    expect(document).toContain('allowUnauthenticated: true')
+    expect(document).not.toContain('OLLAMA_API_KEY')
+    const snapshot = await captureStableAria(page, '[role="dialog"]', scaffold.workspaceCwd)
+    await compareOrRefreshGolden(LOCAL_EXPECTED, snapshot, MODE)
+    expect(tripwire.pageErrors).toEqual([])
+  }, 60_000)
+
   it.skipIf(MODE === 'record')('keeps the fixture inventory closed', async () => {
     await assertFixtureInventory(SNAPSHOT_DIR, [
       'configured.expected.md', 'declared-edit.expected.md', 'declared.expected.md',
-      'delete.expected.md', 'empty.expected.md', 'model-picker.expected.md',
+      'delete.expected.md', 'empty.expected.md', 'local.expected.md', 'model-picker.expected.md',
       'native-delete.expected.md',
     ])
   })

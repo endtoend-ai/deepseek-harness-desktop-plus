@@ -65,6 +65,19 @@ describe('modality schema boundary', () => {
   })
 })
 
+describe('unauthenticated OpenAI-compatible routes', () => {
+  it('accepts the explicit OpenAI-compatible posture and rejects other protocols', () => {
+    const resolved = (profile: Record<string, unknown>): (() => void) => () => {
+      assertServiceable(routeWith(profile)() as Config)
+    }
+    expect(resolved({ allowUnauthenticated: true })).not.toThrow()
+    expect(resolved({ allowUnauthenticated: true, api: 'anthropic-messages' }))
+      .toThrow(/only with an explicit OpenAI-compatible api/)
+    expect(resolved({ allowUnauthenticated: true, api: undefined }))
+      .toThrow(/only with an explicit OpenAI-compatible api/)
+  })
+})
+
 describe('request image policy bounds', () => {
   it.each([
     ['requestImagePixelBudget', 0, /requestImagePixelBudget must be a positive safe integer/],

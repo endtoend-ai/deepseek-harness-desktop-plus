@@ -56,6 +56,8 @@ export interface CustomProviderInitialValues {
   baseURL: string
   /** Wire protocol selected in the pi-ai profile. */
   protocol: string
+  /** Permit an OpenAI-compatible local endpoint to run without a user credential. */
+  allowUnauthenticated?: boolean
 }
 
 /** Props of {@link CustomProviderCard}. */
@@ -163,6 +165,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
         api: protocol,
         baseURL,
         models: models.map(model => ({ ...model })),
+        ...(props.initial?.allowUnauthenticated === true ? { allowUnauthenticated: true } : {}),
       }
       const response = await api.settings.mutate({
         ns: NS,
