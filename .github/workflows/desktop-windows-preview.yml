@@ -178,9 +178,9 @@ jobs:
 
           function Invoke-HarnessInstaller([string] $label) {
             $process = Start-Process -FilePath $installer.FullName -ArgumentList '/S' -PassThru
-            if (-not $process.WaitForExit(180000)) {
+            if (-not $process.WaitForExit(300000)) {
               taskkill /PID $process.Id /T /F | Out-Host
-              throw "$label install did not exit within 180 seconds."
+              throw "$label install did not exit within 300 seconds."
             }
             $process.WaitForExit()
             if ($process.ExitCode -ne 0) {
@@ -246,11 +246,28 @@ jobs:
           }
           $uninstall = Start-Process -FilePath $uninstallers[0].FullName -ArgumentList '/S' -Wait -PassThru
           if ($uninstall.ExitCode -ne 0) { throw "Silent uninstall exited with $($uninstall.ExitCode)." }
-          $uninstallDeadline = (Get-Date).AddSeconds(30)
-          while ((Get-Date) -lt $uninstallDeadline -and (Test-Path $application.FullName)) {
+          # NSIS can return from its launcher before the copied background
+          # uninstaller removes the installation directory and exits. Starting
+          # the next installer during that window can block on the old process.
+          $uninstallDeadline = (Get-Date).AddSeconds(90)
+          while ((Get-Date) -lt $uninstallDeadline -and (Test-Path $application.DirectoryName)) {
             Start-Sleep -Seconds 2
           }
-          if (Test-Path $application.FullName) { throw 'The installed application remained after uninstall.' }
+          if (Test-Path $application.DirectoryName) { throw 'The installation directory remained after uninstall.' }
+          $backgroundDeadline = (Get-Date).AddSeconds(60)
+          do {
+            $backgroundUninstallers = @(Get-CimInstance Win32_Process |
+              Where-Object Name -Like 'Uninstall*.exe')
+            if ($backgroundUninstallers.Count -eq 0) { break }
+            Start-Sleep -Seconds 2
+          } while ((Get-Date) -lt $backgroundDeadline)
+          if ($backgroundUninstallers.Count -ne 0) {
+            $backgroundUninstallers |
+              Select-Object ProcessId, ParentProcessId, Name, ExecutablePath, CommandLine |
+              Format-List |
+              Out-Host
+            throw 'The copied background uninstaller remained after uninstall.'
+          }
 
           Invoke-HarnessInstaller 'residual-seed'
           $seedApplications = @(Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Programs') `
