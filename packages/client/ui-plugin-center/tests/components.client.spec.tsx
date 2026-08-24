@@ -463,6 +463,7 @@ describe('exact version detail', () => {
       .mockResolvedValueOnce(detailResult(withdrawn))
       .mockResolvedValueOnce(detailResult(null))
       .mockRejectedValueOnce(new Error('gone'))
+      .mockResolvedValueOnce(detailResult(detail()))
     render(<PluginCenterTab {...props({ detail: detailRead })} />)
     const opener = (await screen.findAllByRole('button', { name: `${en.details}：Workspace tools` }))[0]!
 
@@ -474,7 +475,9 @@ describe('exact version detail', () => {
     expect(await screen.findByText(en.detailUnavailable)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: en.backToCatalog }))
     fireEvent.click(opener)
-    expect((await screen.findByRole('alert')).textContent).toBe(en.detailError)
+    expect((await screen.findByRole('alert')).textContent).toContain(en.detailErrorHint)
+    fireEvent.click(screen.getByRole('button', { name: en.retryDetail }))
+    expect(await screen.findByText('Complete fixture detail.')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: en.backToCatalog }))
 
     const localEntry = summary('plugin', 'local')

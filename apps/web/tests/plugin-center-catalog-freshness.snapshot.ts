@@ -193,6 +193,7 @@ let mutationsEnabled: boolean
 let currentOperation: PluginOperation | null
 let operationListeners: Set<(operation: PluginOperation) => void>
 let installedVersion: string | null
+let detailFailuresRemaining: number
 
 function operation(phase: OperationPhase, idempotencyKey = 'install:fixture.workspace-tools:web-replay'): PluginOperation {
   return {
@@ -344,6 +345,7 @@ installAssembledBootEnv({
     mutationsEnabled = false
     currentOperation = null
     installedVersion = null
+    detailFailuresRemaining = 0
     operationListeners = new Set()
     Object.defineProperty(window, 'dshDesktop', {
       configurable: true,
@@ -360,7 +362,13 @@ installAssembledBootEnv({
             }
             return result(query)
           },
-          detail: async () => detail(),
+          detail: async () => {
+            if (detailFailuresRemaining > 0) {
+              detailFailuresRemaining -= 1
+              throw new Error('fixture registry rate limit')
+            }
+            return detail()
+          },
           checkCompatibility: async () => compatibility(),
         },
         installedPlugins: {
@@ -455,6 +463,19 @@ it('plugin center assembled detail renders ordered preflight denial without expo
     'Current platform is unsupported',
   ])
   expect(screen.getByRole('button', { name: 'Cannot install' }).hasAttribute('disabled')).toBe(true)
+})
+
+it('plugin center assembled detail retries a temporary registry failure in place', async () => {
+  detailFailuresRemaining = 1
+  mountAssembledApp(EXTRA_PLUGINS)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Plugin Center' }, { timeout: 10_000 }))
+  fireEvent.click((await screen.findAllByRole('button', { name: 'View details：Workspace tools' }))[0]!)
+  expect(await screen.findByText(/npm service may be rate-limited/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Retry details' }))
+
+  expect(await screen.findByText('Complete built-bundle fixture detail.')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Install' }).hasAttribute('disabled')).toBe(true)
 })
 
 it('desktop plugin install activation streams progress, commits after runtime proof, and rehydrates', async () => {

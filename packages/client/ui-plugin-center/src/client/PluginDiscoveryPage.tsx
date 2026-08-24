@@ -448,7 +448,7 @@ function DiscoveryGrid({
 
 function DetailDrawer({
   entry, detailState, compatibilityState, installedItem, mutationsEnabled, operation,
-  operationRequestFailed, closeRef, onClose, onInstall, onManage, t,
+  operationRequestFailed, closeRef, onClose, onRetry, onInstall, onManage, t,
 }: {
   readonly entry: CatalogSummary
   readonly detailState: DetailState
@@ -459,6 +459,7 @@ function DetailDrawer({
   readonly operationRequestFailed: boolean
   readonly closeRef: { current: HTMLButtonElement | null }
   readonly onClose: () => void
+  readonly onRetry: () => void
   readonly onInstall: (entry: CatalogSummary, opener: HTMLButtonElement) => void
   readonly onManage: () => void
   readonly t: Translator
@@ -498,7 +499,12 @@ function DetailDrawer({
           <div className={css.drawerBadges}><EntryBadges entry={entry} t={t} /></div>
 
           {detailState.status === 'loading' ? <p className={css.status}>{t('detailLoading')}</p> : null}
-          {detailState.status === 'error' ? <p className={css.error} role="alert">{t('detailError')}</p> : null}
+          {detailState.status === 'error' ? (
+            <div className={css.error} role="alert">
+              <span>{t('detailError')} {t('detailErrorHint')}</span>
+              <button type="button" onClick={onRetry}>{t('retryDetail')}</button>
+            </div>
+          ) : null}
           {detailState.status === 'ready' && detail === null ? <p className={css.status}>{t('detailUnavailable')}</p> : null}
           {detail === null ? null : (
             <>
@@ -766,14 +772,9 @@ export function PluginDiscoveryPage({
     )
   }
 
-  const openDetail = (
-    entry: CatalogSummary,
-    opener: HTMLButtonElement,
-    initialCompatibility?: CompatibilityState,
-  ): void => {
+  const loadDetail = (entry: CatalogSummary, initialCompatibility?: CompatibilityState): void => {
     const request = detailRequest.current + 1
     detailRequest.current = request
-    detailOpener.current = opener
     setSelectedEntry(entry)
     setDetailState({ status: 'loading' })
     setCompatibilityState(initialCompatibility ?? { status: 'loading' })
@@ -791,6 +792,19 @@ export function PluginDiscoveryPage({
       (result) => { if (detailRequest.current === request) setCompatibilityState({ status: 'ready', result }) },
       () => { if (detailRequest.current === request) setCompatibilityState({ status: 'error' }) },
     )
+  }
+
+  const openDetail = (
+    entry: CatalogSummary,
+    opener: HTMLButtonElement,
+    initialCompatibility?: CompatibilityState,
+  ): void => {
+    detailOpener.current = opener
+    loadDetail(entry, initialCompatibility)
+  }
+
+  const retryDetail = (): void => {
+    if (selectedEntry !== null) loadDetail(selectedEntry)
   }
 
   const closeDetail = (): void => {
@@ -1099,6 +1113,7 @@ export function PluginDiscoveryPage({
           operationRequestFailed={operationRequestFailed}
           closeRef={drawerClose}
           onClose={closeDetail}
+          onRetry={retryDetail}
           onInstall={requestInstall}
           onManage={openPluginCenter}
           t={t}

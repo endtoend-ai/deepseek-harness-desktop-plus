@@ -57,6 +57,10 @@ const MAX_SEARCH_INDEX_ENTRIES = 10_000
 const MAX_REFERENCE_HYDRATIONS_PER_QUERY = 96
 const COLD_START_ENTRY_LIMIT = 6
 const COLD_START_BATCH_SIZE = 12
+const DETAIL_NETWORK_ATTEMPTS = 2
+const DEFAULT_RETRY_DELAY_MS = 400
+const MAX_RETRY_DELAY_MS = 2_000
+const TRANSIENT_HTTP_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504])
 const PACKAGE_NAME = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/u
 const EXACT_VERSION = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/u
 const STABLE_ID = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/u
@@ -497,10 +501,18 @@ async function fetchJson(fetcher: typeof fetch, url: URL, label: string): Promis
       throw new CatalogNetworkError(`${label} request failed`, error)
     }
     if (response.status === 404) throw new CatalogResourceMissingError(`${label} returned HTTP 404`)
-    if (!response.ok) throw new CatalogNetworkError(`${label} returned HTTP ${String(response.status)}`)
+    if (!response.ok) {
+      const retryable = TRANSIENT_HTTP_STATUSES.has(response.status)
+      throw new CatalogNetworkError(
+        `${label} returned HTTP ${String(response.status)}`,
+        undefined,
+        retryable,
+        retryable ? responseRetryDelay(response) : 0,
+      )
+    }
     const declared = Number(response.headers.get('content-length'))
     if (Number.isFinite(declared) && declared > MAX_JSON_BYTES) {
-      throw new CatalogNetworkError(`${label} exceeds 2 MiB`)
+      throw new CatalogNetworkError(`${label} exceeds 2 MiB`, undefined, false, 0)
     }
     let text: string
     try {
@@ -509,12 +521,12 @@ async function fetchJson(fetcher: typeof fetch, url: URL, label: string): Promis
       throw new CatalogNetworkError(`${label} response failed`, error)
     }
     if (Buffer.byteLength(text, 'utf8') > MAX_JSON_BYTES) {
-      throw new CatalogNetworkError(`${label} exceeds 2 MiB`)
+      throw new CatalogNetworkError(`${label} exceeds 2 MiB`, undefined, false, 0)
     }
     try {
       return JSON.parse(text) as unknown
     } catch (error) {
-      throw new CatalogNetworkError(`${label} returned invalid JSON`, error)
+      throw new CatalogNetworkError(`${label} returned invalid JSON`, error, false, 0)
     }
   } finally {
     clearTimeout(timeout)
@@ -530,12 +542,26 @@ async function fetchArtifact(fetcher: typeof fetch, rawUrl: string): Promise<Uin
   const controller = new AbortController()
   const timeout = setTimeout(() => { controller.abort() }, REQUEST_TIMEOUT_MS)
   try {
-    const response = await fetcher(url, {
-      headers: { accept: 'application/octet-stream' },
-      redirect: 'error',
-      signal: controller.signal,
-    })
-    if (!response.ok || response.body === null) throw new Error(`npm artifact returned HTTP ${String(response.status)}`)
+    let response: Response
+    try {
+      response = await fetcher(url, {
+        headers: { accept: 'application/octet-stream' },
+        redirect: 'error',
+        signal: controller.signal,
+      })
+    } catch (error) {
+      throw new CatalogNetworkError('npm artifact request failed', error)
+    }
+    if (!response.ok) {
+      const retryable = TRANSIENT_HTTP_STATUSES.has(response.status)
+      throw new CatalogNetworkError(
+        `npm artifact returned HTTP ${String(response.status)}`,
+        undefined,
+        retryable,
+        retryable ? responseRetryDelay(response) : 0,
+      )
+    }
+    if (response.body === null) throw new CatalogNetworkError('npm artifact response has no body')
     const declared = Number(response.headers.get('content-length'))
     if (Number.isFinite(declared) && declared > MAX_ARTIFACT_BYTES) throw new Error('npm artifact exceeds 64 MiB')
     const chunks: Uint8Array[] = []
@@ -543,7 +569,12 @@ async function fetchArtifact(fetcher: typeof fetch, rawUrl: string): Promise<Uin
     const reader = response.body.getReader()
     try {
       for (;;) {
-        const next = await reader.read()
+        let next: ReadableStreamReadResult<Uint8Array>
+        try {
+          next = await reader.read()
+        } catch (error) {
+          throw new CatalogNetworkError('npm artifact response failed', error)
+        }
         if (next.done) break
         length += next.value.byteLength
         if (length > MAX_ARTIFACT_BYTES) {
@@ -778,9 +809,39 @@ class CatalogDiscoveryError extends Error {
 }
 
 class CatalogNetworkError extends Error {
-  constructor(message: string, cause?: unknown) {
+  constructor(
+    message: string,
+    cause?: unknown,
+    readonly retryable = true,
+    readonly retryAfterMs = DEFAULT_RETRY_DELAY_MS,
+  ) {
     super(message, cause === undefined ? undefined : { cause })
     this.name = 'CatalogNetworkError'
+  }
+}
+
+function responseRetryDelay(response: Response): number {
+  const value = response.headers.get('retry-after')
+  if (value === null) return DEFAULT_RETRY_DELAY_MS
+  const seconds = Number(value)
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.min(Math.round(seconds * 1_000), MAX_RETRY_DELAY_MS)
+  }
+  const instant = Date.parse(value)
+  if (!Number.isFinite(instant)) return DEFAULT_RETRY_DELAY_MS
+  return Math.min(Math.max(instant - Date.now(), 0), MAX_RETRY_DELAY_MS)
+}
+
+async function retryDetailNetwork<T>(operation: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await operation()
+    } catch (error) {
+      if (!(error instanceof CatalogNetworkError)
+        || !error.retryable
+        || attempt >= DETAIL_NETWORK_ATTEMPTS) throw error
+      await new Promise(resolve => setTimeout(resolve, error.retryAfterMs))
+    }
   }
 }
 
@@ -1325,11 +1386,15 @@ export class NpmEcosystemCatalogRepository implements PluginCatalogRepository {
       matchQuery = exact.name
     } else if (searchQuery !== '') {
       const document = await this.currentDiscovery()
-      const [textPage, keywordSeeds] = await Promise.all([
+      const [textResult, indexResult] = await Promise.allSettled([
         this.fetchTextSearchPage(searchQuery),
         document === null ? this.searchIndex(forceIndex) : Promise.resolve(document.seeds),
       ])
-      seeds = mergeSeeds(document?.seeds ?? [], keywordSeeds, textPage.seeds)
+      if (textResult.status === 'rejected' && indexResult.status === 'rejected') throw textResult.reason
+      if (textResult.status === 'rejected' || indexResult.status === 'rejected') notice = 'network-unavailable'
+      const textSeeds = textResult.status === 'fulfilled' ? textResult.value.seeds : []
+      const keywordSeeds = indexResult.status === 'fulfilled' ? indexResult.value : []
+      seeds = mergeSeeds(document?.seeds ?? [], keywordSeeds, textSeeds)
     } else {
       seeds = await this.searchIndex(forceIndex)
     }
@@ -1461,16 +1526,17 @@ export class NpmEcosystemCatalogRepository implements PluginCatalogRepository {
     if (retained !== undefined) return retained
     const running = this.hydrations.get(key)
     if (running !== undefined) return await running
-    const hydration = this.decodeReference({
-      name: reference.packageName,
-      version: reference.version,
-      updatedAt: reference.summary.updatedAt,
-      publisher: reference.summary.publisher,
-      description: reference.summary.summary,
-      keywords: reference.summary.keywords,
-    }).then((currentReference) => {
+    const hydration = retryDetailNetwork(async () => {
+      const currentReference = await this.decodeReference({
+        name: reference.packageName,
+        version: reference.version,
+        updatedAt: reference.summary.updatedAt,
+        publisher: reference.summary.publisher,
+        description: reference.summary.summary,
+        keywords: reference.summary.keywords,
+      })
       this.packageReferences.set(key, currentReference)
-      return this.createAuthority(currentReference)
+      return await this.createAuthority(currentReference)
     }).finally(() => { this.hydrations.delete(key) })
     this.hydrations.set(key, hydration)
     return await hydration

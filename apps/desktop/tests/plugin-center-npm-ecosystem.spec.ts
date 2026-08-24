@@ -276,6 +276,7 @@ describe('npm DSH ecosystem catalog', () => {
       if (url.pathname === '/-/v1/search') {
         const text = url.searchParams.get('text') ?? ''
         searchQueries.push(text)
+        if (text === 'keywords:dsh-plugin') return new Response('rate limited', { status: 429 })
         return new Response(JSON.stringify(text === 'dsh-web-ui-all' ? {
           total: 764_408,
           objects: [{
@@ -333,6 +334,7 @@ describe('npm DSH ecosystem catalog', () => {
       })
       expect(result.sections.featured[0]?.compatibility.reason).toContain('发布者未声明 Node.js')
     }
+    expect(short.notice).toBe('network-unavailable')
     expect(searchQueries).toContain('dsh-web-ui-all')
     expect(searchQueries).not.toContain(name)
   })
@@ -586,6 +588,7 @@ describe('npm DSH ecosystem catalog', () => {
     const bytes = aggregateTarball(undefined, patch, name, version)
     const integrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`
     const tarballUrl = `https://registry.npmjs.org/${name}/-/${name}-${version}.tgz`
+    let artifactRequests = 0
     const fetcher: typeof fetch = async (input) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
       if (url.pathname === '/-/v1/search') {
@@ -600,7 +603,13 @@ describe('npm DSH ecosystem catalog', () => {
           } }],
         }), { status: 200 })
       }
-      if (url.href === tarballUrl) return new Response(new Uint8Array(bytes), { status: 200 })
+      if (url.href === tarballUrl) {
+        artifactRequests += 1
+        if (artifactRequests === 1) {
+          return new Response('rate limited', { status: 429, headers: { 'retry-after': '0' } })
+        }
+        return new Response(new Uint8Array(bytes), { status: 200 })
+      }
       return new Response(JSON.stringify({
         name,
         version,
@@ -620,6 +629,7 @@ describe('npm DSH ecosystem catalog', () => {
         eligible: true,
       },
     })
+    expect(artifactRequests).toBe(2)
   })
 
   it('accepts a Bundle reference supplied by the closed Desktop Host runtime', async () => {
@@ -893,7 +903,10 @@ describe('npm DSH ecosystem catalog', () => {
       version: cachedEntry.version,
       action: 'install',
     })).resolves.toMatchObject({ candidate: null })
-    expect(offlineFetch).toHaveBeenCalledTimes(1)
-    expect(new URL(offlineUrls[0]!).pathname).toMatch(/\/1\.0\.0$/u)
+    expect(offlineFetch).toHaveBeenCalledTimes(2)
+    expect(offlineUrls.map(value => new URL(value).pathname)).toEqual([
+      expect.stringMatching(/\/1\.0\.0$/u),
+      expect.stringMatching(/\/1\.0\.0$/u),
+    ])
   })
 })

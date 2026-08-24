@@ -187,6 +187,23 @@ describe('Plugin Discovery page', () => {
     })
   })
 
+  it('retries a temporarily unavailable exact-version detail in place', async () => {
+    const readDetail = vi.fn<PluginDiscoveryPageProps['detail']>()
+      .mockRejectedValueOnce(new Error('rate limited'))
+      .mockResolvedValueOnce(detailResult(detail(entries().featured)))
+    render(<PluginDiscoveryPage {...props({ detail: readDetail })} />)
+
+    const heading = await screen.findByRole('heading', { name: 'Workspace tools' })
+    const opener = heading.closest('button')
+    if (opener === null) throw new Error('Workspace tools detail opener is missing')
+    fireEvent.click(opener)
+    expect((await screen.findByRole('alert')).textContent).toContain(zh.detailErrorHint)
+    fireEvent.click(screen.getByRole('button', { name: zh.retryDetail }))
+
+    expect(await screen.findByText('Complete fixture detail.')).toBeTruthy()
+    expect(readDetail).toHaveBeenCalledTimes(2)
+  })
+
   it('keeps the existing compatibility acknowledgement before a trusted install', async () => {
     const install = vi.fn<PluginDiscoveryPageProps['install']>(async request => ({
       kind: 'started',

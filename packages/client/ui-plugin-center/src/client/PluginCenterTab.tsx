@@ -603,14 +603,9 @@ export function PluginCenterTab({
     )
   }
 
-  const openDetail = (
-    entry: CatalogSummary,
-    element: HTMLButtonElement,
-    initialCompatibility?: CompatibilityState,
-  ): void => {
+  const loadDetail = (entry: CatalogSummary, initialCompatibility?: CompatibilityState): void => {
     const request = detailRequest.current + 1
     detailRequest.current = request
-    detailOpener.current = element
     setDetailEntry(entry)
     setDetailState({ status: 'loading' })
     setCompatibilityState(entry.scope === 'public' ? initialCompatibility ?? { status: 'loading' } : null)
@@ -628,6 +623,19 @@ export function PluginCenterTab({
         () => { if (detailRequest.current === request) setCompatibilityState({ status: 'error' }) },
       )
     }
+  }
+
+  const openDetail = (
+    entry: CatalogSummary,
+    element: HTMLButtonElement,
+    initialCompatibility?: CompatibilityState,
+  ): void => {
+    detailOpener.current = element
+    loadDetail(entry, initialCompatibility)
+  }
+
+  const retryDetail = (): void => {
+    if (detailEntry !== null) loadDetail(detailEntry)
   }
 
   const closeDetail = (): void => {
@@ -1098,6 +1106,7 @@ export function PluginCenterTab({
             operation={operation}
             operationRequestFailed={operationRequestFailed}
             onInstall={() => { startInstall(detailEntry) }}
+            onRetry={retryDetail}
             t={t}
           />
           : null}
