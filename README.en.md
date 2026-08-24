@@ -31,26 +31,34 @@
   <img src="assets/plugin-discovery-hero.jpg" alt="DeepSeek Harness Studio vision enhancement, Plugin Store, zero-code activation, automatic plugin delivery, and AI recommendations" width="100%">
 </p>
 
-## At a glance: available features and near-term roadmap
+## Core features
 
-> Status key: ✅ Available; 🗓️ Planned. The desktop development workspace, public Plugin Center, and Chinese DeepSeek controls are available today. Planned capabilities will be updated only after the corresponding workflow is runnable.
+> This table lists capabilities that are present in source, included in the Desktop composition, and reachable through a user workflow. Longer-term ideas are kept separate.
 
-| Capability | Status | What it enables |
-| --- | --- | --- |
-| **Plugin Discovery and recommendations** | ✅ | Read the public catalog automatically, browse featured, recently updated, ecosystem-popular, and scenario-based recommendations, and search by name, capability, or publisher. |
-| **Public Plugin Center** | ✅ | Inspect exact versions, capabilities, permissions, compatibility, and risk, install online, and manage plugin enablement, updates, disabling, and removal. |
-| **Desktop development workspace** | ✅ | Open local projects, manage sessions and workspaces, use Harness models, tools, Skills, and plugins, and modify the complete source code directly. |
-| **Vision enhancement** | ✅ | Use one switch to select native DeepSeek image input or a verified cloud/self-hosted compatible vision route, with the active path visible in the composer. |
-| **Local models and self-hosted inference** | ✅ | Connect conversation models through OpenAI-compatible Ollama, vLLM, SGLang, or custom endpoints; vision enhancement includes presets and real-image verification for the same local frameworks. |
-| **Chinese DeepSeek controls** | ✅ | Choose Chinese permission levels and DeepSeek-specific thinking modes directly in the composer for the current session. |
-| **Built-in skins and custom backgrounds** | ✅ | Start with the whale-maid skin, switch to Cloud Cat, or choose a local image and let the app adapt its interface palette. |
-| **Standalone MCP, Skills, and tool management** | 🗓️ | Add discovery and connection management for MCP servers, Skills, and tools that are not distributed as Bundles, then compose Agent capabilities per project. |
-| **Agent presets and multi-Agent collaboration** | 🗓️ | Define Agents and subagents that collaborate across coding, testing, research, and review work. |
-| **Planning, background runs, and session recovery** | 🗓️ | Manage plans and tasks, keep long-running work active in the background, inspect progress, and resume previous sessions. |
-| **Project rules, hooks, and durable memory** | 🗓️ | Manage repository instructions, automation hooks, and reusable context so Agents work consistently with project rules. |
-| **Git, worktrees, and code review** | 🗓️ | Develop concurrently in isolated worktrees, inspect diffs, commits, and review results, and reduce interference between tasks. |
-| **Browser and desktop automation** | 🗓️ | Let Agents operate websites and local applications, then verify completion through real interaction results. |
-| **Mobile remote access and channels** | 🗓️ | Inspect and resume tasks from a mobile device, and receive notifications or trigger Agents through common messaging channels. |
+| Capability | What it enables |
+| --- | --- |
+| **Desktop workspaces and session management** | Open local projects through the native directory picker, organize and search sessions by Workspace, and rename, archive, fork, or resume session history. |
+| **Plugin Discovery and Agent recommendations** | Browse featured, recently updated, and ecosystem-popular plugins, filter or search by scenario, or describe a need and let the Agent shortlist the public `dsh-plugin` catalog. |
+| **Trusted plugin lifecycle and recovery** | Review exact versions, permissions, compatibility, and risk before installation; enable, disable, update, or uninstall later; automatically roll back or expose a retryable recovery flow for unfinished transactions. |
+| **Preset Square and seven built-in workflows** | Browse Fufan Official and community Agent Presets, inspect Skills, tools, and environment requirements, install them, and start a new session from the installed list. |
+| **Application Center and FF–LLM Wiki** | Launch complete AI applications with their own interface, data, and runtime flow from a first-class page, with an optional application shortcut in the sidebar. |
+| **Multiple providers and local inference** | Configure DeepSeek and compatible providers, or use the dedicated local-model flow for Ollama, vLLM, SGLang, and custom OpenAI-compatible services. |
+| **Native vision, compatible vision, and image attachments** | Send images directly to an image-capable DeepSeek model or use a verified cloud/self-hosted vision route; attachments persist and each image follows exactly one request path. |
+| **Plan, Goal, Todo, Jobs, and Workflow** | Enter plan mode, manage goals and todos, inspect background work in the current process, and review the members and outcomes of multi-stage Workflows in chat. |
+| **SubAgents and multi-Agent collaboration** | Create one-shot or continuable subagents, inspect parent/child lineage and runtime status, and continue or stop the current turn of supported child sessions. |
+| **Project rules, context references, and deliverables** | Load repository instructions, reference `@file` or `@session` context, and inspect, open, or reveal files the Agent actually produced. |
+| **Permissions, sandboxing, and human confirmation** | Select read-only, workspace-write, or full access for current or future sessions; confirm dangerous access, tool approvals, and Agent questions explicitly in the UI. |
+| **Themes and cross-platform Desktop delivery** | Use built-in or local backgrounds with adapted interface colors, and download macOS arm64 or Windows x64 previews from GitHub Releases. |
+
+## Near-term roadmap
+
+> These directions do not yet have complete first-class product journeys and are not counted as current features.
+
+| Direction | Product work still required |
+| --- | --- |
+| **Standalone capability center** | Discover, connect, and compose MCP servers, Skills, and tools that are not distributed as Bundles, with project-level management. |
+| **Visual Agent composition** | Add editors for custom Agents, role assignment, and team workflows on top of the existing Preset and SubAgent runtime. |
+| **Remote control and automation** | Add browser/desktop operation, mobile continuation, and notification channels behind explicit permission and audit boundaries. |
 
 ## Project overview
 
@@ -58,30 +66,22 @@ DeepSeek Harness Studio uses Electron to host the DeepSeek Harness Web workspace
 
 Desktop installers are published only through this repository's GitHub Releases page, never through a third-party download site. Electron-validated macOS arm64 and Windows x64 development previews are available now, while the complete source remains available for local development.
 
-## Core features
+## Workspace and Agent execution
 
-- **Electron desktop app**: application window, system tray, single-instance behavior, external-link handling, and a restricted preload bridge.
-- **Local Harness Host**: the desktop main process starts `dsh web`, waits for the local service to become ready, and stops the Host process when the app exits.
-- **Web workspace**: DeepSeek Harness sessions, workspaces, models, tools, Skills, and plugin runtime remain available.
-- **Plugin Discovery and recommendations**: read the online catalog and use featured, recently updated, ecosystem-popular, scenario filters, and search to find plugins worth trying.
-- **Agent-assisted plugin search**: describe a need in natural language and let the Agent search the public `dsh-plugin` catalog, rank relevant candidates, and explain each recommendation.
-- **Public Plugin Center**: locate published DSH Bundles by short package name, full npm name, or an explicit GitHub repository; verify exact identity, artifact integrity, Bundle declaration, and local compatibility before installation. Aggregate Bundles may reuse DSH modules packaged with the current Desktop Host, while genuinely missing third-party dependencies remain blocked.
-- **Preset Square**: browse Fufan Official and community Agent Presets from a first-class page, inspect their Skills, tools, and environment requirements, install them safely, and start a new session from the installed list.
-- **Application Center**: launch complete AI applications maintained by the Fufan Desktop team; each application owns its interface, data, and runtime flow and can be shown or hidden in the sidebar.
-- **Composer vision enhancement**: keep one switch; send original images when exact-model metadata declares image support, otherwise use a verified cloud or self-hosted compatible vision route, with each image entering exactly one path.
-- **Local model connectivity**: use standard OpenAI-compatible interfaces for Ollama, vLLM, SGLang, or custom inference services. Studio owns routing and configuration but does not download or start model weights.
-- **Desktop appearance settings**: built-in Whale Maid and Cloud Cat skins, plus local backgrounds, subject focus, and interface glass controls.
-- **Complete development source**: desktop app, Web interface, CLI, capability packages, native helpers, Python SDK, examples, and build scripts are kept in the repository.
+- **Workspaces and sessions**: choose a local directory natively; group, search, or unregister Workspaces; rename, archive, or fork a session at its last completed turn.
+- **Planning and work management**: organize work with Plan, Goal, and Todo. The Jobs panel shows background work owned by the current process; a process restart does not present those old jobs as still running.
+- **Workflows and SubAgents**: chat reconstructs Workflow phases, members, and outcomes. The SubAgent directory exposes parent/child lineage, continuable conversations, and stopping the current turn of a running continuable child.
+- **References and deliverables**: `@file` and `@session` supply context. Successfully produced files appear at the end of the answer and can be opened or revealed through the local Host.
+- **Human collaboration**: Agents can ask structured single-choice, multiple-choice, or custom questions. Tool approvals, full access, and plan review require an explicit UI decision.
+- **Security boundaries**: permission presets bind sandbox and approval policy to each session. Credentials are stored through a write-only flow; the page never reads back or displays a stored secret value.
 
 ## DeepSeek Harness v0.1.1-rc.2 compatibility
 
 Studio `0.1.0-rc.17` integrates the core and Web capabilities from DeepSeek Harness `0.1.1-rc.2` while retaining Beyondata's Plugin Center, Plugin Discovery, Preset Square, Application Center, themes, and desktop recovery flows. Studio and upstream Harness versions are managed independently; the download links above match this release.
 
-- **Models and vision**: keeps Pro and Flash as text models; the single vision-enhancement control selects `DeepSeek-V4-Flash-Vision-Exp`, while verified cloud and self-hosted compatible routes remain available for text models.
-- **Attachments and references**: supports persistent image attachments, `@` file or session references, and image-bearing `/goal` and `/plan` input. Native DeepSeek images use reusable Files API uploads, bounded stale-reference retries, and a whole-request inline fallback when file resolution fails.
-- **Plugins and settings**: renders plugin-provided dynamic settings cards while keeping installation, configuration, enablement, disabling, and removal in the existing Plugin Center flow.
-- **Jobs and runtime**: integrates subagent jobs, concurrent Web Search, faster history forks, and persistent PowerShell PTY sessions on Windows.
-- **Desktop compatibility**: starts the Desktop Host with `--no-open`, retains native directory selection and existing user-data locations, and automatically retries an incompatible historical plugin lockfile without rewriting it so Desktop does not remain trapped on recovery.
+- **Multimodal capability**: retains Pro and Flash text models while adding `DeepSeek-V4-Flash-Vision-Exp`, persistent image attachments, and reusable Files API uploads; stale references retry within bounds and file-resolution failure falls back for the whole request to bounded inline images.
+- **Agent runtime**: integrates `@` file/session references, Plan, Goal, background Jobs, Workflow, SubAgents, concurrent Web Search, and persistent PowerShell PTY sessions on Windows.
+- **Desktop adaptation**: starts the Host with `--no-open`, retains native directory selection, plugin transaction recovery, and existing user-data locations, and performs lockfile-free compatibility recovery for incompatible historical plugin locks.
 
 ## Plugin ecosystem: discover what is worth installing, then manage it
 
@@ -141,7 +141,7 @@ Open **Settings → Background** to switch built-in skins. For a custom image, t
   </tr>
 </table>
 
-## Chinese permissions and DeepSeek model controls
+## Models, permissions, and thinking modes
 
 - **Permission selection**: the composer uses the Chinese `只读`, `工作区写入`, and `完全访问` labels for the current session. General settings affect only new sessions, and enabling Full access requires an explicit risk confirmation.
 - **Model and thinking modes**: the model and API key remain managed in Settings. The composer shows the current DeepSeek model and offers `关闭思考`, `低强度思考`, `深度思考`, and `最大思考`.
