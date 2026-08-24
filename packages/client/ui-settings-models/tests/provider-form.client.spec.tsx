@@ -679,6 +679,76 @@ describe('provider rows', () => {
   })
 })
 
+describe('guided local providers', () => {
+  it('exposes local inference as a first-class entry with framework defaults', async () => {
+    await mountSection()
+
+    fireEvent.click(screen.getByRole('button', { name: en.localAdd }))
+
+    expect(screen.getByRole('radiogroup', { name: en.localFramework })).toBeTruthy()
+    expect(screen.getByRole('radio', { name: /Ollama/ }).getAttribute('aria-checked')).toBe('true')
+    expect(screen.getByLabelText<HTMLInputElement>(en.baseUrl).value)
+      .toBe('http://127.0.0.1:11434/v1')
+    expect(screen.getByLabelText(en.localKeyInput)).toBeTruthy()
+    expect(screen.queryByLabelText(en.customRoute)).toBeNull()
+    expect(screen.queryByLabelText(en.customApi)).toBeNull()
+
+    fireEvent.click(screen.getByRole('radio', { name: /SGLang/ }))
+    expect(screen.getByLabelText<HTMLInputElement>(en.baseUrl).value)
+      .toBe('http://127.0.0.1:30000/v1')
+    expect(screen.getByText(`${en.localEditorTitle} · SGLang`)).toBeTruthy()
+    expect(buttonNamed(en.fetchModels).disabled).toBe(false)
+  })
+
+  it('creates a selected local route without requiring an API key', async () => {
+    const { mutate, set } = await mountSection()
+
+    fireEvent.click(screen.getByRole('button', { name: en.localAdd }))
+    fireEvent.click(screen.getByRole('radio', { name: /vLLM/ }))
+    fireEvent.click(screen.getByRole('button', { name: en.addModel }))
+    fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'local-model' } })
+    fireEvent.click(screen.getByRole('button', { name: en.localCreate }))
+
+    await waitFor(() => { expect(mutate).toHaveBeenCalledOnce() })
+    expect(firstMutate(mutate)).toEqual({
+      ns: 'llm-pi-ai',
+      ops: [{
+        op: 'set',
+        path: ['providers', 'vllm'],
+        value: {
+          displayName: 'vLLM',
+          api: 'openai-completions',
+          baseURL: 'http://127.0.0.1:8000/v1',
+          models: [{ id: 'local-model' }],
+        },
+      }],
+      expectedRevision: 3,
+    })
+    expect(set).not.toHaveBeenCalled()
+  })
+
+  it('marks an existing local route as configured and selects the next preset', async () => {
+    await mountSection({
+      providers: {
+        ollama: {
+          displayName: 'Ollama',
+          api: 'openai-completions',
+          baseURL: 'http://127.0.0.1:11434/v1',
+          models: [{ id: 'qwen3' }],
+        },
+      },
+      declaredRoutes: ['ollama'],
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: en.localAdd }))
+
+    expect(screen.getByRole<HTMLButtonElement>('radio', { name: /Ollama/ }).disabled).toBe(true)
+    expect(screen.getByRole('radio', { name: /vLLM/ }).getAttribute('aria-checked')).toBe('true')
+    expect(screen.getByLabelText<HTMLInputElement>(en.baseUrl).value)
+      .toBe('http://127.0.0.1:8000/v1')
+  })
+})
+
 describe('hand-declared providers', () => {
   function mountCard(
     overrides: Partial<Parameters<typeof CustomProviderCard>[0]> = {},

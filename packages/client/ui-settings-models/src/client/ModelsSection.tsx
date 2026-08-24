@@ -18,6 +18,9 @@ import type { IApiClient } from '@deepseek-ai/dsh-api-remotes/client'
 import { Button, IconPlusOutline16, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
 import { CustomProviderCard } from './CustomProviderCard.tsx'
+import {
+  LOCAL_PROVIDER_PRESETS, LOCAL_PROVIDER_PROTOCOL, LocalProviderCard,
+} from './LocalProviderCard.tsx'
 import { deriveKeyRef, messageOf, protocolChoices, providerUsable } from './store.ts'
 import type { ModelsSettingsStore, ProviderRow } from './store.ts'
 import type { SettingsSchemaOperations } from './schema-operations.ts'
@@ -196,6 +199,7 @@ function Loaded({ injected }: { injected: ModelsSectionFace }): ReactNode {
   const [deleteFailure, setDeleteFailure] = useState<string | undefined>(undefined)
   const [savedTarget, setSavedTarget] = useState<ProviderIdentity | undefined>(undefined)
   const [declaring, setDeclaring] = useState(false)
+  const [addingLocal, setAddingLocal] = useState(false)
   const [dismissedSetup, setDismissedSetup] = useState<ReadonlySet<string>>(() => new Set())
 
   const announceSaved = (target: ProviderIdentity): void => {
@@ -209,6 +213,7 @@ function Loaded({ injected }: { injected: ModelsSectionFace }): ReactNode {
     setEditing(undefined)
     setAdding(false)
     setDeclaring(false)
+    setAddingLocal(false)
     if (changed) announceSaved(target)
   }
 
@@ -318,7 +323,7 @@ function Loaded({ injected }: { injected: ModelsSectionFace }): ReactNode {
               </li>
             )
           }
-          const open = !adding && editing?.provider === row.entry.provider
+          const open = !adding && !addingLocal && editing?.provider === row.entry.provider
           const credentialConfigured = row.credential?.configured === true
           const credentialMissing = !credentialConfigured
             && row.apiKeyEnv !== undefined
@@ -365,6 +370,7 @@ function Loaded({ injected }: { injected: ModelsSectionFace }): ReactNode {
                       // the create card beside this editor, and closing either
                       // one discards the other's draft.
                       setDeclaring(false)
+                      setAddingLocal(false)
                       setAdding(false)
                       setEditing(open ? undefined : target)
                     }}
@@ -416,100 +422,134 @@ function Loaded({ injected }: { injected: ModelsSectionFace }): ReactNode {
         })}
       </ul>
       <div className={styles['addBlock']}>
-        {addTarget !== undefined && addNamespace !== undefined
+        {addingLocal
           ? (
             <div className={styles['addCard']}>
-              <div className={styles['field']}>
-                <span className={styles['fieldLabel']}>{t('provider')}</span>
-                <select
-                  className={`${styles['input']} ${styles['selectInput']}`}
-                  value={addTarget.provider}
-                  aria-label={t('provider')}
-                  onChange={(event) => {
-                    const row = addable.find(candidate => candidate.entry.provider === event.target.value)
-                    /* v8 ignore next -- the select only lists addable rows */
-                    if (row === undefined) return
-                    setEditing(targetOf(row))
-                  }}
-                >
-                  {addable.map(row => (
-                    <option key={row.entry.provider} value={row.entry.provider}>{row.entry.displayName}</option>
-                  ))}
-                </select>
-              </div>
-              <ProviderEditor
-                key={addTarget.provider}
-                provider={addTarget.provider}
-                displayName={addTarget.displayName}
-                hideTitle
-                namespace={addNamespace}
-                schema={schema}
-                settingsPath={addTarget.settingsPath}
+              <LocalProviderCard
+                taken={state.rows.map(row => row.entry.provider)}
+                protocols={protocols}
+                /* v8 ignore next -- the entry is disabled without this namespace */
+                revision={state.namespaces.get('llm-pi-ai')?.revision ?? 0}
                 api={api}
                 t={t}
                 readOnly={!state.writable}
-                onClose={(changed) => { closeEditor(changed, addTarget) }}
+                onClose={(changed) => {
+                  setAddingLocal(false)
+                  if (changed) void controller.load()
+                }}
               />
             </div>
           )
-          : declaring
+          : addTarget !== undefined && addNamespace !== undefined
             ? (
               <div className={styles['addCard']}>
-                <CustomProviderCard
-                  taken={state.rows.map(row => row.entry.provider)}
-                  protocols={protocols}
-                  /* v8 ignore next -- the card only opens from a button disabled without this namespace */
-                  revision={state.namespaces.get('llm-pi-ai')?.revision ?? 0}
+                <div className={styles['field']}>
+                  <span className={styles['fieldLabel']}>{t('provider')}</span>
+                  <select
+                    className={`${styles['input']} ${styles['selectInput']}`}
+                    value={addTarget.provider}
+                    aria-label={t('provider')}
+                    onChange={(event) => {
+                      const row = addable.find(candidate => candidate.entry.provider === event.target.value)
+                      /* v8 ignore next -- the select only lists addable rows */
+                      if (row === undefined) return
+                      setEditing(targetOf(row))
+                    }}
+                  >
+                    {addable.map(row => (
+                      <option key={row.entry.provider} value={row.entry.provider}>{row.entry.displayName}</option>
+                    ))}
+                  </select>
+                </div>
+                <ProviderEditor
+                  key={addTarget.provider}
+                  provider={addTarget.provider}
+                  displayName={addTarget.displayName}
+                  hideTitle
+                  namespace={addNamespace}
+                  schema={schema}
+                  settingsPath={addTarget.settingsPath}
                   api={api}
                   t={t}
                   readOnly={!state.writable}
-                  onClose={(changed) => {
-                    setDeclaring(false)
-                    if (changed) void controller.load()
-                  }}
+                  onClose={(changed) => { closeEditor(changed, addTarget) }}
                 />
               </div>
             )
-            : (
-              // One row for the two ways to gain a provider: adopt one the
-              // adapter already knows, or declare one it does not. Side by side
-              // and equal-width so they read as siblings and line up with the
-              // rows above, rather than two pills of different lengths.
-              <div className={styles['addActions']}>
-                <button
-                  type="button"
-                  className={styles['addButton']}
-                  disabled={addable.length === 0 || !state.writable}
-                  onClick={() => {
-                    const first = addable[0]
-                    /* v8 ignore next -- the button is disabled while nothing is addable */
-                    if (first === undefined) return
-                    setSavedTarget(undefined)
-                    setDeclaring(false)
-                    setAdding(true)
-                    setEditing(targetOf(first))
-                  }}
-                >
-                  {/* Same glyph as the composer's attach button. */}
-                  <IconPlusOutline16 size={14} />
-                  {t('add')}
-                </button>
-                <button
-                  type="button"
-                  className={styles['addButton']}
-                  disabled={protocols.length === 0 || !state.writable}
-                  onClick={() => {
-                    setSavedTarget(undefined)
-                    setAdding(false)
-                    setEditing(undefined)
-                    setDeclaring(true)
-                  }}
-                >
-                  <IconPlusOutline16 size={14} />
-                  {t('customAdd')}
-                </button>
-              </div>
-            )}
+            : declaring
+              ? (
+                <div className={styles['addCard']}>
+                  <CustomProviderCard
+                    taken={state.rows.map(row => row.entry.provider)}
+                    protocols={protocols}
+                    /* v8 ignore next -- the card only opens from a button disabled without this namespace */
+                    revision={state.namespaces.get('llm-pi-ai')?.revision ?? 0}
+                    api={api}
+                    t={t}
+                    readOnly={!state.writable}
+                    onClose={(changed) => {
+                      setDeclaring(false)
+                      if (changed) void controller.load()
+                    }}
+                  />
+                </div>
+              )
+              : (
+              // Catalog, local-server, and manual routes share one creation row.
+                <div className={styles['addActions']}>
+                  <button
+                    type="button"
+                    className={styles['addButton']}
+                    disabled={LOCAL_PROVIDER_PRESETS.every(preset => state.rows.some(
+                      row => row.entry.provider === preset.route,
+                    )) || !protocols.includes(LOCAL_PROVIDER_PROTOCOL) || !state.writable}
+                    onClick={() => {
+                      setSavedTarget(undefined)
+                      setDeclaring(false)
+                      setAdding(false)
+                      setEditing(undefined)
+                      setAddingLocal(true)
+                    }}
+                  >
+                    <IconPlusOutline16 size={14} />
+                    {t('localAdd')}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles['addButton']}
+                    disabled={addable.length === 0 || !state.writable}
+                    onClick={() => {
+                      const first = addable[0]
+                      /* v8 ignore next -- the button is disabled while nothing is addable */
+                      if (first === undefined) return
+                      setSavedTarget(undefined)
+                      setDeclaring(false)
+                      setAddingLocal(false)
+                      setAdding(true)
+                      setEditing(targetOf(first))
+                    }}
+                  >
+                    {/* Same glyph as the composer's attach button. */}
+                    <IconPlusOutline16 size={14} />
+                    {t('add')}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles['addButton']}
+                    disabled={protocols.length === 0 || !state.writable}
+                    onClick={() => {
+                      setSavedTarget(undefined)
+                      setAddingLocal(false)
+                      setAdding(false)
+                      setEditing(undefined)
+                      setDeclaring(true)
+                    }}
+                  >
+                    <IconPlusOutline16 size={14} />
+                    {t('customAdd')}
+                  </button>
+                </div>
+              )}
       </div>
       <Modal
         open={deleteTarget !== undefined}

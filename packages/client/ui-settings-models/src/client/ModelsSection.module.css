@@ -390,6 +390,89 @@
   padding: 0;
 }
 
+.localSetup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.localHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.localPresetGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.localPresetButton {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  min-height: 58px;
+  padding: 9px 11px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.localPresetButton:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.localPresetButtonActive {
+  border-color: var(--dsw-alias-state-business-primary);
+  background: var(--dsw-alias-state-business-tertiary);
+}
+
+.localPresetButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.localPresetButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--dsw-alias-border-l3);
+}
+
+.localPresetName {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.localPresetEndpoint {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.localSetup > .editor {
+  border-top: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 0;
+  padding-top: 14px;
+}
+
+@media (max-width: 620px) {
+  .localPresetGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .customized {
   border-top: 1px solid var(--dsw-alias-border-l2);
   padding-top: 10px;
