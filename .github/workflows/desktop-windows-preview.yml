@@ -243,7 +243,9 @@ jobs:
           if (-not (Test-Path -LiteralPath $pnpmCommand -PathType Leaf)) {
             throw "The packaged Host did not expose pnpm at $pnpmCommand."
           }
-          $expectedPnpmVersion = node -p "require('./package.json').packageManager.split('@').at(-1)"
+          $packageManager = (Get-Content -Raw (Join-Path $env:GITHUB_WORKSPACE 'package.json') |
+            ConvertFrom-Json).packageManager
+          $expectedPnpmVersion = ($packageManager -split '@')[-1]
           $pnpmVersion = (& $pnpmCommand --version | Out-String).Trim()
           if ($LASTEXITCODE -ne 0 -or $pnpmVersion -ne $expectedPnpmVersion) {
             throw "The bundled pnpm command reported '$pnpmVersion'; expected '$expectedPnpmVersion'."
