@@ -15,7 +15,7 @@ import type { JsonValue, SessionEventMap } from '@deepseek-ai/dsh-session'
 const testToolSignal = new AbortController().signal
 
 /**
- * Code Mode unit tier (per the Agent Note's plan): provider contribution per mode,
+ * PTC mode unit tier (per the Agent Note's plan): provider contribution per mode,
  * misconfiguration rejections, the run_code dispatch bridge (serialization,
  * abort, JSON normalization, error mapping, events, quiescence), and HMR
  * safety — all against an in-repo fake runtime, exactly the
@@ -50,7 +50,7 @@ interface SetupOptions {
 async function setup(options: SetupOptions = {}) {
   const ctx = new Context()
   await ctx.plugin(SystemPrompt, { ...options.toolOrder ? { toolOrder: options.toolOrder } : {} })
-  await ctx.plugin(ToolRuntime, { mode: options.mode ?? 'code', ...options.maxParallelSubCalls !== undefined ? { maxParallelSubCalls: options.maxParallelSubCalls } : {} })
+  await ctx.plugin(ToolRuntime, { mode: options.mode ?? 'ptc', ...options.maxParallelSubCalls !== undefined ? { maxParallelSubCalls: options.maxParallelSubCalls } : {} })
   let runtime: FakeRuntime | undefined
   if (options.runtime !== false) {
     await ctx.plugin(FakeRuntime, options.runtime ?? {})
@@ -124,8 +124,8 @@ describe('mode-aware wire contribution', () => {
     expect(assembly.sections.some(section => section.name === 'tools:sdk')).toBe(false)
   })
 
-  it("mode 'code' contributes exactly [run_code] plus the SDK section declaring the other tools", async () => {
-    const { ctx, systemPrompt } = await setup({ mode: 'code' })
+  it("mode 'ptc' contributes exactly [run_code] plus the SDK section declaring the other tools", async () => {
+    const { ctx, systemPrompt } = await setup({ mode: 'ptc' })
     registerEcho(ctx)
     const assembly = await systemPrompt.assemble()
     expect(assembly.tools.map(tool => tool.name)).toEqual([RUN_CODE_NAME])
@@ -136,8 +136,8 @@ describe('mode-aware wire contribution', () => {
     expect(sdk?.text).not.toContain('tools.bash(')
   })
 
-  it("mode 'code' states the run_code-only rule BEFORE the per-tool guidance that names each tool", async () => {
-    const { ctx, systemPrompt } = await setup({ mode: 'code' })
+  it("mode 'ptc' states the run_code-only rule BEFORE the per-tool guidance that names each tool", async () => {
+    const { ctx, systemPrompt } = await setup({ mode: 'ptc' })
     registerEcho(ctx)
     // Stand in for a real tool's guidance section, which names its tool without
     // saying how it is reached.
@@ -149,11 +149,11 @@ describe('mode-aware wire contribution', () => {
 
     const assembly = await systemPrompt.assemble()
     const names = assembly.sections.map(section => section.name)
-    const rule = assembly.sections.find(section => section.name === 'tools:code-only')
+    const rule = assembly.sections.find(section => section.name === 'tools:ptc-only')
     expect(rule?.text).toContain(`\`${RUN_CODE_NAME}\` is the only tool you can call directly`)
     // The rule is worthless after the guidance it qualifies.
-    expect(names.indexOf('tools:code-only')).toBeLessThan(names.indexOf('tool:echo'))
-    expect(names.indexOf('tools:code-only')).toBeLessThan(names.indexOf('tools:sdk'))
+    expect(names.indexOf('tools:ptc-only')).toBeLessThan(names.indexOf('tool:echo'))
+    expect(names.indexOf('tools:ptc-only')).toBeLessThan(names.indexOf('tools:sdk'))
   })
 
   it("mode 'both' omits the run_code-only rule, because native calls do execute there", async () => {
@@ -162,12 +162,12 @@ describe('mode-aware wire contribution', () => {
     const assembly = await systemPrompt.assemble()
     // Registered (the deployment is non-native) but empty, so the renderer
     // drops it: `both` executes the native call the rule would forbid.
-    expect(assembly.sections.find(section => section.name === 'tools:code-only')?.text).toBe('')
+    expect(assembly.sections.find(section => section.name === 'tools:ptc-only')?.text).toBe('')
     expect(assembly.tools.map(tool => tool.name)).toContain('echo')
   })
 
-  it('projects deeply nested output schemas into the Code Mode SDK without structured-clone recursion', async () => {
-    const { ctx, systemPrompt } = await setup({ mode: 'code' })
+  it('projects deeply nested output schemas into the PTC mode SDK without structured-clone recursion', async () => {
+    const { ctx, systemPrompt } = await setup({ mode: 'ptc' })
     let output: JsonSchemaNode = { type: 'string' }
     for (let depth = 0; depth < 5_000; depth++) {
       output = { oneOf: [output, { type: 'null' }] }
@@ -190,7 +190,7 @@ describe('mode-aware wire contribution', () => {
     expect(sdk).toContain('deep_output: string | null')
   })
 
-  it.each(['code', 'both'] as const)('treats expert assembly output as authoritative in mode %s', async (mode) => {
+  it.each(['ptc', 'both'] as const)('treats expert assembly output as authoritative in mode %s', async (mode) => {
     const { ctx, systemPrompt } = await setup({ mode })
     registerEcho(ctx)
     ctx.on('system-prompt/assemble', async (_assembly, _context, next) => {
@@ -207,7 +207,7 @@ describe('mode-aware wire contribution', () => {
     expect(assembly.tools.some(tool => tool.name === RUN_CODE_NAME)).toBe(false)
   })
 
-  it.each(['code', 'both'] as const)('lets one scope shadow the default SDK section in mode %s', async (mode) => {
+  it.each(['ptc', 'both'] as const)('lets one scope shadow the default SDK section in mode %s', async (mode) => {
     const { ctx, systemPrompt } = await setup({ mode })
     registerEcho(ctx)
     const { scope, agent } = await mintAgentScope(ctx)
@@ -231,7 +231,7 @@ describe('mode-aware wire contribution', () => {
     expect(assembly.sections.some(section => section.name === 'tools:sdk')).toBe(true)
   })
 
-  it.each(['code', 'both'] as const)('keeps the run_code transport outside scoped allow-list filtering in mode %s', async (mode) => {
+  it.each(['ptc', 'both'] as const)('keeps the run_code transport outside scoped allow-list filtering in mode %s', async (mode) => {
     const { ctx, systemPrompt, runtime } = await setup({ mode })
     registerEcho(ctx, 'echo')
     registerEcho(ctx, 'hidden')
@@ -239,7 +239,7 @@ describe('mode-aware wire contribution', () => {
     const lift = scope.ctx.tools.restrict({ allow: ['echo'] })
 
     const assembly = await systemPrompt.assemble({ scope: agent })
-    expect(assembly.tools.map(tool => tool.name)).toEqual(mode === 'code'
+    expect(assembly.tools.map(tool => tool.name)).toEqual(mode === 'ptc'
       ? [RUN_CODE_NAME]
       : ['echo', RUN_CODE_NAME])
     const sdk = assembly.sections.find(section => section.name === 'tools:sdk')?.text
@@ -256,12 +256,12 @@ describe('mode-aware wire contribution', () => {
 
     lift()
     const unrestricted = await systemPrompt.assemble({ scope: agent })
-    expect(unrestricted.tools.map(tool => tool.name)).toEqual(mode === 'code'
+    expect(unrestricted.tools.map(tool => tool.name)).toEqual(mode === 'ptc'
       ? [RUN_CODE_NAME]
       : ['echo', 'hidden', RUN_CODE_NAME])
   })
 
-  it.each(['code', 'both'] as const)('keeps the run_code transport outside scoped deny-list filtering in mode %s', async (mode) => {
+  it.each(['ptc', 'both'] as const)('keeps the run_code transport outside scoped deny-list filtering in mode %s', async (mode) => {
     const { ctx, systemPrompt, runtime } = await setup({ mode })
     registerEcho(ctx, 'denied')
     registerEcho(ctx, 'kept')
@@ -269,7 +269,7 @@ describe('mode-aware wire contribution', () => {
     scope.ctx.tools.restrict({ deny: ['denied'] })
 
     const assembly = await systemPrompt.assemble({ scope: agent })
-    expect(assembly.tools.map(tool => tool.name)).toEqual(mode === 'code'
+    expect(assembly.tools.map(tool => tool.name)).toEqual(mode === 'ptc'
       ? [RUN_CODE_NAME]
       : ['kept', RUN_CODE_NAME])
     const sdk = assembly.sections.find(section => section.name === 'tools:sdk')?.text
@@ -285,7 +285,7 @@ describe('mode-aware wire contribution', () => {
     expect(result.content).toEqual([{ type: 'text', text: 'kept' }])
   })
 
-  it.each(['code', 'both'] as const)('reserves run_code against scoped shadows and explicit restrictions in mode %s', async (mode) => {
+  it.each(['ptc', 'both'] as const)('reserves run_code against scoped shadows and explicit restrictions in mode %s', async (mode) => {
     const { ctx, systemPrompt } = await setup({ mode })
     const { scope, agent } = await mintAgentScope(ctx)
     const impostor = defineContentToolFixture({
@@ -295,10 +295,10 @@ describe('mode-aware wire contribution', () => {
       execute: () => Promise.resolve([{ type: 'text' as const, text: 'impostor' }]),
     })
 
-    expect(() => scope.ctx.tools.register(impostor)).toThrow(/reserved for the Code Mode presentation transport/)
-    expect(() => ctx.tools.register(impostor)).toThrow(/reserved for the Code Mode presentation transport/)
-    expect(() => scope.ctx.tools.restrict({ allow: [RUN_CODE_NAME] })).toThrow(/cannot name reserved Code Mode presentation transport/)
-    expect(() => scope.ctx.tools.restrict({ deny: [RUN_CODE_NAME] })).toThrow(/cannot name reserved Code Mode presentation transport/)
+    expect(() => scope.ctx.tools.register(impostor)).toThrow(/reserved for the PTC mode presentation transport/)
+    expect(() => ctx.tools.register(impostor)).toThrow(/reserved for the PTC mode presentation transport/)
+    expect(() => scope.ctx.tools.restrict({ allow: [RUN_CODE_NAME] })).toThrow(/cannot name reserved PTC mode presentation transport/)
+    expect(() => scope.ctx.tools.restrict({ deny: [RUN_CODE_NAME] })).toThrow(/cannot name reserved PTC mode presentation transport/)
     scope.ctx.systemPrompt.section({
       name: 'scoped-note',
       order: FIRST_PARTY_SECTION_ORDER.TOOLS_SDK - 10,
@@ -322,7 +322,7 @@ describe('mode-aware wire contribution', () => {
     expect(result.content).toEqual([{ type: 'text', text: '(run_code completed with no output)' }])
   })
 
-  it.each(['code', 'both'] as const)('keeps run_code in the toolOrder universe without exposing it as a restriction target in mode %s', async (mode) => {
+  it.each(['ptc', 'both'] as const)('keeps run_code in the toolOrder universe without exposing it as a restriction target in mode %s', async (mode) => {
     const { ctx, systemPrompt } = await setup({
       mode,
       toolOrder: [RUN_CODE_NAME, '<unlisted-tools>'],
@@ -331,7 +331,7 @@ describe('mode-aware wire contribution', () => {
     const { agent } = await mintAgentScope(ctx)
 
     const assembly = await systemPrompt.assemble({ scope: agent })
-    expect(assembly.tools.map(tool => tool.name)).toEqual(mode === 'code'
+    expect(assembly.tools.map(tool => tool.name)).toEqual(mode === 'ptc'
       ? [RUN_CODE_NAME]
       : [RUN_CODE_NAME, 'echo'])
   })
@@ -361,7 +361,7 @@ describe('mode-aware wire contribution', () => {
   })
 
   it('renders byte-identical SDK text across consecutive assemblies of an unchanged tool set', async () => {
-    const { ctx, systemPrompt } = await setup({ mode: 'code' })
+    const { ctx, systemPrompt } = await setup({ mode: 'ptc' })
     registerEcho(ctx)
     const first = await systemPrompt.assemble()
     const second = await systemPrompt.assemble()
@@ -370,17 +370,17 @@ describe('mode-aware wire contribution', () => {
   })
 
   it('rejects every assembly when a non-native mode has no code runtime', async () => {
-    const { systemPrompt } = await setup({ mode: 'code', runtime: false })
+    const { systemPrompt } = await setup({ mode: 'ptc', runtime: false })
     await expect(systemPrompt.assemble()).rejects.toThrow(/requires a code runtime/)
   })
 
   it('rejects every assembly when the runtime language has no registered SDK renderer', async () => {
-    const { systemPrompt } = await setup({ mode: 'code', runtime: { language: 'ruby' } })
+    const { systemPrompt } = await setup({ mode: 'ptc', runtime: { language: 'ruby' } })
     await expect(systemPrompt.assemble()).rejects.toThrow(/no SDK renderer registered for runtime language "ruby"/)
   })
 
   it('assembles under a python runtime by picking the Python SDK renderer', async () => {
-    const { ctx, systemPrompt } = await setup({ mode: 'code', runtime: { language: 'python' } })
+    const { ctx, systemPrompt } = await setup({ mode: 'ptc', runtime: { language: 'python' } })
     registerEcho(ctx)
     const assembly = await systemPrompt.assemble()
     const sdk = assembly.sections.find(section => section.name === 'tools:sdk')
@@ -406,7 +406,7 @@ describe('mode-aware wire contribution', () => {
   })
 
   it('emits a TypeScript-flavored run_code schema under a typescript runtime', async () => {
-    const { ctx, systemPrompt } = await setup({ mode: 'code', runtime: { language: 'typescript' } })
+    const { ctx, systemPrompt } = await setup({ mode: 'ptc', runtime: { language: 'typescript' } })
     registerEcho(ctx)
     const assembly = await systemPrompt.assemble()
     const runCodeSchema = assembly.tools.find(tool => tool.name === RUN_CODE_NAME)
@@ -421,7 +421,7 @@ describe('mode-aware wire contribution', () => {
   })
 
   it('emits a Python-flavored run_code schema under a python runtime (matches the SDK language)', async () => {
-    const { ctx, systemPrompt } = await setup({ mode: 'code', runtime: { language: 'python' } })
+    const { ctx, systemPrompt } = await setup({ mode: 'ptc', runtime: { language: 'python' } })
     registerEcho(ctx)
     const assembly = await systemPrompt.assemble()
     const runCodeSchema = assembly.tools.find(tool => tool.name === RUN_CODE_NAME)
@@ -442,7 +442,7 @@ describe('mode-aware wire contribution', () => {
     // which throws when the schema is projected. Assembly's
     // requireCodeRuntime rejects such a language earlier; this reaches the
     // guard on its own.
-    const { ctx } = await setup({ mode: 'code', runtime: { language: 'ruby' } })
+    const { ctx } = await setup({ mode: 'ptc', runtime: { language: 'ruby' } })
     const definition = ctx.tools.get(RUN_CODE_NAME)
     // Names the known languages, symmetric with the SDK_RENDERERS guard: this
     // is the reachable rejection, so it must be at least as diagnosable.
@@ -457,15 +457,15 @@ describe('mode-aware wire contribution', () => {
     // returns undefined there, so the flavor getter degrades to the TS default
     // rather than throwing. None of those readers feeds a model: assembly goes
     // through wireSchemas, which requires a runtime first.
-    const { ctx } = await setup({ mode: 'code', runtime: false })
+    const { ctx } = await setup({ mode: 'ptc', runtime: false })
     const definition = ctx.tools.get(RUN_CODE_NAME)
     expect(definition?.description).toContain('Execute a TypeScript program')
     const params = definition?.parameters as { properties: { code: { description: string } } }
     expect(params.properties.code.description).toBe('The program: the body of an async TypeScript function.')
   })
 
-  it("rejects the assembly when toolOrder names a native tool that mode 'code' no longer contributes", async () => {
-    const { ctx, systemPrompt } = await setup({ mode: 'code', toolOrder: ['echo', '<unlisted-tools>'] })
+  it("rejects the assembly when toolOrder names a native tool that mode 'ptc' no longer contributes", async () => {
+    const { ctx, systemPrompt } = await setup({ mode: 'ptc', toolOrder: ['echo', '<unlisted-tools>'] })
     registerEcho(ctx)
     await expect(systemPrompt.assemble()).rejects.toThrow(/toolOrder lists unregistered tool "echo"/)
   })
@@ -474,7 +474,7 @@ describe('mode-aware wire contribution', () => {
     const ctx = new Context()
     await ctx.plugin(SystemPrompt, {})
     await ctx.plugin(FakeRuntime, {})
-    const fiber = await ctx.plugin(ToolRuntime, { mode: 'code' })
+    const fiber = await ctx.plugin(ToolRuntime, { mode: 'ptc' })
     expect(ctx.tools.get(RUN_CODE_NAME)).toBeDefined()
     await fiber.dispose()
     const assembly = await ctx.systemPrompt.assemble()
@@ -520,7 +520,7 @@ describe('the sub-dispatch scheduler (native concurrency contract)', () => {
   }
 
   it('overlaps concurrency-safe calls under Promise.all and logs a start event per dispatch', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const gated = registerGated(ctx, 'safe_read', true)
     const { agent, events } = fakeAgent()
     runtime.behavior = async (request) => {
@@ -548,7 +548,7 @@ describe('the sub-dispatch scheduler (native concurrency contract)', () => {
   })
 
   it('an exclusive call bars overlap: safe calls drain first, it runs alone, later calls wait', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const safe = registerGated(ctx, 'safe_read', true)
     const unsafe = registerGated(ctx, 'writer', false)
     runtime.behavior = async (request) => {
@@ -578,7 +578,7 @@ describe('the sub-dispatch scheduler (native concurrency contract)', () => {
   })
 
   it('maxParallelSubCalls caps the overlap window', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code', maxParallelSubCalls: 2 })
+    const { ctx, runtime } = await setup({ mode: 'ptc', maxParallelSubCalls: 2 })
     const gated = registerGated(ctx, 'safe_read', true)
     runtime.behavior = async (request) => {
       const tools = request.bindings[0]!.functions
@@ -603,7 +603,7 @@ describe('the sub-dispatch scheduler (native concurrency contract)', () => {
   })
 
   it('a tool unregistered between binding enumeration and dispatch fails as unknown tool', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const calls: unknown[] = []
     const dispose = ctx.tools.register(defineTool({
       name: 'ephemeral',
@@ -635,7 +635,7 @@ describe('the sub-dispatch scheduler (native concurrency contract)', () => {
   })
 
   it('ordered pre-execute never overlaps: a slow policy on one call delays the next start', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const gated = registerGated(ctx, 'safe_read', true)
     const stages: string[] = []
     let releaseGate: (() => void) | undefined
@@ -671,7 +671,7 @@ describe('the sub-dispatch scheduler (native concurrency contract)', () => {
   })
 
   it('an exclusive call holds its barrier through post-execute: the next start waits for the commit', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const writer = registerGated(ctx, 'writer', false)
     const reader = registerGated(ctx, 'safe_read', true)
     const stages: string[] = []
@@ -708,7 +708,7 @@ describe('the sub-dispatch scheduler (native concurrency contract)', () => {
   })
 
   it('run settlement drains a commit already in progress: the settle event is appended inside the turn', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const gated = registerGated(ctx, 'safe_read', true)
     const { agent, events } = fakeAgent()
     let releasePost: (() => void) | undefined
@@ -742,7 +742,7 @@ describe('the sub-dispatch scheduler (native concurrency contract)', () => {
   })
 
   it('post-execute and context commitment stay in submission order under out-of-order completion', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const gated = registerGated(ctx, 'safe_read', true)
     const postOrder: string[] = []
     ctx.on('tools/post-execute', async (postExec, _result, next): Promise<PostToolDecision> => {
@@ -778,7 +778,7 @@ describe('the sub-dispatch scheduler (native concurrency contract)', () => {
   })
 
   it('a queued-unstarted call abandoned by run settlement logs no start event', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const gated = registerGated(ctx, 'writer', false)
     const { agent, events } = fakeAgent()
     const abandoned: string[] = []
@@ -810,7 +810,7 @@ describe('the sub-dispatch scheduler (native concurrency contract)', () => {
 
 describe('the run_code dispatch bridge', () => {
   it('bridges tool calls, returns only the curated output, and logs one event per dispatch', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const calls = registerEcho(ctx)
     const { agent, events } = fakeAgent()
     runtime.behavior = async (request) => {
@@ -841,7 +841,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('exposes only an opaque parent token to nested result observers', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     registerEcho(ctx)
     runtime.behavior = async (request) => {
       await request.bindings[0]!.functions.echo!({ value: 'nested' })
@@ -868,7 +868,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('forwards a nested terminal conclusion onto the successful run_code result', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     ctx.tools.register(defineTool({
       name: 'finalize',
       description: 'Terminal tool.',
@@ -908,7 +908,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('serializes Promise.all dispatches: tool executions never overlap, in submission order', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const intervals: [string, string][] = []
     let active = 0
     ctx.tools.register(defineTool({
@@ -946,7 +946,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('rejects the program-side call when the tool errors, with the tool error text', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     ctx.tools.register(defineContentToolFixture({
       name: 'fail',
       description: 'Always fails.',
@@ -965,10 +965,10 @@ describe('the run_code dispatch bridge', () => {
     expect(result.content[0]).toEqual({ type: 'text', text: 'caught: deliberate failure' })
   })
 
-  it('a throwing tools/code-dispatch-log listener is contained: the original settled content is logged', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+  it('a throwing tools/ptc-dispatch-log listener is contained: the original settled content is logged', async () => {
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     registerEcho(ctx)
-    ctx.on('tools/code-dispatch-log', () => { throw new Error('log-content listener failed') })
+    ctx.on('tools/ptc-dispatch-log', () => { throw new Error('log-content listener failed') })
     const { agent, events } = fakeAgent()
     runtime.behavior = async (request) => {
       const value = await request.bindings[0]!.functions.echo!({ value: 'x' })
@@ -981,7 +981,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('a throwing tools/pre-execute listener settles the sub-call without post-execute', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const calls = registerEcho(ctx)
     const postExecuted: string[] = []
     ctx.on('tools/pre-execute', (exec, next) => {
@@ -1012,7 +1012,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('a tools/pre-execute deny reaches the program as a binding rejection', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     registerEcho(ctx)
     ctx.on('tools/pre-execute', (exec, next) => {
       if (exec.name === 'echo') return Promise.resolve({ kind: 'deny' as const, reason: 'not on my watch' })
@@ -1032,7 +1032,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('rejects a binding argument that is not lossless JSON, dispatching nothing', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const calls = registerEcho(ctx)
     const { agent, events } = fakeAgent()
     runtime.behavior = async (request) => {
@@ -1050,7 +1050,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('dispatches and logs independent snapshots of the same lossless JSON value', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const calls = registerEcho(ctx)
     const { agent, events } = fakeAgent()
     runtime.behavior = async (request) => {
@@ -1065,7 +1065,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('defers sub-call additionalContexts onto the outer run_code result', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     registerEcho(ctx)
     ctx.on('tools/post-execute', (exec, _result, next): Promise<PostToolDecision> => {
       if (exec.name === 'echo') {
@@ -1101,7 +1101,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('defers image-bearing final sub-call content onto the outer run_code result', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     ctx.tools.register(defineContentToolFixture({
       name: 'image_result',
       description: 'Return one durable image.',
@@ -1136,7 +1136,7 @@ describe('the run_code dispatch bridge', () => {
 
   it('does not defer images removed by a nested post-execute decision', async () => {
     for (const decision of ['block', 'replace'] as const) {
-      const { ctx, runtime } = await setup({ mode: 'code' })
+      const { ctx, runtime } = await setup({ mode: 'ptc' })
       ctx.tools.register(defineContentToolFixture({
         name: 'image_result',
         description: 'Return one durable image.',
@@ -1197,7 +1197,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('converts a failed run into a structured isError result carrying kind, message, and captured logs', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     runtime.behavior = () => Promise.resolve({
       logs: ['got this far'],
       error: { kind: 'timeout', message: 'compute budget exhausted (300ms busy)' },
@@ -1218,7 +1218,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('aborting the outer signal aborts the in-flight sub-dispatch and abandons queued ones', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const seen: string[] = []
     let sawAbort = false
     ctx.tools.register(defineContentToolFixture({
@@ -1252,7 +1252,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('a runtime that starts a binding call and then REJECTS still reaches quiescence before returning', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const { agent, events } = fakeAgent()
     let sawAbort = false
     let started!: () => void
@@ -1287,7 +1287,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('runs without an owning agent: dispatches work, event logging is skipped', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const calls = registerEcho(ctx)
     runtime.behavior = async (request) => {
       await request.bindings[0]!.functions.echo!({ value: 'x' })
@@ -1301,14 +1301,14 @@ describe('the run_code dispatch bridge', () => {
   it('executing run_code under a missing runtime is a structured isError, not a crash', async () => {
     const ctx = new Context()
     await ctx.plugin(SystemPrompt, {})
-    await ctx.plugin(ToolRuntime, { mode: 'code' })
+    await ctx.plugin(ToolRuntime, { mode: 'ptc' })
     const result = await runCode(ctx, 'program')
     expect(result.isError).toBe(true)
     expect((result.content[0] as { text: string }).text).toContain('requires a code runtime')
   })
 
   it('presents the model-authored description as the execute-card title over the program input', async () => {
-    const { ctx } = await setup({ mode: 'code' })
+    const { ctx } = await setup({ mode: 'ptc' })
     const tool = ctx.tools.get(RUN_CODE_NAME)!
     // The description labels the card (the bash description precedent); the
     // program itself remains the expanded raw input.
@@ -1321,7 +1321,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('rejects a whitespace-only description with a structured isError', async () => {
-    const { ctx } = await setup({ mode: 'code' })
+    const { ctx } = await setup({ mode: 'ptc' })
     const result = await runCode(ctx, 'return 1', { description: '   ' })
     expect(result.isError).toBe(true)
     expect((result.content[0] as { text: string }).text).toContain('invalid description')
@@ -1333,7 +1333,7 @@ describe('the run_code dispatch bridge', () => {
     ['logs plus result', { logs: ['printed'], value: 'returned' }, 'printed\nreturned'],
     ['no output', { logs: [] }, '(run_code completed with no output)'],
   ] as [string, CodeRunResult, string][])('keeps %s in durable content without a result presenter', async (_name, output, text) => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     runtime.behavior = () => Promise.resolve(output)
 
     const result = await runCode(ctx, 'return 1')
@@ -1347,7 +1347,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('keeps a post-policy spill preview in durable content without a result presenter', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const preview = 'HEAD\n\n(Omitted 100 bytes. Full formatted result stored at: /tmp/run-code.txt.)\n\nTAIL'
     runtime.behavior = () => Promise.resolve({ logs: ['printed'], value: 'returned' })
     ctx.on('tools/post-execute', (exec, _result, next): Promise<PostToolDecision> => {
@@ -1363,7 +1363,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('keeps canonical failure content durable without a result presenter', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     runtime.behavior = () => Promise.resolve({
       logs: ['captured before failure'],
       error: { kind: 'output-limit', message: 'outer output exceeded 8 bytes' },
@@ -1381,7 +1381,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('logs the complete sub-result content verbatim, non-text blocks and long text included', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const { agent, events } = fakeAgent()
     const long = 'x'.repeat(300)
     ctx.tools.register(defineTool({
@@ -1414,7 +1414,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('rejects undefined, getter-throwing, exotic, and unrepresentable binding arguments before dispatch', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const calls = registerEcho(ctx)
     const { agent, events } = fakeAgent()
     runtime.behavior = async (request) => {
@@ -1446,7 +1446,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('dispatches and durably logs binding arguments deeper than the structured-clone call stack', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const depth = 5_000
     let observedDepth = 0
     let observedLeaf: JsonValue | undefined
@@ -1497,7 +1497,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('gives the tool and durable log the same immutable argument value', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const { agent, events } = fakeAgent()
     let mutationSucceeded: boolean | undefined
     ctx.tools.register(defineContentToolFixture({
@@ -1521,7 +1521,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('exposes a tool named __proto__ as an ordinary own binding', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     ctx.tools.register(defineTool({
       name: '__proto__',
       description: 'A prototype-colliding tool name.',
@@ -1544,7 +1544,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('renders every non-string JSON root as pretty JSON while preserving strings raw', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     runtime.behavior = () => Promise.resolve({ logs: [], value: { n: 42, ok: true } })
     expect((await runCode(ctx, 'object')).content[0]).toEqual({ type: 'text', text: '{\n  "n": 42,\n  "ok": true\n}' })
     runtime.behavior = () => Promise.resolve({ logs: [], value: {} })
@@ -1567,7 +1567,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('renders deeply nested JSON without recursive traversal or quadratic indentation', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     let value: JsonValue = {
       emptyArray: [],
       emptyObject: {},
@@ -1588,7 +1588,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('short-circuits a pre-aborted outer signal before the code runtime', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const calls = registerEcho(ctx)
     runtime.behavior = (request) => {
       // The fake honors the seam contract for an already-aborted signal.
@@ -1612,7 +1612,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('reports cancellation after rejecting a late binding without dispatching it', async () => {
-    const { ctx, runtime } = await setup({ mode: 'code' })
+    const { ctx, runtime } = await setup({ mode: 'ptc' })
     const calls = registerEcho(ctx)
     const controller = new AbortController()
     runtime.behavior = async (request) => {
@@ -1632,7 +1632,7 @@ describe('the run_code dispatch bridge', () => {
   })
 
   it('a tool/code-dispatch event never derives a model message', () => {
-    const session = Session.create(SessionId('code-mode-derive'))
+    const session = Session.create(SessionId('ptc-derive'))
     session.append('user/message', createUserMessage({
       content: [{ type: 'text', text: 'hi' }], source: { kind: 'user' },
     }), { surfaceOp: 'append' })
@@ -1653,14 +1653,14 @@ describe('the run_code dispatch bridge', () => {
   it('direct construction rejects a non-positive parallel sub-call cap at load', async () => {
     const ctx = new Context()
     await ctx.plugin(SystemPrompt, {})
-    expect(() => new ToolRuntime(ctx, { mode: 'code', maxParallelSubCalls: 0 }))
+    expect(() => new ToolRuntime(ctx, { mode: 'ptc', maxParallelSubCalls: 0 }))
       .toThrow('maxParallelSubCalls must be a positive integer')
   })
 
   it('direct construction in code mode defaults the parallel sub-call cap', async () => {
     const ctx = new Context()
     await ctx.plugin(SystemPrompt, {})
-    const registry = new ToolRuntime(ctx, { mode: 'code' })
+    const registry = new ToolRuntime(ctx, { mode: 'ptc' })
     expect(registry.get(RUN_CODE_NAME)).toBeDefined()
   })
 
@@ -1675,7 +1675,7 @@ describe('the run_code dispatch bridge', () => {
   it('denies a model-direct native-tool call under code mode as UNKNOWN_TOOL', async () => {
     const ctx = new Context()
     await ctx.plugin(SystemPrompt, {})
-    const registry = new ToolRuntime(ctx, { mode: 'code' })
+    const registry = new ToolRuntime(ctx, { mode: 'ptc' })
     registerEcho(ctx, 'write')
     const result = await registry.execute({
       signal: testToolSignal,
@@ -1695,7 +1695,7 @@ describe('the run_code dispatch bridge', () => {
   it('routes a pre-aborted collapsed call through ABORTED_BEFORE_DISPATCH', async () => {
     const ctx = new Context()
     await ctx.plugin(SystemPrompt, {})
-    const registry = new ToolRuntime(ctx, { mode: 'code' })
+    const registry = new ToolRuntime(ctx, { mode: 'ptc' })
     registerEcho(ctx, 'write')
     const aborted = new AbortController()
     aborted.abort()
@@ -1713,17 +1713,17 @@ describe('the run_code dispatch bridge', () => {
 
 /**
  * Presentation is per agent, because an agent preset composes it: one
- * deployment runs a Code Mode agent beside native ones, and neither may see
+ * deployment runs a PTC mode agent beside native ones, and neither may see
  * the other's catalog. The deployment `mode` is the default those agents
  * shadow, not a process-wide fact.
  */
 describe('per-agent presentation', () => {
-  it('gives one agent Code Mode while the deployment stays native', async () => {
+  it('gives one agent PTC mode while the deployment stays native', async () => {
     const { ctx, systemPrompt } = await setup({ mode: 'native' })
     const calls = registerEcho(ctx)
     const { scope, agent } = await mintAgentScope(ctx)
 
-    scope.ctx.tools.presentAs('code')
+    scope.ctx.tools.presentAs('ptc')
 
     const coded = await systemPrompt.assemble({ scope: agent })
     expect(coded.tools.map(tool => tool.name)).toEqual([RUN_CODE_NAME])
@@ -1753,8 +1753,8 @@ describe('per-agent presentation', () => {
     const calls = registerEcho(ctx)
     // The preset's standing scope declares once; the agent only PARENTS to it
     // (the per-preset standing mount configuration has no per-agent declaration).
-    const standing = await mintAgentScope(ctx, 'preset:code-like')
-    standing.scope.ctx.tools.presentAs('code')
+    const standing = await mintAgentScope(ctx, 'preset:ptc-like')
+    standing.scope.ctx.tools.presentAs('ptc')
     const joined = await mintAgentScope(ctx, 'joined-agent')
     bindScopeParent(joined.agent, standing.agent)
     const loner = await mintAgentScope(ctx, 'loner-agent')
@@ -1803,7 +1803,7 @@ describe('per-agent presentation', () => {
     registerEcho(ctx)
     const coded = await mintAgentScope(ctx, 'coded')
     const plain = await mintAgentScope(ctx, 'plain')
-    coded.scope.ctx.tools.presentAs('code')
+    coded.scope.ctx.tools.presentAs('ptc')
 
     // Not merely hidden from the prompt: the transport one agent presents must
     // not be dispatchable by another that never presented it.
@@ -1812,8 +1812,8 @@ describe('per-agent presentation', () => {
     expect(ctx.tools.get(RUN_CODE_NAME)).toBeUndefined()
   })
 
-  it('lets an agent opt out of a code-mode deployment', async () => {
-    const { ctx, systemPrompt } = await setup({ mode: 'code' })
+  it('lets an agent opt out of a PTC mode deployment', async () => {
+    const { ctx, systemPrompt } = await setup({ mode: 'ptc' })
     registerEcho(ctx)
     const { scope, agent } = await mintAgentScope(ctx)
 
@@ -1830,7 +1830,7 @@ describe('per-agent presentation', () => {
     const { ctx, systemPrompt } = await setup({ mode: 'native' })
     registerEcho(ctx)
     const { scope, agent } = await mintAgentScope(ctx)
-    const dispose = scope.ctx.tools.presentAs('code')
+    const dispose = scope.ctx.tools.presentAs('ptc')
 
     dispose()
 
@@ -1842,18 +1842,18 @@ describe('per-agent presentation', () => {
   it('refuses a second declaration for the same agent', async () => {
     const { ctx } = await setup({ mode: 'native' })
     const { scope } = await mintAgentScope(ctx)
-    scope.ctx.tools.presentAs('code')
+    scope.ctx.tools.presentAs('ptc')
 
     // Two answers to "which form does the model see" is a contradiction, and
     // silently keeping either one would make the composition unreadable.
     expect(() => scope.ctx.tools.presentAs('both'))
-      .toThrow('conflicts with "code" already declared')
+      .toThrow('conflicts with "ptc" already declared')
   })
 
   it('refuses an unscoped declaration', async () => {
     const { ctx } = await setup({ mode: 'native' })
 
-    expect(() => ctx.tools.presentAs('code'))
+    expect(() => ctx.tools.presentAs('ptc'))
       .toThrow('requires a scoped context')
   })
 
