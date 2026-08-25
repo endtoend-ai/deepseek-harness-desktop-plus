@@ -47,7 +47,20 @@ function sessionFakeFor() {
 
 async function bench() {
   const runtime = await SlotTestRuntime.create()
-  runtime.provide('connection', { api: { settings: {} }, isLoopback: false })
+  const sessionHistory = vi.fn().mockResolvedValue({
+    result: { ok: true, value: { events: [], hasMore: false } },
+  })
+  const subagentHistory = vi.fn().mockResolvedValue({
+    result: { ok: true, value: { events: [], hasMore: false } },
+  })
+  runtime.provide('connection', {
+    api: {
+      settings: {},
+      sessions: { history: sessionHistory },
+      subagents: { history: subagentHistory },
+    },
+    isLoopback: false,
+  })
   // The plugin injects both; these specs exercise no settings path.
   runtime.provide('remote', { $on: () => () => {} })
   runtime.provide('settingsScope', { bind: () => stubSettingsScope().scope } as never)
@@ -124,7 +137,7 @@ async function bench() {
   return {
     runtime, feature, slots: runtime.slots, entryOf,
     conversationApi, conversationHeaderApi, residentApi, composerApi, chatViewApi, inputApi,
-    sessionFake, layoutFake,
+    sessionFake, layoutFake, sessionHistory, subagentHistory,
   }
 }
 
@@ -138,8 +151,10 @@ describe('conversation slot inject API', () => {
     expect(injected.views.list().map(v => v.id)).toEqual(['chat'])
 
     const chatView = b.chatViewApi(ROOT)
-    chatView.injected.loadOlder()
+    await chatView.injected.loadOlder()
     expect(b.sessionFake.loadOlder).toHaveBeenCalledTimes(1)
+    await expect(chatView.injected.readOutline()).resolves.toEqual([])
+    expect(b.sessionHistory).toHaveBeenCalledWith({ sessionId: ROOT, maxMessages: 50 }, undefined)
     chatView.injected.forkAt(17)
     await vi.waitFor(() => {
       expect(b.runtime.sessions.calls).toContainEqual({ method: 'open', args: [ROOT] })

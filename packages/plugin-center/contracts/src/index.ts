@@ -669,6 +669,8 @@ export type PluginRecoveryDiagnostic =
     readonly recoveryAttempt: number
     readonly recoveryReasonCode: PluginRecoveryReasonCode | null
     readonly exportedAt: string
+    readonly desktopVersion: string
+    readonly platform: SupportedPluginPlatform
   }
   | {
     readonly schemaVersion: 1
@@ -683,6 +685,8 @@ export type PluginRecoveryDiagnostic =
     readonly recoveryAttempt: 1
     readonly recoveryReasonCode: 'unsupported-journal-version' | 'journal-invalid'
     readonly exportedAt: string
+    readonly desktopVersion: string
+    readonly platform: SupportedPluginPlatform
   }
 
 /** Review states owned by the production Registry for one exact immutable version. */
@@ -2360,6 +2364,7 @@ export function decodePluginRecoveryDiagnostic(value: unknown): PluginRecoveryDi
   exact(source, '$diagnostic', [
     'schemaVersion', 'journalStatus', 'operationId', 'profileName', 'action', 'pluginId', 'version',
     'phaseHistory', 'terminalResult', 'recoveryAttempt', 'recoveryReasonCode', 'exportedAt',
+    'desktopVersion', 'platform',
   ])
   if (source['schemaVersion'] !== 1) fail('$diagnostic.schemaVersion', 'must equal 1')
   const journalStatus = enumeration(source['journalStatus'], '$diagnostic.journalStatus', [
@@ -2367,6 +2372,8 @@ export function decodePluginRecoveryDiagnostic(value: unknown): PluginRecoveryDi
   ] as const)
   const operationId = id(source['operationId'], '$diagnostic.operationId')
   const exportedAt = instant(source['exportedAt'], '$diagnostic.exportedAt')
+  const desktopVersion = version(source['desktopVersion'], '$diagnostic.desktopVersion')
+  const platform = enumeration(source['platform'], '$diagnostic.platform', SUPPORTED_PLUGIN_PLATFORMS)
   const terminalResult = source['terminalResult'] === null
     ? null
     : enumeration(source['terminalResult'], '$diagnostic.terminalResult', OPERATION_TERMINAL_RESULTS)
@@ -2400,6 +2407,8 @@ export function decodePluginRecoveryDiagnostic(value: unknown): PluginRecoveryDi
       recoveryAttempt: 1,
       recoveryReasonCode,
       exportedAt,
+      desktopVersion,
+      platform,
     }
   }
   if (source['profileName'] !== 'web') fail('$diagnostic.profileName', 'must equal web')
@@ -2416,6 +2425,8 @@ export function decodePluginRecoveryDiagnostic(value: unknown): PluginRecoveryDi
     recoveryAttempt: integer(source['recoveryAttempt'], '$diagnostic.recoveryAttempt', 0, 100),
     recoveryReasonCode,
     exportedAt,
+    desktopVersion,
+    platform,
   }
 }
 

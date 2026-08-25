@@ -22,6 +22,8 @@ Every decision is scoped to those exact inputs and carries stable ordered reason
 
 Installation intent contains only plugin id, exact version, and a stable idempotency key. Installed projections keep package, Bundle, source, protection, runtime, update, pending action, configuration routes, and declared owned data as separate facts. Enable, disable, update, and uninstall requests reuse the exact-id plus idempotency form. Post-uninstall data removal additionally requires the committed operation id, a bounded subset of declared relative paths, and the fixed `remove-owned-data` confirmation. Immutable operation snapshots use one ordered phase vocabulary and one closed failure vocabulary; start responses distinguish a new operation, a same-key join, and a different active operation without exposing package-manager authority.
 
+Recovery snapshots expose only stable phases, reason codes, attempt counts, and retry/export capabilities. Diagnostic documents add the running Desktop version and supported platform to the bounded journal projection; they still exclude local paths, Profile contents, environment values, raw errors, credentials, and tokens.
+
 ## Model Experience
 
 None, as this package only validates catalog and preflight values and registers nothing model-facing; a later activated plugin owns any model-visible behavior.

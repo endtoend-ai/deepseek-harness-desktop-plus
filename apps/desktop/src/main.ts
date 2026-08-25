@@ -24,10 +24,12 @@ import {
 import {
   decodeCatalogDetailQuery,
   decodeCatalogListQuery,
+  decodePluginManagementRequest,
   decodePluginDiagnosticExportRequest,
   decodePluginRecoveryRetryRequest,
   decodePresetRuntimeRequest,
   type CompatibilityFingerprint,
+  type PluginRecoverySnapshot,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import { AppearanceStorage } from './appearance-storage.ts'
@@ -63,6 +65,8 @@ import {
 } from './plugin-center/owned-data.ts'
 import { PluginRuntimeVerifier } from './plugin-center/runtime-verifier.ts'
 import {
+  isPluginSafeModeManagementAction,
+  isPluginSafeModeRecovery,
   preparePluginCenterStartup,
   type PluginStartupRecoveryResult,
 } from './plugin-center/startup-recovery.ts'
@@ -107,6 +111,17 @@ let pluginDiagnosticExporter: PluginRecoveryDiagnosticExporter | undefined
 let pluginOwnedDataRemover: PluginOwnedDataRemover | undefined
 let presetRuntimeController: PresetRuntimeController | undefined
 let pluginRecoveryStartupBlocked = false
+let pluginRecoverySafeMode = false
+
+function applyPluginRecoverySnapshot(snapshot: PluginRecoverySnapshot | null): void {
+  if (snapshot === null || snapshot.phase === 'rolled-back') {
+    pluginRecoveryStartupBlocked = false
+    pluginRecoverySafeMode = false
+    return
+  }
+  pluginRecoveryStartupBlocked = true
+  pluginRecoverySafeMode = isPluginSafeModeRecovery(snapshot)
+}
 
 interface PluginCenterBackend {
   readonly catalog: PluginCatalogRepository
@@ -333,7 +348,7 @@ function hardenSession(): void {
 
 async function createMainWindow(): Promise<BrowserWindow> {
   const origin = currentHostOrigin()
-  const recoveryMode = pluginRecoveryStartupBlocked
+  const recoveryMode = pluginRecoveryStartupBlocked && !pluginRecoverySafeMode
   if (!recoveryMode && origin === undefined) throw new Error('desktop Host is not ready')
   const window = new BrowserWindow({
     width: WINDOW_WIDTH,
@@ -390,7 +405,11 @@ async function createMainWindow(): Promise<BrowserWindow> {
     return { action: 'deny' }
   })
   if (recoveryMode) await window.loadURL(recoveryPageUrl())
-  else if (origin !== undefined) await loadWindowHost(window, origin)
+  else if (origin !== undefined) await loadWindowHost(
+    window,
+    origin,
+    pluginRecoverySafeMode ? PLUGIN_CENTER_PAGE_ID : undefined,
+  )
   if (!lifecycle?.isQuitting) window.show()
   return window
 }
@@ -576,12 +595,18 @@ function registerDesktopBridge(): PluginCenterBackend {
   })
   ipcMain.handle(DESKTOP_CHANNELS.pluginOperationStart, async (event, value: unknown) => {
     assertDesktopSender(event)
-    if (pluginRecoveryStartupBlocked) throw new Error('plugin recovery must finish before another operation can start')
     const controller = pluginOperationController
     if (controller === undefined) throw new Error('plugin operation controller is unavailable')
-    return typeof value === 'object' && value !== null && 'action' in value
-      ? await controller.manage(value)
-      : await controller.start(value)
+    const management = typeof value === 'object' && value !== null && 'action' in value
+      ? decodePluginManagementRequest(value)
+      : null
+    const safeManagement = pluginRecoverySafeMode
+      && management !== null
+      && isPluginSafeModeManagementAction(management.action)
+    if (pluginRecoveryStartupBlocked && !safeManagement) {
+      throw new Error('plugin recovery safe mode allows only disable or uninstall')
+    }
+    return management === null ? await controller.start(value) : await controller.manage(management)
   })
   ipcMain.handle(DESKTOP_CHANNELS.pluginOwnedDataGetOffer, async (event) => {
     assertDesktopSender(event)
@@ -611,13 +636,16 @@ function registerDesktopBridge(): PluginCenterBackend {
     const recovery = pluginRecoveryController
     if (recovery === undefined) throw new Error('plugin recovery controller is unavailable')
     const result = await recovery.retry(request.operationId)
-    if (result?.phase === 'rolled-back') {
-      pluginRecoveryStartupBlocked = false
+    applyPluginRecoverySnapshot(result)
+    if (result?.phase === 'rolled-back' || pluginRecoverySafeMode) {
       const window = mainWindow
       const origin = currentHostOrigin()
       if (window !== undefined && !window.isDestroyed() && origin !== undefined) {
         await loadWindowHost(window, origin, PLUGIN_CENTER_PAGE_ID)
       }
+    } else if (result?.phase === 'recovery-failed') {
+      const window = mainWindow
+      if (window !== undefined && !window.isDestroyed()) await window.loadURL(recoveryPageUrl())
     }
     return result
   })
@@ -682,15 +710,24 @@ async function initializePluginOperations(backend: PluginCenterBackend): Promise
     reloadHost: origin => currentLifecycle.reloadHost(origin, PLUGIN_CENTER_PAGE_ID),
   })
   pluginRecoveryController = recovery
-  pluginDiagnosticExporter = new PluginRecoveryDiagnosticExporter(journal)
+  pluginDiagnosticExporter = new PluginRecoveryDiagnosticExporter(journal, {
+    desktopVersion: app.getVersion(),
+    platform: resolveSupportedPluginPlatform(process.platform, process.arch),
+  })
   pluginOwnedDataRemover = new PluginOwnedDataRemover(
     join(app.getPath('userData'), 'plugin-data'),
     journal,
     ownedDataAuthorityStore,
   )
   recovery.subscribe((snapshot) => {
+    applyPluginRecoverySnapshot(snapshot)
     for (const window of BrowserWindow.getAllWindows()) {
-      if (!window.isDestroyed()) window.webContents.send(DESKTOP_CHANNELS.pluginRecoveryState, snapshot)
+      if (window.isDestroyed()) continue
+      window.webContents.send(DESKTOP_CHANNELS.pluginRecoveryState, snapshot)
+      if (snapshot.phase === 'recovery-failed' && !pluginRecoverySafeMode
+        && !isRecoveryPageUrl(window.webContents.getURL())) {
+        void window.loadURL(recoveryPageUrl())
+      }
     }
   })
   const sharedExecutorOptions = {
@@ -764,10 +801,15 @@ async function initializePluginOperations(backend: PluginCenterBackend): Promise
       }
       return await currentHost.start()
     },
+    startSafeHost: async () => currentHost.current ?? await currentHost.start(),
   })
   if (startup.recovery?.operationId !== UNREADABLE_PLUGIN_JOURNAL_OPERATION_ID) {
     await controller.initialize()
     controller.subscribe((operation) => {
+      if (pluginRecoverySafeMode && operation.phase === 'committed') {
+        pluginRecoveryStartupBlocked = false
+        pluginRecoverySafeMode = false
+      }
       for (const window of BrowserWindow.getAllWindows()) {
         if (!window.isDestroyed()) window.webContents.send(DESKTOP_CHANNELS.pluginOperationState, operation)
       }
@@ -838,7 +880,8 @@ async function boot(): Promise<void> {
     reportError: (error) => { console.error('desktop shutdown failed:', error) },
   })
   const pluginStartup = await initializePluginOperations(pluginCenter)
-  pluginRecoveryStartupBlocked = pluginStartup.mode === 'recovery-failed'
+  pluginRecoveryStartupBlocked = pluginStartup.mode !== 'normal'
+  pluginRecoverySafeMode = pluginStartup.mode === 'safe'
   createTray()
   await lifecycle.showWindow()
   if (app.isPackaged && !pluginRecoveryStartupBlocked) {

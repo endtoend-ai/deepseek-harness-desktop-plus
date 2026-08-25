@@ -18,6 +18,7 @@ import type {
   ComposerKeyboard, DraftAttachmentId, EditSelection, InputActions, InputNotice, InputState,
 } from '../input/contract.ts'
 import type { createChatStore } from '../stores.ts'
+import type { ConversationOutlineEntry } from '../chat/outline.ts'
 import type { ComposerSubmitGesture, InputSubmitMode } from './composer-submission.ts'
 import type { ChatNode, ChatNodeKind } from './chat-nodes.ts'
 import type { CallId, SelectionTarget, ViewTab } from './views.ts'
@@ -757,7 +758,10 @@ export interface ChatViewInjected {
    * hand the path off (the chat view shows that reason and a retry).
    */
   openFile: (path: string) => Promise<void>
-  loadOlder: () => void
+  /** Extend the rendered transcript window by one history page. */
+  loadOlder: () => Promise<void>
+  /** Read the complete lightweight history index without mounting old rows. */
+  readOutline: (signal?: AbortSignal) => Promise<ConversationOutlineEntry[]>
   /** Resolve a session-authorized historical image for inline display. */
   loadImage: (attachment: ImageAttachmentRef) => Promise<string>
   /** Hand a call off to the trajectory view: write the one-shot inspect target and switch tabs. */

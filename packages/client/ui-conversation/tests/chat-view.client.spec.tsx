@@ -153,7 +153,8 @@ function makeHarness(init?: Partial<ConversationSnapshot>) {
   const { set, source } = makeSource(init)
   const openDetails = vi.fn<(t: SelectionTarget) => void>()
   const openFile = vi.fn<(path: string) => Promise<void>>().mockResolvedValue(undefined)
-  const loadOlder = vi.fn()
+  const loadOlder = vi.fn<ChatViewSlotProps['loadOlder']>().mockResolvedValue(undefined)
+  const readOutline = vi.fn<ChatViewSlotProps['readOutline']>().mockResolvedValue([])
   const inspectCall = vi.fn<(callId: string) => void>()
   // In-memory scroll memory matching the apply.ts per-session map contract.
   let savedScroll: ReturnType<ChatViewSlotProps['chatScroll']['read']> = null
@@ -283,6 +284,7 @@ function makeHarness(init?: Partial<ConversationSnapshot>) {
     openDetails,
     openFile,
     loadOlder,
+    readOutline,
     loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
     inspectCall,
     chatScroll,
@@ -1333,6 +1335,33 @@ describe('ChatView', () => {
     expect(view.getByText('加载中…')).toBeTruthy()
   })
 
+  it('loads an unloaded outline target page and scrolls to its rendered row', async () => {
+    const h = makeHarness({ nodes: [user(50, 'recent target')], hasMore: true })
+    const readOutline = vi.fn<ChatViewSlotProps['readOutline']>().mockResolvedValue([
+      { seq: 1, role: 'user', summary: 'old target' },
+      { seq: 50, role: 'user', summary: 'recent target' },
+    ])
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    })
+    const loadOlder = vi.fn<ChatViewSlotProps['loadOlder']>(async () => {
+      h.set({ nodes: [user(1, 'old target'), user(50, 'recent target')], hasMore: false })
+    })
+    const view = render(
+      <h.ChatView {...h.props} readOutline={readOutline} loadOlder={loadOlder} />,
+    )
+    fireEvent.click(view.getByRole('button', { name: '打开对话目录' }))
+    fireEvent.click(await view.findByRole('button', { name: /old target/ }))
+    await waitFor(() => {
+      expect(loadOlder).toHaveBeenCalledTimes(1)
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' })
+      expect(view.container.querySelector('[data-chat-anchor-seq="1"][data-chat-outline-target="true"]')).not.toBeNull()
+      expect(view.queryByRole('button', { name: '隐藏对话目录' })).toBeNull()
+    })
+  })
+
   it('shows open error and loading states', () => {
     const h = makeHarness({
       openState: 'error',
@@ -1444,7 +1473,7 @@ describe('ChatView', () => {
     })
     const noHistoryView = render(<noHistory.ChatView {...noHistory.props} />)
     expect(noHistoryView.getByText('No compactable history yet.')).toBeTruthy()
-    expect(noHistoryView.queryByRole('button')).toBeNull()
+    expect(noHistoryView.queryByRole('button', { name: /compact/i })).toBeNull()
 
     const failed = makeHarness({
       nodes: [command({
