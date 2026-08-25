@@ -88,6 +88,7 @@ import { PresetSquareClient } from './preset-square/client.ts'
 import { ResourcePresetSquareCatalog } from './preset-square/bundled-catalog.ts'
 import { migrateLegacyBundledContentPreset } from './preset-square/legacy-bundled-preset-migration.ts'
 import {
+  prepareBundledPackageManagerCommand,
   PresetRuntimeController,
   withPresetRuntimeEnvironment,
 } from './preset-square/runtime-controller.ts'
@@ -854,6 +855,12 @@ async function boot(): Promise<void> {
   const pluginCenter = registerDesktopBridge()
   const paths = pluginCenter.paths
   assertHostArtifacts(paths)
+  await prepareBundledPackageManagerCommand({
+    homeDirectory: resolveDshHome(),
+    nodeExecutable: paths.nodeExecutable,
+    packageManagerEntry: paths.packageManagerEntry,
+    electronRunAsNode: paths.electronRunAsNode,
+  })
   host = createHostSupervisor({
     spawnHost: () => spawnDshWeb({
       ...paths,

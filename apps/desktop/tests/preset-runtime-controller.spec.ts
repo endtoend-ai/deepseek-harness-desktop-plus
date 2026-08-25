@@ -1,15 +1,17 @@
 import { existsSync } from 'node:fs'
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import type {
   ManagedPresetRuntimeId,
   PresetRuntimeDependencyId,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import {
+  prepareBundledPackageManagerCommand,
   PresetRuntimeController,
   presetRuntimePaths,
+  withPresetRuntimeEnvironment,
   type PresetRuntimeInstaller,
   type PresetRuntimeProcessAdapter,
 } from '../src/preset-square/runtime-controller.ts'
@@ -100,6 +102,47 @@ function controller(
 }
 
 describe('Preset runtime controller', () => {
+  it('exposes the bundled pnpm entry through the Windows Host command path', async () => {
+    const directory = await home()
+    await prepareBundledPackageManagerCommand({
+      homeDirectory: directory,
+      nodeExecutable: 'C:\\Program Files\\DeepSeek Harness\\DeepSeek Harness.exe',
+      packageManagerEntry: 'C:\\Program Files\\DeepSeek Harness\\resources\\host\\node_modules\\pnpm\\bin\\pnpm.cjs',
+      electronRunAsNode: true,
+      platform: 'win32',
+    })
+
+    const wrapper = await readFile(join(presetRuntimePaths(directory).bin, 'pnpm.cmd'), 'utf8')
+    expect(wrapper).toBe([
+      '@echo off',
+      'set "ELECTRON_RUN_AS_NODE=1"',
+      '"C:\\Program Files\\DeepSeek Harness\\DeepSeek Harness.exe" "C:\\Program Files\\DeepSeek Harness\\resources\\host\\node_modules\\pnpm\\bin\\pnpm.cjs" %*',
+      '',
+    ].join('\r\n'))
+  })
+
+  it('places an executable bundled pnpm wrapper first in the POSIX Host path', async () => {
+    const directory = await home()
+    const paths = presetRuntimePaths(directory)
+    await prepareBundledPackageManagerCommand({
+      homeDirectory: directory,
+      nodeExecutable: '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness',
+      packageManagerEntry: '/Applications/DeepSeek Harness.app/Contents/Resources/host/node_modules/pnpm/bin/pnpm.cjs',
+      electronRunAsNode: true,
+      platform: 'darwin',
+    })
+
+    const wrapperPath = join(paths.bin, 'pnpm')
+    expect(await readFile(wrapperPath, 'utf8')).toBe([
+      '#!/bin/sh',
+      "export ELECTRON_RUN_AS_NODE='1'",
+      "exec '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' '/Applications/DeepSeek Harness.app/Contents/Resources/host/node_modules/pnpm/bin/pnpm.cjs' \"$@\"",
+      '',
+    ].join('\n'))
+    expect((await stat(wrapperPath)).mode & 0o777).toBe(0o700)
+    expect(withPresetRuntimeEnvironment({ PATH: '/usr/bin' }, directory).PATH?.split(delimiter)[0]).toBe(paths.bin)
+  })
+
   it('moves the video runtime from detected missing to verified ready after one confirmed install', async () => {
     const directory = await home()
     const installer = new FixtureInstaller(directory)

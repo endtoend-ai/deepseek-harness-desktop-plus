@@ -163,6 +163,27 @@ export function withPresetRuntimeEnvironment(
   }
 }
 
+/**
+ * Expose the bundled package manager to Host plugins without relying on a shell installation.
+ * @param options Desktop runtime paths and launch mode for the packaged pnpm entry.
+ * @returns Completion after the platform command wrapper has been replaced atomically.
+ */
+export async function prepareBundledPackageManagerCommand(
+  options: Pick<
+    PresetRuntimeControllerOptions,
+    'homeDirectory' | 'nodeExecutable' | 'packageManagerEntry' | 'electronRunAsNode' | 'platform'
+  >,
+): Promise<void> {
+  await writeCommandWrapper(
+    presetRuntimePaths(options.homeDirectory),
+    options.platform ?? process.platform,
+    'pnpm',
+    options.nodeExecutable,
+    [options.packageManagerEntry],
+    options.electronRunAsNode,
+  )
+}
+
 function quotePosix(value: string): string {
   return `'${value.replaceAll("'", "'\\''")}'`
 }
