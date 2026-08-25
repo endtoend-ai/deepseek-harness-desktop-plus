@@ -27,7 +27,7 @@
 
 <p align="center">自动发现并推送生态新插件，AI 智能推荐值得安装的能力；无需命令行即可完成搜索、校验、安装、启停与卸载。</p>
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.18/DeepSeek-Harness-Desktop-0.1.0-rc.18-macos-arm64-preview.zip"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.18/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.18-Setup.exe"><strong>下载 Windows x64 开发预览版</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.19/DeepSeek-Harness-Desktop-0.1.0-rc.19-macos-arm64-preview.zip"><strong>下载 macOS arm64 开发预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.19/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.19-Setup.exe"><strong>下载 Windows x64 开发预览版</strong></a></p>
 
 <p align="center">
   <img src="assets/plugin-discovery-hero.jpg" alt="DeepSeek Harness Studio 视觉增强、插件市场、Preset 广场、零代码一键部署、插件自动推送与 AI 智能推荐" width="100%">
@@ -87,7 +87,7 @@ DeepSeek Harness Studio 使用 Electron 承载 DeepSeek Harness 的 Web 工作�
 
 ## DeepSeek Harness v0.1.1-rc.2 兼容能力
 
-Studio `0.1.0-rc.18` 已整合 DeepSeek Harness `0.1.1-rc.2` 的核心与 Web 能力，同时保留赋范的插件中心、插件发现、Preset 广场、应用中心、主题皮肤和桌面恢复链路。Studio 版本号与 Harness 上游版本号分别管理；页面顶部下载链接与本版本一致。
+Studio `0.1.0-rc.19` 已整合 DeepSeek Harness `0.1.1-rc.2` 的核心与 Web 能力，同时保留赋范的插件中心、插件发现、Preset 广场、应用中心、主题皮肤和桌面恢复链路。Studio 版本号与 Harness 上游版本号分别管理；页面顶部下载链接与本版本一致。
 
 - **多模态能力**：保留 Pro／Flash 文本模型，接入 `DeepSeek-V4-Flash-Vision-Exp`、可持久图片附件和 Files API 图片复用；失效引用会有界重传，解析失败时整次请求回退为受限内联图片。
 - **Agent 运行能力**：接入 `@` 文件／会话引用、Plan、Goal、后台 Jobs、Workflow、SubAgent、并发 Web Search 与 Windows 持久 PowerShell PTY。
@@ -342,7 +342,7 @@ Studio 已支持通过标准 OpenAI-compatible 接口接入本机或局域网中
 
 > GitHub Releases 已提供经过真实 Electron 验收的 macOS Apple Silicon 预览 ZIP 和 Windows x64 预览安装程序，运行桌面端无需另行安装 Node.js 或 pnpm。当前均为开发预览资产；正式版本仍将提供完成平台签名的 macOS `.dmg` 和 Windows x64 `.exe`。
 
-<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.18/DeepSeek-Harness-Desktop-0.1.0-rc.18-macos-arm64-preview.zip"><strong>下载 macOS arm64 预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.18/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.18-Setup.exe"><strong>下载 Windows x64 安装程序</strong></a></p>
+<p align="center"><a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.19/DeepSeek-Harness-Desktop-0.1.0-rc.19-macos-arm64-preview.zip"><strong>下载 macOS arm64 预览版</strong></a> · <a href="https://github.com/fufankeji/deepseek-harness-studio/releases/download/desktop-preview-v0.1.0-rc.19/DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.19-Setup.exe"><strong>下载 Windows x64 安装程序</strong></a></p>
 
 ### macOS arm64
 
@@ -357,7 +357,7 @@ open "/Applications/DeepSeek Harness.app"
 
 ### Windows x64
 
-下载 `DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.18-Setup.exe` 后直接运行安装程序。Release 的公开下载区只保留 macOS ZIP 和 Windows 安装程序；校验文件、blockmap 与平台验收记录保留在对应 GitHub Actions 构建中，避免普通用户误下载开发文件。
+下载 `DeepSeek-Harness-Desktop-Windows-x64-0.1.0-rc.19-Setup.exe` 后直接运行安装程序。Release 的公开下载区只保留 macOS ZIP 和 Windows 安装程序；校验文件、blockmap 与平台验收记录保留在对应 GitHub Actions 构建中，避免普通用户误下载开发文件。
 
 开发预览版使用独立 Pre-release 标签，不触发正式安装器发布。正式流程只接受与 Desktop 版本完全一致的 `desktop-v*` 标签；macOS 与 Windows 安装包分别完成平台签名验证后，GitHub 才会同时公开安装文件和 `SHA256SUMS`。
 

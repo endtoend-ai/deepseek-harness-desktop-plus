@@ -239,6 +239,16 @@ jobs:
             throw 'The packaged Harness Host did not become observable within 75 seconds.'
           }
 
+          $pnpmCommand = Join-Path $env:DSH_HOME 'preset-runtime\bin\pnpm.cmd'
+          if (-not (Test-Path -LiteralPath $pnpmCommand -PathType Leaf)) {
+            throw "The packaged Host did not expose pnpm at $pnpmCommand."
+          }
+          $expectedPnpmVersion = node -p "require('./package.json').packageManager.split('@').at(-1)"
+          $pnpmVersion = (& $pnpmCommand --version | Out-String).Trim()
+          if ($LASTEXITCODE -ne 0 -or $pnpmVersion -ne $expectedPnpmVersion) {
+            throw "The bundled pnpm command reported '$pnpmVersion'; expected '$expectedPnpmVersion'."
+          }
+
           taskkill /PID $applicationProcess.Id /T /F | Out-Host
           $uninstallers = @(Get-ChildItem $application.DirectoryName -File -Filter 'Uninstall*.exe')
           if ($uninstallers.Count -ne 1) {
@@ -301,6 +311,7 @@ jobs:
             'native_runner=windows-2025',
             'silent_install=PASS',
             'packaged_host_start=PASS',
+            'bundled_pnpm_command=PASS',
             'silent_uninstall=PASS',
             'manually_deleted_install_repair=PASS',
             'repaired_uninstaller=PASS',

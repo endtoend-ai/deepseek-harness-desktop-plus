@@ -52,6 +52,8 @@ describe('desktop GitHub Release workflow', () => {
     expect(previewWorkflow).toContain('WaitForExit(300000)')
     expect(previewWorkflow).toContain("Where-Object Name -Like 'Uninstall*.exe'")
     expect(previewWorkflow).toContain('The copied background uninstaller remained after uninstall.')
+    expect(previewWorkflow).toContain("'preset-runtime\\bin\\pnpm.cmd'")
+    expect(previewWorkflow).toContain('bundled_pnpm_command=PASS')
     expect(previewWorkflow).toContain('manually_deleted_install_repair=PASS')
     expect(previewWorkflow).toContain('repaired_uninstaller=PASS')
     const releaseStep = previewWorkflow.slice(previewWorkflow.indexOf(
