@@ -1,8 +1,8 @@
-/** Run one headless task through the shipped Code Mode composition. Requires a model credential. */
+/** Run one headless task through the shipped PTC mode composition. Requires a model credential. */
 import { spawn } from 'node:child_process'
 
 const task = process.argv.slice(2).join(' ').trim()
-  || 'Inspect this repository with Code Mode and report its top-level architecture.'
+  || 'Inspect this repository with PTC mode and report its top-level architecture.'
 
 const child = spawn(process.execPath, [
   '--import',
@@ -13,6 +13,6 @@ const child = spawn(process.execPath, [
   task,
 ], {
   stdio: 'inherit',
-  env: { ...process.env, DSH_TOOLS_MODE: 'code' },
+  env: { ...process.env, DSH_TOOLS_MODE: 'ptc' },
 })
 child.on('exit', (code, signal) => { process.exit(signal !== null ? 1 : code ?? 1) })
