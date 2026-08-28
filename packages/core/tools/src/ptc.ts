@@ -1,9 +1,9 @@
 /**
- * Code Mode `run_code` transport. Programs call the registry's agent-visible
+ * PTC mode `run_code` transport. Programs call the registry's agent-visible
  * tools through nested executions scheduled under the native concurrency
  * contract; each sub-dispatch is logged for reconstruction, while only the
  * outer curated result enters model history.
- * @module @deepseek-ai/dsh-tools/src/code-mode
+ * @module @deepseek-ai/dsh-tools/src/ptc
  */
 
 import { ToolCallId, createUserMessage, HarnessError } from '@deepseek-ai/dsh-llm'
@@ -14,10 +14,10 @@ import type { JsonValue } from '@deepseek-ai/dsh-session'
 import { FIRST_PARTY_SECTION_ORDER } from '@deepseek-ai/dsh-system-prompt'
 import { defineTool, parameterSchemaSpecToJsonSchema } from './schema.ts'
 import { TOOL_RUNTIME_SCHEDULER } from './index.ts'
-import type { CodeDispatchLog, ToolDefinition, ToolExecutionResult, ToolRuntime, ToolRunContext } from './index.ts'
+import type { PtcDispatchLog, ToolDefinition, ToolExecutionResult, ToolRuntime, ToolRunContext } from './index.ts'
 import type {} from './types.ts'
 
-/** The model-facing name of the Code Mode tool. */
+/** The model-facing name of the PTC mode tool. */
 export const RUN_CODE_NAME = 'run_code'
 
 /** The `tools:sdk` section order, after per-tool guidance sections. */
@@ -72,7 +72,7 @@ const PYTHON_FLAVOR: RunCodeFlavor = {
 }
 
 /**
- * The languages Code Mode ships a presentation for. Both per-language tables —
+ * The languages PTC mode ships a presentation for. Both per-language tables —
  * {@link RUN_CODE_FLAVORS} here and `SDK_RENDERERS` in {@link ./index.ts} — are
  * checked against this union with `satisfies`, so a language added to one and
  * not the other fails `typecheck` instead of waiting for a runtime that reports
@@ -259,7 +259,7 @@ function renderValue(value: JsonValue): string {
   return typeof value === 'string' ? value : renderJsonValue(value)
 }
 
-/** Canonical value returned by the outer Code Mode transport. */
+/** Canonical value returned by the outer PTC mode transport. */
 type RunCodeOutput = { logs: string[]; result?: JsonValue }
 
 /**
@@ -279,8 +279,8 @@ export interface RunCodeBridgeOptions {
   peekRuntime: () => CodeRuntime | undefined
   /** The run's overlap cap for parallel-classified sub-calls (the registry passes its validated `maxParallelSubCalls`). */
   maxParallel: number
-  /** Runs the contained `tools/code-dispatch-log` waterfall over one settled sub-dispatch (the registry's private invoker). */
-  shapeDispatchLog: (dispatch: CodeDispatchLog) => Promise<ContentBlock[]>
+  /** Runs the contained `tools/ptc-dispatch-log` waterfall over one settled sub-dispatch (the registry's private invoker). */
+  shapeDispatchLog: (dispatch: PtcDispatchLog) => Promise<ContentBlock[]>
 }
 
 /**

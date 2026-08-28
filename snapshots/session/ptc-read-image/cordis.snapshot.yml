@@ -1,8 +1,11 @@
-# Keyless replay combines Code Mode with the durable image store and an exact
+# Keyless replay combines PTC mode with the durable image store and an exact
 # image-capable replay route. The scenario generates its tiny PNG inside the
 # run_code program, then exercises read_image as a nested dispatch.
 - id: llm-deepseek
   name: '@deepseek-ai/dsh-llm-deepseek'
+  disabled: true
+
+- id: plugin-package-inventory-deepseek
   disabled: true
 
 - id: agent-default-model
@@ -25,7 +28,7 @@
 - id: tools
   name: '@deepseek-ai/dsh-tools'
   config:
-    mode: code
+    mode: ptc
 
 - id: system-prompt
   name: '@deepseek-ai/dsh-system-prompt'

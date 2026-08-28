@@ -1,4 +1,4 @@
-// Code Mode browser round trip with nested sub-calls and details selection.
+// PTC mode browser round trip with nested sub-calls and details selection.
 // Record: DSH_SNAPSHOT=record rewrites session.jsonl, then a keyless
 // DSH_SNAPSHOT=refresh regenerates ui.expected.md.
 import { readFile } from 'node:fs/promises'
@@ -13,15 +13,15 @@ import {
 } from './scaffold.ts'
 import { connectFreshWorkspace, expandOwningTurnProcess, newEnglishPage, saveFailureShot } from './support.ts'
 
-const FIXTURE = fileURLToPath(new URL('../../../snapshots/web/code-mode-round/session.jsonl', import.meta.url))
-const UI_EXPECTED = fileURLToPath(new URL('../../../snapshots/web/code-mode-round/ui.expected.md', import.meta.url))
+const FIXTURE = fileURLToPath(new URL('../../../snapshots/web/ptc-round/session.jsonl', import.meta.url))
+const UI_EXPECTED = fileURLToPath(new URL('../../../snapshots/web/ptc-round/ui.expected.md', import.meta.url))
 const MODE = webSnapshotMode()
 
 // Elicits the successful and failed sub-rows this scenario asserts.
 const PROMPT = 'Using ONE run_code program: run bash `echo CODE_ROUND_OK`, then read the file missing.txt '
   + 'catching its error in the program. Return an object with both outcomes. Then reply DONE and stop.'
 
-describe('web e2e: Code Mode round renders nested sub-calls', () => {
+describe('web e2e: PTC mode round renders nested sub-calls', () => {
   let scaffold: WebScaffold
   let browser: Browser
   let page: Page
@@ -30,7 +30,7 @@ describe('web e2e: Code Mode round renders nested sub-calls', () => {
 
   beforeAll(async () => {
     scaffold = await launchWebScaffold({
-      toolsMode: 'code',
+      toolsMode: 'ptc',
       compareReplaySession: true,
       ...(MODE === 'record' ? {} : { replayFixture: FIXTURE, paceMs: 15 }),
     })
@@ -49,7 +49,7 @@ describe('web e2e: Code Mode round renders nested sub-calls', () => {
   })
 
   it('drives the recorded prompt to a settled turn (all modes)', async () => {
-    onTestFailed(() => saveFailureShot(page, 'web-e2e-code-mode-drive'))
+    onTestFailed(() => saveFailureShot(page, 'web-e2e-ptc-drive'))
     if (MODE !== 'record') {
       expect(fixtureUserPrompts(await readFile(FIXTURE, 'utf8'))).toEqual([PROMPT])
     }
@@ -89,7 +89,7 @@ describe('web e2e: Code Mode round renders nested sub-calls', () => {
   })
 
   it.skipIf(MODE === 'record')('renders the code parent row with always-visible nested sub-rows', async () => {
-    onTestFailed(() => saveFailureShot(page, 'web-e2e-code-mode-rows'))
+    onTestFailed(() => saveFailureShot(page, 'web-e2e-ptc-rows'))
     await expect.poll(() => page.getByText('DONE', { exact: true }).count(), { timeout: 15_000 }).toBeGreaterThanOrEqual(1)
     // The parent run_code row wears the code variant with the model-authored
     // description as its summary (the presentCall contract).
@@ -103,7 +103,7 @@ describe('web e2e: Code Mode round renders nested sub-calls', () => {
   }, 60_000)
 
   it.skipIf(MODE === 'record')('a bash sub-row click leaves the default details panel closed', async () => {
-    onTestFailed(() => saveFailureShot(page, 'web-e2e-code-mode-details'))
+    onTestFailed(() => saveFailureShot(page, 'web-e2e-ptc-details'))
     const nest = page.locator('[data-subcalls]').first()
     const frame = page.locator('[style*="grid-template-columns"]').first()
     expect(await frame.getAttribute('data-details-collapsed')).toBe('true')
@@ -113,7 +113,7 @@ describe('web e2e: Code Mode round renders nested sub-calls', () => {
   })
 
   it.skipIf(MODE === 'record')('matches the expanded conversation aria golden with stable anchors', async () => {
-    onTestFailed(() => saveFailureShot(page, 'web-e2e-code-mode-aria'))
+    onTestFailed(() => saveFailureShot(page, 'web-e2e-ptc-aria'))
     const snapshot = await captureExpandedTurnProcessAria(
       page,
       '[class*="centerCol"]',
