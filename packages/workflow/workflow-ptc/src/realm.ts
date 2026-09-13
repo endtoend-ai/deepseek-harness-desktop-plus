@@ -1,11 +1,8 @@
 /**
- * Materializes values leaving the script vm into plain JSON before they cross the worker
- * boundary, and renders thrown script values without rejecting the run. The walk rejects
- * values that JSON cannot preserve but trusts model-written workflow scripts: getters and proxy traps may
- * run, and the vm is not a security boundary. The worker provides host-loop isolation and
- * forced termination, not hostile-value containment. See
- * .agents/notes/implemented/feature/2026-07-05-dynamic-workflows.md for the isolation rationale.
- * @module @deepseek-ai/dsh-workflow-worker-thread/realm
+ * Materializes script VM values as plain JSON and renders thrown values.
+ * Getters and proxy traps may execute inside the confined Node process;
+ * process isolation and cancellation belong to PTC, not the VM.
+ * @module @deepseek-ai/dsh-workflow-ptc/realm
  */
 
 /** Thrown by {@link materializeFromRealm}; the caller wraps it into the right `WorkflowError` code. */
@@ -20,9 +17,8 @@ export class MaterializeError extends Error {
  * Render a thrown value to failure text without ever throwing: prefer the
  * `stack` (host or realm — a realm error's `stack` is a plain string read),
  * fall back to `message`, then `String()`. Reading those properties MAY run
- * script code (a getter, `toString`) — accepted under the module's trust
- * premise; if that code itself throws, a fixed label is returned instead.
- * @param error - any value thrown in the host or worker realm.
+ * script code; if that code itself throws, a fixed label is returned instead.
+ * @param error - any value thrown in the host or guest realm.
  * @returns human-readable text for the failure report; prefers the stack.
  */
 export function renderThrown(error: unknown): string {
