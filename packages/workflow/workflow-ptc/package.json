@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-workflow-worker-thread",
-  "description": "worker-thread workflow engine: executes model-written orchestration scripts off the host event loop, bridging agent() calls back to ctx.subagents",
+  "name": "@deepseek-ai/dsh-workflow-ptc",
+  "description": "Workflow orchestration in the shared sandboxed Node PTC runtime",
   "version": "0.1.5-rc.2",
   "publishConfig": {
     "access": "public"
@@ -8,7 +8,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/workflow/workflow-worker-thread"
+    "directory": "packages/workflow/workflow-ptc"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -18,16 +18,11 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
-    "./worker": {
-      "types": "./lib/types/worker.d.ts",
-      "default": "./lib/worker.cjs"
-    },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
     "lib/index.js",
-    "lib/worker.cjs",
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
@@ -38,7 +33,10 @@
     "@deepseek-ai/dsh-session": "workspace:^",
     "@deepseek-ai/dsh-subagent": "workspace:^",
     "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/dsh-workflow": "workspace:^"
+    "@deepseek-ai/dsh-workflow": "workspace:^",
+    "@deepseek-ai/dsh-ptc-runtime": "workspace:^",
+    "@deepseek-ai/dsh-sandbox": "workspace:^",
+    "@deepseek-ai/dsh-sandbox-policy": "workspace:^"
   },
   "dependencies": {
     "@deepseek-ai/dsh-brand": "workspace:^",
@@ -59,7 +57,15 @@
     "@deepseek-ai/dsh-system-prompt": "workspace:^",
     "@deepseek-ai/dsh-tools": "workspace:^",
     "@deepseek-ai/dsh-workflow": "workspace:^",
-    "tsx": "^4.19.2",
-    "@deepseek-ai/dsh-http-proxy": "workspace:^"
+    "@deepseek-ai/dsh-http-proxy": "workspace:^",
+    "@deepseek-ai/dsh-ptc-runtime": "workspace:^",
+    "@deepseek-ai/dsh-sandbox": "workspace:^",
+    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
+    "@deepseek-ai/dsh-ptc-runtime-node": "workspace:^",
+    "@deepseek-ai/dsh-fs": "workspace:^",
+    "@deepseek-ai/dsh-fs-local": "workspace:^",
+    "@deepseek-ai/dsh-subprocess": "workspace:^",
+    "@deepseek-ai/dsh-subprocess-local": "workspace:^",
+    "@deepseek-ai/dsh-sandbox-local": "workspace:^"
   }
 }

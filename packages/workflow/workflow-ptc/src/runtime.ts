@@ -1,15 +1,8 @@
 /**
- * Per-run worker-side vm hooks, child RPC, concurrency/caps, cancellation, and result serialization; it
- * never touches Cordis. Script values leaving the realm are materialized as plain JSON before
- * messaging. Values entering the trusted model-written realm are passed directly; `args` alone is
- * cloned so script mutation cannot alter initialization data. See `./realm.ts` for the trust model.
- *
- * Fatal workflow errors—bad hook arguments, unsupported schemas/options, caps, start failures, and
- * cancellation—propagate through combinators. Only child failures and ordinary stage errors become
- * per-item nulls. Every returned promise has a rejection consumer so dropped script promises cannot
- * kill the worker. A cancelled script that never settles emits nothing; the host force-settles the
- * run within grace and terminates the thread.
- * @module @deepseek-ai/dsh-workflow-worker-thread/runtime
+ * Workflow VM hooks, child callbacks, ordinary concurrency limits and result serialization.
+ * PTC owns process confinement and cancellation. Fatal hook and provider failures propagate
+ * through combinators; ordinary child failures and stage errors become per-item nulls.
+ * @module @deepseek-ai/dsh-workflow-ptc/runtime
  */
 
 import * as vm from 'node:vm'
@@ -57,18 +50,14 @@ function defaultLabel(prompt: string): string {
 }
 
 /**
- * One live script execution inside the worker. Constructed per run by the
- * session; `drive()` is called exactly once and NEVER rejects — every failure
- * becomes a {@link WorkflowResult} with a non-`completed` stop reason. The
- * host owns cancellation and cleanup of any dropped child work.
+ * One script execution inside the confined Node process. The host owns
+ * cancellation and cleanup of any dropped child work.
  */
 export class WorkflowExecution {
   /** 1-based count of `agent()` calls started (the `agentsStarted` result field). */
   private started = 0
   private activeSlots = 0
-  private readonly slotWaiters: { resolve(): void; reject(error: unknown): void }[] = []
-  private cancelReason: string | undefined
-  private cancelError: WorkflowError | undefined
+  private readonly slotWaiters: (() => void)[] = []
   private currentPhase: string | undefined
   private readonly context: vm.Context
   private readonly compiled: vm.Script
@@ -81,12 +70,7 @@ export class WorkflowExecution {
     private readonly observer: ExecutionObserver,
     private readonly children: ChildPort,
   ) {
-    // Compile FIRST: a body syntax error must throw out of the constructor
-    // before any realm state exists. The host pre-parses the identical
-    // wrapper, so under one Node version this throw is unreachable in
-    // production — the session still maps it to an error result defensively.
-    // lineOffset compensates for the wrapper line, so stack traces carry the
-    // script's own line numbers.
+    // The host parses this same wrapper before publishing a run.
     try {
       this.compiled = new vm.Script(`(async () => {\n${body}\n})()`, {
         filename: `workflow:${meta.name}`,
@@ -104,7 +88,7 @@ export class WorkflowExecution {
       pipeline: (items: unknown, ...stages: unknown[]) => this.contain(this.pipeline(items, stages)),
       phase: (title: unknown) => { this.phase(title) },
       log: (message: unknown) => { this.log(message) },
-      // workerData already performed the real cross-thread structured clone.
+      // PTC has already copied these inputs through its JSON channel.
       args,
     }
     for (const [key, value] of Object.entries(globals)) {
@@ -115,94 +99,29 @@ export class WorkflowExecution {
   }
 
   /**
-   * Whether the run has been cancelled. A METHOD, not an inline property
-   * read: `cancel()` mutates `cancelReason` concurrently (the session's
-   * message handler), and an inline read after an `await` gets narrowed by
-   * control flow into an always-false comparison.
-   */
-  private isCancelled(): boolean {
-    return this.cancelReason !== undefined
-  }
-
-  /**
-   * Shared hook entry guard: after {@link cancel}, EVERY hook throws
-   * `CANCELLED` at its next call — cancellation is the next HOOK boundary,
-   * not just the next `agent()`, so a script that caught one cancelled
-   * rejection cannot keep emitting progress through `phase`/`log` or enter a
-   * combinator.
-   */
-  private throwIfCancelled(): void {
-    if (this.isCancelled()) throw this.cancelledError()
-  }
-
-  /**
-   * Cancel the run: waiting `agent()` slots reject and every future hook call
-   * throws `CANCELLED` — the script dies at its next await. A script that
-   * never settles anyway (parked on a promise no hook owns) is the HOST's
-   * problem: its grace timer force-settles the run and terminates the
-   * worker. Idempotent; the first reason wins.
-   * @param reason - human-readable cause carried on the CANCELLED error. The
-   * host independently aborts the required signal shared by every child.
-   */
-  cancel(reason: string): void {
-    if (this.cancelReason !== undefined) return
-    this.cancelReason = reason
-    this.cancelError = new WorkflowError(`workflow run cancelled: ${this.cancelReason}`, 'CANCELLED')
-    for (const waiter of this.slotWaiters.splice(0)) waiter.reject(this.cancelledError())
-  }
-
-  /**
-   * Run the script to settlement. Resolves — never rejects — with the run's
-   * {@link WorkflowResult}: the materialized return value on `completed`, the
-   * failure message on `error`, and `cancelled` when the script died of
-   * cancellation. This method only chooses the result; the session publishes
-   * it and the host owns terminal child cancellation.
-   * @returns the settled outcome — this promise NEVER rejects (the seam's
-   * `result`-never-rejects contract); every failure maps to a variant.
+   * Run the script and materialize its JSON return value.
+   * @returns A completed or error result; script failures never reject.
    */
   async drive(): Promise<WorkflowResult> {
     try {
-      // Cancelled before the body ever ran (an already-aborted start signal,
-      // relayed by the host before its `go`): the script must not execute at
-      // all, let alone report `completed`.
-      if (this.isCancelled()) throw this.cancelledError()
       const scriptPromise = this.compiled.runInContext(this.context, { timeout: this.limits.syncTimeoutMs }) as Promise<unknown>
       const raw: unknown = await this.contain(Promise.resolve(scriptPromise))
-      // Cancelled while the body ran: a script that settled without touching
-      // another hook (or without any) must still report `cancelled` — the
-      // holder asked for cancellation and `completed` would be a lie.
-      if (this.isCancelled()) throw this.cancelledError()
       const value = raw === undefined ? null : this.materializeResult(raw)
       return { value, stopReason: 'completed', agentsStarted: this.started }
     } catch (error: unknown) {
-      // Any failure after cancel() reports `cancelled` with the canonical
-      // reason — the reject path mirrors the resolve path's post-settle check.
-      if (this.isCancelled()) {
-        return { value: null, stopReason: 'cancelled', error: this.cancelledError().message, agentsStarted: this.started }
-      }
-      // renderThrown is total (thrown values of any realm), so this arm
-      // cannot throw — drive() resolving is the `result` never-rejects contract
-      // contract.
       return { value: null, stopReason: 'error', error: renderThrown(error), agentsStarted: this.started }
     }
   }
 
   /**
    * Attach a no-op rejection consumer WITHOUT changing what the caller
-   * receives: if the script drops the promise (no await), cancellation cannot
-   * become an unhandled rejection (which would kill the worker thread); if
+   * receives: if the script drops the promise, a host rejection cannot become
+   * an unhandled rejection that kills the process; if
    * the script does await it, it still observes the rejection.
    */
   private contain<T>(promise: Promise<T>): Promise<T> {
     promise.catch(() => { /* consumed: see method contract — a dropped hook promise must not surface an unhandled rejection */ })
     return promise
-  }
-
-  private cancelledError(): WorkflowError {
-    // cancel() arms cancelError before any caller can observe isCancelled()
-    // === true; the fallback guards the type, not a reachable path.
-    /* v8 ignore next */
-    return this.cancelError ?? new WorkflowError('workflow run cancelled', 'CANCELLED')
   }
 
   /** Materialize the script's return value; violations become RESULT_UNSERIALIZABLE. */
@@ -220,23 +139,16 @@ export class WorkflowExecution {
     }
   }
 
-  /**
-   * Acquire one concurrency slot (FIFO). Cancellation rejects QUEUED waiters
-   * (see {@link cancel}); the callers guard their own entry and post-acquire
-   * windows, so no cancelled-precheck is duplicated here.
-   */
+  /** Acquire one concurrency slot in FIFO order. */
   private acquireSlot(): Promise<void> {
     if (this.activeSlots < this.limits.maxConcurrentAgents) {
       this.activeSlots += 1
       return Promise.resolve()
     }
-    return new Promise<void>((resolve, reject) => {
-      this.slotWaiters.push({
-        resolve: () => {
-          this.activeSlots += 1
-          resolve()
-        },
-        reject,
+    return new Promise<void>((resolve) => {
+      this.slotWaiters.push(() => {
+        this.activeSlots += 1
+        resolve()
       })
     })
   }
@@ -244,12 +156,11 @@ export class WorkflowExecution {
   private releaseSlot(): void {
     this.activeSlots -= 1
     const next = this.slotWaiters.shift()
-    if (next) next.resolve()
+    if (next) next()
   }
 
   /** The `agent(prompt, opts)` hook. */
   private async agent(rawPrompt: unknown, rawOpts: unknown): Promise<unknown> {
-    this.throwIfCancelled()
     if (typeof rawPrompt !== 'string' || rawPrompt.length === 0) {
       throw new WorkflowError('agent() requires a non-empty prompt string', 'INVALID_ARGUMENT')
     }
@@ -267,12 +178,6 @@ export class WorkflowExecution {
 
     await this.acquireSlot()
     try {
-      // Re-check after the acquire: the await yields at least one microtask
-      // tick even when a slot is free, and a queued waiter resumes a tick
-      // after its release — a cancel() landing in either window must not
-      // reach the host (which would refuse anyway, but the refusal reads as
-      // a start failure rather than the cancellation it is).
-      this.throwIfCancelled()
       let run: ChildHandle
       try {
         run = await this.children.startAgent({
@@ -282,19 +187,7 @@ export class WorkflowExecution {
           ...opts.model !== undefined ? { model: opts.model } : {},
         })
       } catch (error: unknown) {
-        // The host refuses starts once the run is cancelled — a refusal that
-        // races our own cancel state must read as the cancellation it is,
-        // not as a broken contract.
-        if (this.isCancelled()) throw this.cancelledError()
         throw new WorkflowError(`agent() could not start a child: ${renderThrown(error)}`, 'AGENT_START', { cause: error })
-      }
-      // The start round-trip yields to the event loop, so a cancel CAN land
-      // between the host starting the child and this continuation running —
-      // wind the fresh child down instead of leaving it live behind a dead
-      // script.
-      if (this.isCancelled()) {
-        await run.dispose()
-        throw this.cancelledError()
       }
       const info: WorkflowAgentInfo = { seq, label, ...phase !== undefined ? { phase } : {}, childId: brandString<SessionId>(run.id) }
       this.observer.agentStart(info)
@@ -308,10 +201,6 @@ export class WorkflowExecution {
           // lifecycle before propagating, and propagate FATAL: an ordinary
           // throw would dissolve to a per-item null inside the combinators,
           // and a broken provider must not read as a failed child.
-          if (this.isCancelled()) {
-            this.observer.agentEnd({ ...info, outcome: 'cancelled' })
-            throw this.cancelledError()
-          }
           this.observer.agentEnd({ ...info, outcome: 'failed' })
           throw new WorkflowError(`child agent run failed: ${renderThrown(error)}`, 'AGENT_RESULT', { cause: error })
         }
@@ -328,12 +217,6 @@ export class WorkflowExecution {
           }
           this.observer.agentEnd({ ...info, outcome: 'completed' })
           return outputText(result.output)
-        }
-        // A cancelled RUN kills the script; a child that failed for its own
-        // reasons resolves null (scripts .filter(Boolean) per the CC contract).
-        if (this.isCancelled()) {
-          this.observer.agentEnd({ ...info, outcome: 'cancelled' })
-          throw this.cancelledError()
         }
         this.observer.agentEnd({ ...info, outcome: 'failed' })
         return null
@@ -400,7 +283,6 @@ export class WorkflowExecution {
 
   /** The `parallel(thunks)` hook: each thunk caught → `null`; fatal errors propagate. */
   private async parallel(rawThunks: unknown): Promise<unknown[]> {
-    this.throwIfCancelled()
     if (!Array.isArray(rawThunks)) {
       throw new WorkflowError('parallel() requires an array of zero-argument functions', 'INVALID_ARGUMENT')
     }
@@ -427,7 +309,6 @@ export class WorkflowExecution {
 
   /** The `pipeline(items, ...stages)` hook: per-item stage chains, NO cross-stage barrier. */
   private async pipeline(rawItems: unknown, rawStages: unknown[]): Promise<unknown[]> {
-    this.throwIfCancelled()
     if (!Array.isArray(rawItems)) {
       throw new WorkflowError('pipeline() requires an items array', 'INVALID_ARGUMENT')
     }
@@ -469,7 +350,6 @@ export class WorkflowExecution {
 
   /** The `phase(title)` hook: sets the current label for subsequent `agent()` calls and notifies observers. */
   private phase(title: unknown): void {
-    this.throwIfCancelled()
     if (typeof title !== 'string' || title.length === 0) {
       throw new WorkflowError('phase() requires a non-empty title string', 'INVALID_ARGUMENT')
     }
@@ -479,7 +359,6 @@ export class WorkflowExecution {
 
   /** The `log(message)` hook: narration to observers. */
   private log(message: unknown): void {
-    this.throwIfCancelled()
     if (typeof message !== 'string') {
       throw new WorkflowError('log() requires a message string', 'INVALID_ARGUMENT')
     }
