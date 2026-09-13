@@ -1,8 +1,7 @@
 /**
- * Non-protocol wire vocabulary for the worker-thread engine: the `workerData` init payload and
- * the child-port interfaces the worker-side runtime consumes. Host/worker messages are defined in
- * `./protocol.ts`; transported child requests and results are plain JSON for structured clone.
- * @module @deepseek-ai/dsh-workflow-worker-thread/types
+ * Workflow guest inputs and the child callbacks consumed by its VM helpers.
+ * PTC transfers initialization data, requests and results as lossless JSON.
+ * @module @deepseek-ai/dsh-workflow-ptc/types
  */
 
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
@@ -10,8 +9,7 @@ import type { ObjectJsonSchema } from '@deepseek-ai/dsh-tools'
 import type { WorkflowMeta } from '@deepseek-ai/dsh-workflow'
 
 /**
- * The per-run limits the worker-side runtime enforces. The host keeps the
- * knobs only it can act on (`provider`, `disposeGraceMs`).
+ * Ordinary script limits enforced by the guest helpers.
  */
 export interface WorkerLimits {
   /** Concurrent `agent()` ceiling (already auto-resolved; ≥ 1). */
@@ -20,23 +18,23 @@ export interface WorkerLimits {
   maxTotalAgents: number
   /** Items accepted by one `parallel()`/`pipeline()` call. */
   maxItemsPerCall: number
-  /** vm timeout for the script's initial synchronous slice (inside the worker). */
+  /** VM timeout for the script's initial synchronous slice. */
   syncTimeoutMs: number
 }
 
-/** The `workerData` payload one run is initialized with (host → worker, once, at spawn). */
+/** The initialization data returned by the host before the script runs. */
 export interface WorkerInit {
   /** The validated meta block (plain data off the start request, validated host-side). */
   meta: WorkflowMeta
   /** The plain-JS script body, exactly as the start request carried it. */
   body: string
-  /** The run's `args` value; the workerData structured clone is the copy that isolates the caller. */
+  /** The run's `args` value, copied through the PTC JSON channel. */
   args?: unknown
-  /** The worker-enforced limits. */
+  /** The guest helper limits. */
   limits: WorkerLimits
 }
 
-/** What the worker asks the host to start for one `agent()` call (options already validated worker-side). */
+/** One `agent()` child request after the guest validates script options. */
 export interface ChildStartRequest {
   /** The child's prompt text. */
   prompt: string
@@ -49,7 +47,7 @@ export interface ChildStartRequest {
 }
 
 /**
- * The JSON projection of a child's `SubagentResult` crossing the port. The
+ * The JSON projection of a child's `SubagentResult`. The
  * seam's `stopReason` union is merge-extensible, so it degrades to `string`
  * on the wire — the runtime only ever branches on `'completed'`.
  */
@@ -63,15 +61,14 @@ export interface ChildResult {
 }
 
 /**
- * The worker-side handle for one started child — the RPC mirror of the
- * subagent seam's run handle, reduced to what the runtime consumes.
+ * The guest handle for one published child, reduced to what the VM helpers consume.
  */
 export interface ChildHandle {
   /** The child agent's id (minted host-side by the subagent seam). */
   readonly id: string
   /**
    * Resolves with the child's terminal {@link ChildResult}; REJECTS only when
-   * the host reports an infrastructure fault (`child-failed`) — a child that
+   * the host reports an infrastructure fault; a child that
    * failed for its own reasons resolves with a non-`completed` stop reason.
    */
   readonly result: Promise<ChildResult>
@@ -80,8 +77,7 @@ export interface ChildHandle {
 }
 
 /**
- * The worker-side port the runtime starts child agents through — the seam
- * that lets the execution core stay ignorant of the thread boundary.
+ * Child callbacks independent of the PTC transport.
  */
 export interface ChildPort {
   /**

@@ -1,19 +1,19 @@
 /**
- * Worker-thread workflow engine. Each run executes its model-written script in
- * an escapable vm context on a fresh worker and bridges `agent()` calls to host
- * subagents. The thread prevents synchronous script work from blocking the host
- * and permits forced termination, but it is containment rather than a security boundary.
- * @module @deepseek-ai/dsh-workflow-worker-thread
+ * Workflow orchestration through the shared sandboxed Node PTC executor.
+ * The VM supplies script helpers; the process applies the calling Session's file policy.
+ * @module @deepseek-ai/dsh-workflow-ptc
  */
 
 import { randomUUID } from 'node:crypto'
 import { availableParallelism } from 'node:os'
 import * as vm from 'node:vm'
 import type { Context } from '@deepseek-ai/cordis'
+import type {} from '@deepseek-ai/dsh-ptc-runtime'
+import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import z from '@deepseek-ai/schemastery'
 import WorkflowEngine, { WorkflowError, WorkflowRunId } from '@deepseek-ai/dsh-workflow'
 import type { WorkflowRun, WorkflowRunInfo, WorkflowStartRequest } from '@deepseek-ai/dsh-workflow'
-import { WorkerRun } from './host.ts'
+import { PtcWorkflowRun } from './host.ts'
 import { validateMeta } from './meta.ts'
 import type { WorkerInit, WorkerLimits } from './types.ts'
 
@@ -38,14 +38,8 @@ export interface Config {
   maxTotalAgents?: number
   /** Items accepted by a single `parallel()`/`pipeline()` call (default 4096). */
   maxItemsPerCall?: number
-  /** vm timeout for the script's initial synchronous slice, inside the worker (default 5000 ms). */
+  /** VM timeout for the script's initial synchronous slice (default 5000 ms). */
   syncTimeoutMs?: number
-  /**
-   * How long after a cancellation an unsettled script may keep running before
-   * the run force-settles `cancelled` and its worker is TERMINATED (default
-   * 5000 ms); also bounds `dispose()`.
-   */
-  disposeGraceMs?: number
 }
 
 type ResolvedConfig = Required<Config>
@@ -54,12 +48,8 @@ type ResolvedConfig = Required<Config>
 const META_STATEMENT = /^\s*export\s+const\s+meta\b/
 
 /**
- * Parse-check the body with the SAME wrapper the worker-side runtime
- * compiles, so `start()` keeps the seam's synchronous `SCRIPT_PARSE` throw
- * (the worker's own compile happens a thread away, after `start()` returned).
- * One redundant parse per run, bought deliberately for the contract. A body
- * opening with `export const meta` gets a pointed message instead of the
- * wrapper's bare SyntaxError — the model's likeliest authoring slip.
+ * Reject invalid JavaScript synchronously before publishing a workflow run.
+ * The guest compiles the same async wrapper in its own process.
  */
 function assertBodyParses(body: string, name: string): void {
   if (META_STATEMENT.test(body)) {
@@ -104,13 +94,13 @@ function resolveMaxTotalAgents(requested: number | undefined, ceiling: number): 
 }
 
 /**
- * The worker-thread engine service. `start()` validates the script up front
+ * The PTC-backed workflow engine. `start()` validates the script up front
  * (meta + a host-side body parse) and returns a {@link WorkflowRun} whose
  * `result` never rejects; the `workflow/*` events fire around the run per
  * the seam contract.
  */
-class WorkerThreadWorkflowEngine extends WorkflowEngine {
-  static inject = ['subagents']
+class PtcWorkflowEngine extends WorkflowEngine {
+  static inject = ['subagents', 'ptcRuntime', 'sandboxPolicy']
 
   static Config: z<Config> = z.object({
     provider: z.string().default('spawn'),
@@ -118,7 +108,6 @@ class WorkerThreadWorkflowEngine extends WorkflowEngine {
     maxTotalAgents: z.natural().min(1).default(1000),
     maxItemsPerCall: z.natural().min(1).default(4096),
     syncTimeoutMs: z.natural().min(1).default(5000),
-    disposeGraceMs: z.natural().default(5000),
   })
 
   private readonly config: ResolvedConfig
@@ -131,7 +120,7 @@ class WorkerThreadWorkflowEngine extends WorkflowEngine {
   }
 
   /**
-   * Validate and execute a workflow script in a fresh worker thread. Throws
+   * Validate and execute a workflow script in a sandboxed Node process. Throws
    * {@link WorkflowError} synchronously (`META_INVALID` for a malformed meta
    * block, `SCRIPT_PARSE` for a body that does not compile) for a request
    * that cannot begin; once a run is returned, every failure resolves through
@@ -141,6 +130,7 @@ class WorkerThreadWorkflowEngine extends WorkflowEngine {
    * @returns the live run (its `result` resolves when the script settles).
    */
   start(request: WorkflowStartRequest): WorkflowRun {
+    if (this.ctx.ptcRuntime.language !== 'typescript') throw new Error('workflow-ptc requires the Node TypeScript PTC runtime')
     const meta = validateMeta(request.meta)
     assertBodyParses(request.script, meta.name)
     const subagentProvider = resolveSubagentProvider(this.ctx, this.config.provider, request.subagentProvider)
@@ -158,26 +148,22 @@ class WorkerThreadWorkflowEngine extends WorkflowEngine {
     const init: WorkerInit = {
       meta,
       body: request.script,
-      ...request.args !== undefined ? { args: request.args } : {},
+      ...request.args !== undefined ? { args: structuredClone(request.args) } : {},
       limits,
     }
-    // Capture the dependency while this service call is still traced through
-    // the start() holder. Cordis strips the engine-provider shadow when it
-    // returns the SubagentRuntime handle, so an already-returned run can keep
-    // starting children after an engine HMR unload removes ctx.workflowEngine.
-    // Re-resolving `this.ctx.subagents` later from WorkerRun would instead walk
-    // the now-inactive engine fiber and break the seam's holder-owned lifetime.
+    // Captured service handles keep a holder-owned run usable after engine unload.
     const runCtx = this.ctx
     const subagents = runCtx.subagents
-    const workerRun = new WorkerRun(
+    const run = new PtcWorkflowRun(
       runCtx,
       subagents,
+      runCtx.ptcRuntime,
       id,
       meta,
       request.parent,
       init,
       subagentProvider,
-      this.config.disposeGraceMs,
+      runCtx.sandboxPolicy.resolve({ session: request.parent.session }),
       {
         phase: (title) => { this.emitWorkflowEvent('workflow/phase', info, title) },
         log: (message) => { this.emitWorkflowEvent('workflow/log', info, message) },
@@ -190,7 +176,7 @@ class WorkerThreadWorkflowEngine extends WorkflowEngine {
     this.emitWorkflowEvent('workflow/start', info)
     // `workflow/end` fires as the (never-rejecting) result settles, with the
     // outcome DATA only — the value stays with the run's holder.
-    void workerRun.result.then((settled) => {
+    void run.result.then((settled) => {
       this.emitWorkflowEvent('workflow/end', info, {
         stopReason: settled.stopReason,
         ...settled.error !== undefined ? { error: settled.error } : {},
@@ -198,8 +184,8 @@ class WorkerThreadWorkflowEngine extends WorkflowEngine {
       })
     })
 
-    return workerRun
+    return run
   }
 }
 
-export default WorkerThreadWorkflowEngine
+export default PtcWorkflowEngine

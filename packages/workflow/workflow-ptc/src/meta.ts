@@ -3,7 +3,7 @@
  * contract and rejects every violation by name. Meta arrives as schema-checked
  * JSON data, never evaluated script text; evaluating it on the host could run getters outside the
  * worker timeout that exists to isolate model-written code.
- * @module @deepseek-ai/dsh-workflow-worker-thread/meta
+ * @module @deepseek-ai/dsh-workflow-ptc/meta
  */
 
 import { WorkflowError } from '@deepseek-ai/dsh-workflow'
