@@ -115,7 +115,6 @@ describe('selected Profile compatibility projection', () => {
       dsh: {
         profile: {
           bundles: ['@local/unknown-bundle'],
-          disabledBundles: [WORKSPACE_CANDIDATE.packageName],
         },
       },
     }, undefined, 2)}\n`)
@@ -145,19 +144,5 @@ describe('selected Profile compatibility projection', () => {
     const fingerprint = read(current.home)
     expect(fingerprint.installedPlugins.find(plugin => plugin.packageName === '@local/unknown-bundle'))
       .toMatchObject({ enabled: true, version: '0.3.0' })
-  })
-
-  it('rejects ambiguous active and disabled Profile state', () => {
-    const current = fixture()
-    writeFileSync(join(current.profile, 'package.json'), `${JSON.stringify({
-      dependencies: { [WORKSPACE_CANDIDATE.packageName]: WORKSPACE_CANDIDATE.version },
-      dsh: {
-        profile: {
-          bundles: [WORKSPACE_CANDIDATE.packageName],
-          disabledBundles: [WORKSPACE_CANDIDATE.packageName],
-        },
-      },
-    })}\n`)
-    expect(() => read(current.home)).toThrow('both active and disabled')
   })
 })

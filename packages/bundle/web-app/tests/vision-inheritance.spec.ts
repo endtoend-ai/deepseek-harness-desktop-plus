@@ -21,7 +21,7 @@ describe('Desktop vision preset inheritance', () => {
   })
 
   it('mounts the vision Tool, Skill and instructions into every live and future Agent scope', () => {
-    const source = readFileSync(resolve(ROOT, 'packages/host/apiproxy/src/vision-enhancement.ts'), 'utf8')
+    const source = readFileSync(resolve(ROOT, 'packages/api/vision-controller/src/vision-enhancement.ts'), 'utf8')
     expect(source).toContain('scope.ctx.skills.register({\n        name: \'vision-enhancement\'')
     expect(source).toContain('scope.ctx.tools.register(visionTool)')
     expect(source).toContain('scope.ctx.systemPrompt.context({')

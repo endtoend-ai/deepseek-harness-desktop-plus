@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { VisionRouteView } from '@deepseek-ai/dsh-api-remotes/client'
-import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { ModelDirectoryState } from '@deepseek-ai/dsh-client-ui-model-selection/client'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import {
-  HoverCard, IconSparkle16,
+  HoverCard, IconSparkleRegular,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
   VisionEnableProbe, VisionEnhancementState,
@@ -180,7 +180,7 @@ export function VisionEnhancementShortcut({
             disabled={busy || currentModel === null}
             onClick={activate}
           >
-            <IconSparkle16 size={14} />
+            <IconSparkleRegular size={14} />
             <span className={css.shortcutLabel}>视觉增强</span>
           </button>
         )}

@@ -1,11 +1,14 @@
 /** Shared browser state for the Desktop visual-enhancement controls. */
 
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+// TODO(t6): these three views join the assembled Client Remote with
+// `@deepseek-ai/dsh-api-vision-controller`; the controller below is the only consumer.
 import type {
-  ConnectionHandle, VisionProvider, VisionProviderView, VisionRouteView,
+  VisionProvider, VisionProviderView, VisionRouteView,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import {
   createSnapshotStore, type SnapshotStore,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from '@deepseek-ai/dsh-client-store'
 
 /** Host settings namespace used by visual enhancement. */
 export const VISION_SETTINGS_NAMESPACE = 'vision-enhancement'
@@ -49,8 +52,6 @@ export interface VisionEnhancementState {
   /** Latest status or mutation failure. */
   error: string | null
 }
-
-type VisionApi = Pick<ConnectionHandle['api'], 'settings' | 'vision'>
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -103,8 +104,8 @@ export class VisionEnhancementController {
   private loading: Promise<void> | undefined
   private refreshPending = false
 
-  /** @param api - Host visual-enhancement and Settings wire faces. */
-  constructor(private readonly api: VisionApi) {}
+  /** @param ctx - browser plugin context carrying the Host Remote namespaces. */
+  constructor(private readonly ctx: ClientContext) {}
 
   /** Load once for the first mounted surface and share the result. */
   ensureLoaded(): Promise<void> {
@@ -132,10 +133,10 @@ export class VisionEnhancementController {
     })
     const pending = (async () => {
       try {
-        const response = await this.api.vision.status({})
-        if (!response.result.ok) throw new Error(response.result.error.message)
+        const response = await this.ctx.remote.vision.status()
+        if (!response.ok) throw new Error(response.error.message)
         if (generation !== this.generation) return
-        const value = response.result.value
+        const value = response.value
         this.store.update((state) => {
           state.status = 'ready'
           state.enabled = value.enabled
@@ -166,11 +167,10 @@ export class VisionEnhancementController {
       state.error = null
     })
     try {
-      const response = await this.api.settings.update({
-        ns: VISION_SETTINGS_NAMESPACE,
-        patch: { enabled: false },
-      })
-      if (!response.result.ok) throw new Error(response.result.error.message)
+      const response = await this.ctx.remote.settings.update(
+        VISION_SETTINGS_NAMESPACE, { enabled: false }, undefined,
+      )
+      if (!response.ok) throw new Error(response.error.message)
       if (generation !== this.generation) return
       this.store.update((state) => {
         state.status = 'ready'
@@ -192,9 +192,9 @@ export class VisionEnhancementController {
    * @returns The automatic image route selected by the Host.
    */
   async route(modelProvider: string, model: string): Promise<VisionRouteView> {
-    const response = await this.api.vision.route({ modelProvider, model })
-    if (!response.result.ok) throw new Error(response.result.error.message)
-    return response.result.value
+    const response = await this.ctx.remote.vision.route(modelProvider, model)
+    if (!response.ok) throw new Error(response.error.message)
+    return response.value
   }
 
   /**
@@ -210,8 +210,8 @@ export class VisionEnhancementController {
       state.error = null
     })
     try {
-      const response = await this.api.vision.activate({ modelProvider, model })
-      if (!response.result.ok) throw new Error(response.result.error.message)
+      const response = await this.ctx.remote.vision.activate(modelProvider, model)
+      if (!response.ok) throw new Error(response.error.message)
       if (generation === this.generation) {
         this.store.update((state) => {
           state.status = 'ready'
@@ -219,7 +219,7 @@ export class VisionEnhancementController {
           state.error = null
         })
       }
-      return response.result.value
+      return response.value
     } catch (error) {
       if (generation === this.generation) this.fail(error)
       throw error
@@ -241,9 +241,9 @@ export class VisionEnhancementController {
       state.error = null
     })
     try {
-      const response = await this.api.vision.enable(input, signal)
-      if (!response.result.ok) throw new Error(response.result.error.message)
-      const value = response.result.value
+      const response = await this.ctx.remote.vision.enable(input, signal)
+      if (!response.ok) throw new Error(response.error.message)
+      const value = response.value
       if (generation === this.generation) {
         this.store.update((state) => {
           state.status = 'ready'

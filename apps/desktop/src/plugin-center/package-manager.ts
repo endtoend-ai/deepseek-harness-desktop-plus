@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process'
 import { dirname, win32 } from 'node:path'
 
 /** Package-manager version included in every supported Desktop package. */
-export const PINNED_PACKAGE_MANAGER_VERSION = '11.7.0'
+export const PINNED_PACKAGE_MANAGER_VERSION = '11.28.5'
 
 /** Path below the staged Host node_modules directory. */
 export const PACKAGE_MANAGER_ENTRY_SEGMENTS = ['pnpm', 'bin', 'pnpm.cjs'] as const

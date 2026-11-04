@@ -208,7 +208,6 @@ async function createHarness(
     ...manifest.dsh,
     profile: {
       bundles: priorEnabled ? [PACKAGE_NAME] : [],
-      disabledBundles: priorPackagePresent && !priorEnabled ? [PACKAGE_NAME] : [],
     },
   }
   await writeFile(join(profile, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`)

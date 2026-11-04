@@ -2,9 +2,9 @@ import {
   useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode,
 } from 'react'
 import {
-  Button, IconChevronRightOutline14, IconDownloadOutline16, IconEllipsisOutline16,
-  IconLoadingOutline16, IconRefreshOutline16, IconSearchOutline16, IconSettingsOutline16,
-  IconWarningOutline16, Menu,
+  Button, IconChevronRightOutlineRegular, IconDownloadOutlineRegular, IconEllipsisOutlineRegular,
+  IconLoadingOutlineRegular, IconRefreshOutlineRegular, IconSearchOutlineRegular, IconSettingsOutlineRegular,
+  IconWarningOutlineRegular, Menu,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
   CatalogDetailQuery,
@@ -83,7 +83,7 @@ export interface PluginCenterTabInjected {
 
 /** Full props assembled by the independent main-page renderer. */
 export type PluginCenterTabProps =
-  PropsRuntime<'main.page'>
+  PropsRuntime<'main'>
   & PropsLocale<'pluginCenter'>
   & InjectFace<PluginCenterTabInjected>
 
@@ -273,7 +273,7 @@ function CatalogCard({
           <strong>{entry.displayName}</strong>
           <span className={css.cardSummary}>{entry.summary}</span>
         </span>
-        <IconChevronRightOutline14 className={css.cardChevron} aria-hidden="true" />
+        <IconChevronRightOutlineRegular className={css.cardChevron} aria-hidden="true" />
       </button>
       {installed ? (
         installedItem === null ? (
@@ -283,7 +283,7 @@ function CatalogCard({
             aria-label={`${t('pluginActions')}：${entry.displayName}`}
             disabled
           >
-            <IconEllipsisOutline16 aria-hidden="true" />
+            <IconEllipsisOutlineRegular aria-hidden="true" />
           </button>
         ) : (
           <Menu
@@ -309,7 +309,7 @@ function CatalogCard({
                 disabled={menuItems.length === 0}
                 onClick={() => { setMenuOpen(value => !value) }}
               >
-                <IconEllipsisOutline16 aria-hidden="true" />
+                <IconEllipsisOutlineRegular aria-hidden="true" />
               </button>
             )}
           />
@@ -912,7 +912,7 @@ export function PluginCenterTab({
             </div>
             <div className={css.topActions}>
               <button type="button" aria-label={t('refresh')} title={freshness} onClick={retry}>
-                <IconRefreshOutline16 size={16} />
+                <IconRefreshOutlineRegular size={16} />
               </button>
             </div>
           </>
@@ -921,7 +921,7 @@ export function PluginCenterTab({
             <button type="button" onClick={closeDetail} aria-label={t('backToCatalog')}>
               {t(detailEntry.catalogKind === 'plugin' ? 'plugins' : 'skills')}
             </button>
-            <IconChevronRightOutline14 aria-hidden="true" />
+            <IconChevronRightOutlineRegular aria-hidden="true" />
             <span>{detailEntry.displayName}</span>
           </div>
         )}
@@ -942,8 +942,8 @@ export function PluginCenterTab({
             >
               <div className={css.recoveryStatusIcon} aria-hidden="true">
                 {recovery.phase === 'recovering'
-                  ? <IconLoadingOutline16 size={18} />
-                  : <IconWarningOutline16 size={18} />}
+                  ? <IconLoadingOutlineRegular size={18} />
+                  : <IconWarningOutlineRegular size={18} />}
               </div>
               <div className={css.recoveryContent}>
                 <strong>{t(recovery.phase === 'recovering'
@@ -974,7 +974,7 @@ export function PluginCenterTab({
                 <Button
                   variant="primary"
                   size="sm"
-                  icon={<IconRefreshOutline16 size={14} />}
+                  icon={<IconRefreshOutlineRegular size={14} />}
                   disabled={!recovery.canRetry || recoveryBusy}
                   onClick={retryPluginRecovery}
                 >
@@ -983,7 +983,7 @@ export function PluginCenterTab({
                 <Button
                   variant="outline"
                   size="sm"
-                  icon={<IconDownloadOutline16 size={14} />}
+                  icon={<IconDownloadOutlineRegular size={14} />}
                   disabled={!recovery.canExportDiagnostics || recoveryBusy}
                   onClick={exportPluginRecovery}
                 >
@@ -994,7 +994,7 @@ export function PluginCenterTab({
           ) : null}
 
           <label className={css.search}>
-            <IconSearchOutline16 aria-hidden="true" />
+            <IconSearchOutlineRegular aria-hidden="true" />
             <span className={css.visuallyHidden}>{t(kind === 'plugin' ? 'searchPlugins' : 'searchSkills')}</span>
             <input
               type="search"
@@ -1015,7 +1015,7 @@ export function PluginCenterTab({
                 title={t('manageInstalled')}
                 onClick={() => { showInstalled(!installedOpen) }}
               >
-                <IconSettingsOutline16 size={16} />
+                <IconSettingsOutlineRegular size={16} />
               </button>
             </div>
             <div className={css.installedIcons}>

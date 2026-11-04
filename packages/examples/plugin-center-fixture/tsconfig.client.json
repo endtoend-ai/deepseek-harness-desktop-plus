@@ -8,8 +8,7 @@
   "files": ["src/client/FixtureCapability.tsx", "src/client/index.ts"],
   "references": [
     { "path": "../../../vendor/cordis" },
-    { "path": "../../client/locale" },
-    { "path": "../../client/runtime" },
+    { "path": "../../client/locale/tsconfig.client.json" },
     { "path": "../../client/ui-layout" },
     { "path": "../../client/ui-sidebar" },
     { "path": "../../client/ui-slots" }

@@ -2,43 +2,8 @@
 /** Keyless assembled Desktop appearance journey over the built client bundles. */
 
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { expect, it, vi } from 'vitest'
-import {
-  installAssembledBootEnv,
-  mountAssembledApp,
-  type AssembledBootPlugin,
-} from './assembled-boot.ts'
-
-const DESKTOP_CUSTOMIZATION: AssembledBootPlugin = {
-  id: '@deepseek-ai/dsh-client-ui-desktop-customization',
-  bundlePath: 'packages/client/ui-desktop-customization/lib/client.js',
-  url: '/plugins/ui-desktop-customization.js',
-  rev: 'fx',
-  inject: [
-    '@deepseek-ai/dsh-client-runtime',
-    '@deepseek-ai/dsh-api-remotes',
-    '@deepseek-ai/dsh-client-locale',
-    '@deepseek-ai/dsh-client-ui-theme',
-    '@deepseek-ai/dsh-client-ui-conversation',
-    '@deepseek-ai/dsh-client-ui-settings',
-    '@deepseek-ai/dsh-client-ui-layout',
-  ],
-}
-
-const SETTINGS_GENERAL: AssembledBootPlugin = {
-  id: '@deepseek-ai/dsh-client-ui-settings-general',
-  bundlePath: 'packages/client/ui-settings-general/lib/client.js',
-  url: '/plugins/ui-settings-general.js',
-  rev: 'fx',
-  inject: [
-    '@deepseek-ai/dsh-client-runtime',
-    '@deepseek-ai/dsh-client-ui-settings',
-    '@deepseek-ai/dsh-client-locale',
-    '@deepseek-ai/dsh-client-connection',
-    '@deepseek-ai/dsh-api-remotes',
-    '@deepseek-ai/dsh-client-ui-sidebar',
-  ],
-}
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { installAssembledBootEnv, mountAssembledApp } from './assembled-boot.ts'
 
 const DEFAULT_APPEARANCE = {
   builtinTheme: 'whale-maid',
@@ -50,35 +15,42 @@ const DEFAULT_APPEARANCE = {
 
 const save = vi.fn(async (settings: typeof DEFAULT_APPEARANCE) => settings)
 
-installAssembledBootEnv({
-  setup: () => {
-    save.mockClear()
-    Object.defineProperty(window, 'dshDesktop', {
-      configurable: true,
-      value: {
-        platform: 'darwin',
-        appearance: {
-          get: async () => DEFAULT_APPEARANCE,
-          save,
-          reset: async () => DEFAULT_APPEARANCE,
-        },
-        updates: {
-          getState: async () => ({ phase: 'idle', currentVersion: '0.1.0-rc.10' }),
-          check: async () => ({ phase: 'up-to-date', currentVersion: '0.1.0-rc.10' }),
-          download: async () => ({ phase: 'ready', currentVersion: '0.1.0-rc.10' }),
-          install: async () => {},
-          onState: () => () => {},
-        },
+// Registered before the shared environment so it runs after that teardown:
+// Vitest executes afterEach hooks in reverse registration order, and the
+// unmounting graph still reads this bridge.
+afterEach(() => {
+  delete (window as unknown as { dshDesktop?: unknown }).dshDesktop
+})
+
+installAssembledBootEnv()
+
+// The appearance journey reads the Studio Desktop bridge through
+// `window.dshDesktop`; the assembled Web fixture serves no such bridge, so
+// each test installs its own before the graph mounts.
+beforeEach(() => {
+  save.mockClear()
+  Object.defineProperty(window, 'dshDesktop', {
+    configurable: true,
+    value: {
+      platform: 'darwin',
+      appearance: {
+        get: async () => DEFAULT_APPEARANCE,
+        save,
+        reset: async () => DEFAULT_APPEARANCE,
       },
-    })
-  },
-  cleanup: () => {
-    delete (window as unknown as { dshDesktop?: unknown }).dshDesktop
-  },
+      updates: {
+        getState: async () => ({ phase: 'idle', currentVersion: '0.1.0-rc.10' }),
+        check: async () => ({ phase: 'up-to-date', currentVersion: '0.1.0-rc.10' }),
+        download: async () => ({ phase: 'ready', currentVersion: '0.1.0-rc.10' }),
+        install: async () => {},
+        onState: () => () => {},
+      },
+    },
+  })
 })
 
 it('assembled Desktop settings lists and persists the three Jiutian themes', async () => {
-  mountAssembledApp([SETTINGS_GENERAL, DESKTOP_CUSTOMIZATION])
+  mountAssembledApp()
 
   fireEvent.click(await screen.findByRole('button', { name: 'Settings' }, { timeout: 10_000 }))
   const dialog = await screen.findByRole('dialog', { name: 'Settings' })

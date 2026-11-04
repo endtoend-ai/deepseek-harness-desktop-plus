@@ -4,7 +4,6 @@ import { createRequire } from 'node:module'
 import { existsSync, readFileSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import {
-  readProfileBundleState,
   readProfileManifest,
   resolveBundleDir,
 } from '@deepseek-ai/dsh-app-boot'
@@ -28,6 +27,7 @@ import {
   evaluateCompatibility,
   evaluateInstalledActivationCompatibility,
 } from './compatibility.ts'
+import { readProfileBundleState } from './profile-bundles.ts'
 
 interface SemverApi {
   valid(version: string): string | null
@@ -287,8 +287,9 @@ export function deriveInstalledPluginProjection(input: InstalledProjectionInput)
   const manifest = readProfileManifest('desktop', input.profileDirectory)
   const bundleState = readProfileBundleState(manifest)
   const dependencies = Object.keys(manifest.dependencies ?? {})
-  const names = [...new Set([...bundleState.bundles, ...bundleState.disabledBundles, ...dependencies])]
+  const names = [...new Set([...bundleState.bundles, ...dependencies])]
   const protectedNames = new Set(input.systemComponents.packageNames)
+  const dependencyOrder = new Map(dependencies.map((packageName, index) => [packageName, index]))
   const pending = input.operation !== null && !TERMINAL_PHASES.has(input.operation.phase)
     ? input.operation
     : null
@@ -297,7 +298,9 @@ export function deriveInstalledPluginProjection(input: InstalledProjectionInput)
   for (const packageName of names) {
     const observation = observePackage(input.profileDirectory, input.installAnchor, packageName)
     const activeIndex = bundleState.bundles.indexOf(packageName)
-    const disabledIndex = bundleState.disabledBundles.indexOf(packageName)
+    // An installed dependency absent from the active list is the profile's explicit disabled state.
+    const installedIndex = dependencyOrder.get(packageName) ?? -1
+    const disabledIndex = activeIndex === -1 && installedIndex !== -1 ? installedIndex : -1
     const listed = activeIndex !== -1 || disabledIndex !== -1
     if (!listed && !observation.bundle) continue
     const system = protectedNames.has(packageName)

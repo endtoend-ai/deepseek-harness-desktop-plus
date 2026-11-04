@@ -1,20 +1,23 @@
 /** Desktop Plugin Center first-level navigation and independent main page. */
 
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+// Type-only: the ctx.slots service merge this plugin registers through.
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
+// Type-only: ctx.uiWorkspace, the Workspace UI navigation service.
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import { resolveCatalogBridge } from './bridge.ts'
-import { PluginCenterNavItem, type PluginCenterNavInjected } from './PluginCenterNavItem.tsx'
+import { PluginCenterIcon } from './PluginCenterIcon.tsx'
 import { PluginCenterTab, type PluginCenterTabInjected } from './PluginCenterTab.tsx'
-import { PluginDiscoveryNavItem, type PluginDiscoveryNavInjected } from './PluginDiscoveryNavItem.tsx'
+import { PluginDiscoveryIcon } from './PluginDiscoveryIcon.tsx'
 import { PluginDiscoveryPage, type PluginDiscoveryInjected } from './PluginDiscoveryPage.tsx'
-import { PresetSquareNavItem, type PresetSquareNavInjected } from './PresetSquareNavItem.tsx'
+import { PresetSquareIcon } from './PresetSquareIcon.tsx'
 import { PresetSquarePage, type PresetSquarePageInjected } from './PresetSquarePage.tsx'
-import { ApplicationCenterNavItem, type ApplicationCenterNavInjected } from './ApplicationCenterNavItem.tsx'
+import { ApplicationCenterIcon } from './ApplicationCenterIcon.tsx'
 import {
   ApplicationCenterPage, type ApplicationCenterInjected, type ApplicationRuntimeStatus,
 } from './ApplicationCenterPage.tsx'
@@ -39,13 +42,14 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 export const NS = 'pluginCenter'
 /** Services used by the slot contribution. */
 export const inject = [
-  'slots', 'layout', 'locale', 'settingsNavigation', 'sessions', 'workspaces', 'connection', 'conversation',
+  'slots', 'layout', 'locale', 'settingsNavigation', 'workspaces', 'uiWorkspace',
+  'remote', 'remote.credentials',
 ]
 
-const PLUGIN_CENTER_PAGE_ID = 'plugin-center'
-const PLUGIN_DISCOVERY_PAGE_ID = 'plugin-discovery'
-const PRESET_SQUARE_PAGE_ID = 'preset-square'
-const APPLICATION_CENTER_PAGE_ID = 'application-center'
+const PLUGIN_CENTER_PAGE_ID = 'plugin-center' as MainPanelId
+const PLUGIN_DISCOVERY_PAGE_ID = 'plugin-discovery' as MainPanelId
+const PRESET_SQUARE_PAGE_ID = 'preset-square' as MainPanelId
+const APPLICATION_CENTER_PAGE_ID = 'application-center' as MainPanelId
 const LLM_WIKI_STATUS_PATH = '/api/ff-llm-wiki/status'
 const LLM_WIKI_OPEN_PATH = '/api/ff-llm-wiki/open'
 const LLM_WIKI_SIDEBAR_VISIBILITY_KEY = 'ff-llm-wiki:sidebar-visible'
@@ -54,14 +58,10 @@ const LLM_WIKI_SIDEBAR_VISIBILITY_EVENT = 'ff-llm-wiki:sidebar-visibility'
 /** Add the Desktop-only catalog as a first-level page without replacing Settings. */
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-plugin-center: dictionaries')
+  const t = ctx.locale.bind(NS)
   const resolved = resolveCatalogBridge()
   const bridge = resolved.bridge
   const unavailable = (): Promise<never> => Promise.reject(new Error('Desktop catalog bridge unavailable'))
-  const hostConnection = (): ConnectionHandle => {
-    const connection = ctx.get('connection') as ConnectionHandle | undefined
-    if (connection === undefined) throw new Error('Host connection unavailable')
-    return connection
-  }
   const presetInjected = (): PresetSquarePageInjected => ({
     presetAvailable: bridge?.presetSquare !== undefined,
     presetDevelopment: resolved.development,
@@ -73,45 +73,35 @@ export function apply(ctx: ClientContext): void {
     checkPresetRuntime: presetId => bridge?.presetSquare?.checkRuntime({ presetId }) ?? unavailable(),
     installPresetRuntime: presetId => bridge?.presetSquare?.installRuntime({ presetId }) ?? unavailable(),
     listLocalPresets: async () => {
-      const response = await hostConnection().api.agentPresets.list({})
-      if (!response.result.ok) throw new Error(response.result.error.message)
+      const response = await ctx.remote.agentPresets.list()
+      if (!response.ok) throw new Error(response.error.message)
+      // 0.2.1 declares presets as profile composition rows: the browser can
+      // read and select them, and it has no authoring surface to advertise.
       return {
-        presets: response.result.value.presets,
-        authorable: response.result.value.authorable,
+        presets: response.value.presets.map(row => ({ ...row, trust: 'system' as const })),
+        authorable: false,
       }
     },
-    removeLocalPreset: async (id) => {
-      const response = await hostConnection().api.agentPresets.remove({ agentPreset: id })
-      if (!response.result.ok) throw new Error(response.result.error.message)
+    removeLocalPreset: async () => {
+      throw new Error('Removing a preset is not available in this deployment')
     },
     describePresetCredentials: async (refs) => {
-      const response = await hostConnection().api.credentials.describe({ refs: [...refs] })
-      if (!response.result.ok) throw new Error(response.result.error.message)
-      return response.result.value.credentials
+      const response = await ctx.remote.credentials.describe([...refs])
+      if (!response.ok) throw new Error(response.error.message)
+      return response.value
     },
     setPresetCredential: async (ref, value) => {
-      const response = await hostConnection().api.credentials.set({ ref, value })
-      if (!response.result.ok) throw new Error(response.result.error.message)
+      const response = await ctx.remote.credentials.set(ref, value)
+      if (!response.ok) throw new Error(response.error.message)
     },
     useLocalPreset: async (id) => {
-      const workspaces = ctx.workspaces.list.getSnapshot()
-      const currentSession = ctx.sessions.list.getSnapshot().current
-      const currentWorkspace = currentSession === undefined
-        ? undefined
-        : workspaces.items.find(item => item.sessionIds.includes(currentSession))?.workspaceId
-      const targetWorkspace = currentWorkspace ?? workspaces.recentWorkspaceId
-      if (targetWorkspace === undefined) return 'workspace-needed'
-      try {
-        const sessionId = await ctx.workspaces.connectWorkspace(targetWorkspace)
-        const response = await hostConnection().api.agentPresets.select({ sessionId, agentPreset: id })
-        if (!response.result.ok) return 'not-ready'
-        ctx.sessions.noteAgentPreset(sessionId, response.result.value.agentPreset)
-        ctx.sessions.open(sessionId)
-        ctx.layout.closePrimaryPage()
-        return 'opened'
-      } catch {
-        return 'not-ready'
-      }
+      // The Workspace navigation service owns the target: the current
+      // Session's Workspace, then the recent one, and the preset rides the
+      // creation so the Host composes the Session under it.
+      if (ctx.workspaces.list.getSnapshot().items.length === 0) return 'workspace-needed'
+      ctx.uiWorkspace.startSession(undefined, { agentPreset: id, clearPreviousDraft: false })
+      ctx.layout.selectPanel(null)
+      return 'opened'
     },
   })
   const applicationInjected = (): ApplicationCenterInjected => ({
@@ -169,22 +159,6 @@ export function apply(ctx: ClientContext): void {
     onRecoveryState: listener => bridge?.pluginRecovery?.onState(listener) ?? (() => {}),
   })
 
-  const navInjected = (): PluginCenterNavInjected => ({
-    pageId: PLUGIN_CENTER_PAGE_ID,
-    open: () => { ctx.layout.openPrimaryPage(PLUGIN_CENTER_PAGE_ID) },
-  })
-  const discoveryNavInjected = (): PluginDiscoveryNavInjected => ({
-    pageId: PLUGIN_DISCOVERY_PAGE_ID,
-    open: () => { ctx.layout.openPrimaryPage(PLUGIN_DISCOVERY_PAGE_ID) },
-  })
-  const presetNavInjected = (): PresetSquareNavInjected => ({
-    pageId: PRESET_SQUARE_PAGE_ID,
-    open: () => { ctx.layout.openPrimaryPage(PRESET_SQUARE_PAGE_ID) },
-  })
-  const applicationNavInjected = (): ApplicationCenterNavInjected => ({
-    pageId: APPLICATION_CENTER_PAGE_ID,
-    open: () => { ctx.layout.openPrimaryPage(APPLICATION_CENTER_PAGE_ID) },
-  })
   const discoveryInjected = (): PluginDiscoveryInjected => ({
     available: bridge !== undefined,
     development: resolved.development,
@@ -197,89 +171,75 @@ export function apply(ctx: ClientContext): void {
     install: request => bridge === undefined ? unavailable() : bridge.pluginOperations.install(request),
     getOperation: () => bridge === undefined ? Promise.resolve(null) : bridge.pluginOperations.getOperation(),
     onOperationState: listener => bridge === undefined ? () => {} : bridge.pluginOperations.onState(listener),
-    openPluginCenter: () => { ctx.layout.openPrimaryPage(PLUGIN_CENTER_PAGE_ID) },
+    openPluginCenter: () => { ctx.layout.selectPanel(PLUGIN_CENTER_PAGE_ID) },
     findWithAgent: async (requirement) => {
-      const sessionId = ctx.sessions.list.getSnapshot().current
-      if (sessionId === undefined) {
-        ctx.workspaces.startSession()
-        return 'session-starting'
-      }
-      const connection = ctx.get('connection') as ConnectionHandle | undefined
-      if (connection === undefined) throw new Error('Agent connection unavailable')
-      const described = await connection.api.credentials.describe({ refs: ['DEEPSEEK_API_KEY'] })
-      if (!described.result.ok) throw new Error(described.result.error.message)
-      if (described.result.value.credentials['DEEPSEEK_API_KEY']?.configured !== true) {
+      const described = await ctx.remote.credentials.describe(['DEEPSEEK_API_KEY'])
+      if (!described.ok) throw new Error(described.error.message)
+      if (described.value['DEEPSEEK_API_KEY']?.configured !== true) {
         ctx.settingsNavigation.open({ sectionId: 'models' })
         return 'needs-model'
       }
-      const agentContext = ctx.sessions.scope(sessionId)
-      const conversation = agentContext?.get('conversation')
-      if (conversation === undefined) throw new Error('Agent session unavailable')
-      await conversation.send(`/find-plugins ${requirement}`)
-      ctx.layout.closePrimaryPage(PLUGIN_DISCOVERY_PAGE_ID)
+      if (ctx.workspaces.list.getSnapshot().items.length === 0) return 'needs-workspace'
+      // No client-wide "current Session" exists in 0.2.1: the navigation
+      // service reuses the blank Session when there is one and otherwise
+      // starts a Session, which is what the discovery handoff needs.
+      ctx.uiWorkspace.startSession(undefined, {
+        prompt: `/find-plugins ${requirement}`,
+        whenDraftExists: 'append',
+      })
+      ctx.layout.selectPanel(null)
       return 'sent'
     },
   })
 
-  ctx.slots.inject('sidebar.primary.action', () => ctx.slots.register({
-    name: 'sidebar.primary.action',
-    id: PLUGIN_CENTER_PAGE_ID,
-    order: 20,
-    locale: NS,
-    inject: navInjected,
-  }, PluginCenterNavItem))
-  ctx.slots.inject('sidebar.primary.action', () => ctx.slots.register({
-    name: 'sidebar.primary.action',
-    id: PLUGIN_DISCOVERY_PAGE_ID,
-    order: 21,
-    locale: NS,
-    inject: discoveryNavInjected,
-  }, PluginDiscoveryNavItem))
-  ctx.slots.inject('sidebar.primary.action', () => ctx.slots.register({
-    name: 'sidebar.primary.action',
-    id: PRESET_SQUARE_PAGE_ID,
-    order: 22,
-    locale: NS,
-    inject: presetNavInjected,
-  }, PresetSquareNavItem))
-  ctx.slots.inject('sidebar.primary.action', () => ctx.slots.register({
-    name: 'sidebar.primary.action',
-    id: APPLICATION_CENTER_PAGE_ID,
-    order: 23,
-    locale: NS,
-    inject: applicationNavInjected,
-  }, ApplicationCenterNavItem))
-  ctx.slots.inject('main.page', () => ctx.slots.register({
-    name: 'main.page',
+  // The sidebar's panel list owns the row chrome and the accessible label, so
+  // each entrance contributes only its glyph and its resolved title.
+  const panels = [
+    { id: PLUGIN_CENTER_PAGE_ID, order: 20, label: 'nav' as const, icon: PluginCenterIcon },
+    { id: PLUGIN_DISCOVERY_PAGE_ID, order: 21, label: 'discoveryNav' as const, icon: PluginDiscoveryIcon },
+    { id: PRESET_SQUARE_PAGE_ID, order: 22, label: 'presetTitle' as const, icon: PresetSquareIcon },
+    { id: APPLICATION_CENTER_PAGE_ID, order: 23, label: 'applicationTitle' as const, icon: ApplicationCenterIcon },
+  ] as const
+  for (const panel of panels) {
+    ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
+      name: 'sidebar.panellist',
+      id: panel.id,
+      order: panel.order,
+      locale: NS,
+      label: () => t(panel.label),
+    }, panel.icon))
+  }
+  ctx.slots.inject('main', () => ctx.slots.register({
+    name: 'main',
     key: PLUGIN_CENTER_PAGE_ID,
     locale: NS,
     inject: injected,
   }, PluginCenterTab))
-  ctx.slots.inject('main.page', () => ctx.slots.register({
-    name: 'main.page',
+  ctx.slots.inject('main', () => ctx.slots.register({
+    name: 'main',
     key: PLUGIN_DISCOVERY_PAGE_ID,
     locale: NS,
     inject: discoveryInjected,
   }, PluginDiscoveryPage))
-  ctx.slots.inject('main.page', () => ctx.slots.register({
-    name: 'main.page',
+  ctx.slots.inject('main', () => ctx.slots.register({
+    name: 'main',
     key: PRESET_SQUARE_PAGE_ID,
     locale: NS,
     inject: presetInjected,
   }, PresetSquarePage))
-  ctx.slots.inject('main.page', () => ctx.slots.register({
-    name: 'main.page',
+  ctx.slots.inject('main', () => ctx.slots.register({
+    name: 'main',
     key: APPLICATION_CENTER_PAGE_ID,
     locale: NS,
     inject: applicationInjected,
   }, ApplicationCenterPage))
+  // The main column is one selection: tearing the plugin down returns it to
+  // the Conversation only when one of these pages is the one showing.
   ctx.effect(
     () => () => {
-      ctx.layout.closePrimaryPage(PLUGIN_CENTER_PAGE_ID)
-      ctx.layout.closePrimaryPage(PLUGIN_DISCOVERY_PAGE_ID)
-      ctx.layout.closePrimaryPage(PRESET_SQUARE_PAGE_ID)
-      ctx.layout.closePrimaryPage(APPLICATION_CENTER_PAGE_ID)
+      const active = ctx.layout.panelInfo.getSnapshot().activePanelId
+      if (panels.some(panel => panel.id === active)) ctx.layout.selectPanel(null)
     },
-    'ui-plugin-center: close selected pages on teardown',
+    'ui-plugin-center: release its main panel on teardown',
   )
 }

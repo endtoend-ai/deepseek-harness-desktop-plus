@@ -85,7 +85,6 @@ function fixture(): { readonly profile: string; readonly anchor: string } {
     dsh: {
       profile: {
         bundles: [systemPackage, WORKSPACE.packageName, '@local/unknown-bundle'],
-        disabledBundles: [SKILLS.packageName],
       },
     },
   }, undefined, 2)}\n`)

@@ -1,8 +1,8 @@
 /** Desktop-only browser features registered through existing UI slots. */
 
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-model-selection/client'
@@ -40,8 +40,7 @@ export const inject = ['slots', 'locale', 'theme', 'connection', 'remote', 'mode
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'desktop-customization: dictionaries')
   const bridge = desktopBridge()
-  const connection = ctx.get('connection') as ConnectionHandle
-  const vision = new VisionEnhancementController(connection.api)
+  const vision = new VisionEnhancementController(ctx)
   const visionInjected = (): VisionEnhancementInjected => ({
     hooks: { visionEnhancement: vision.store },
     load: () => vision.ensureLoaded(),
@@ -107,10 +106,13 @@ export function apply(ctx: ClientContext): void {
         },
         resolveRoute: (modelProvider, model) => vision.route(modelProvider, model),
         activateRoute: (modelProvider, model) => vision.activate(modelProvider, model),
-        selectNativeVision: () => directory.select({
-          provider: 'deepseek-official',
-          model: 'deepseek-v4-flash-vision-exp',
-        }),
+        selectNativeVision: async () => {
+          const selected = await directory.select({
+            provider: 'deepseek-official',
+            model: 'deepseek-v4-flash-vision-exp',
+          })
+          if (!selected.ok) throw new Error(selected.error.message)
+        },
       }
     },
   }, VisionEnhancementShortcut))

@@ -9,25 +9,25 @@
   ],
   "references": [
     {
+      "path": "../../boot/app-boot"
+    },
+    {
+      "path": "../../util/package-manifest"
+    },
+    {
       "path": "../../../vendor/cordis"
     },
     {
       "path": "../../../vendor/loader"
     },
     {
-      "path": "../../client/modules"
+      "path": "../../preset/agent-preset-registry"
     },
     {
       "path": "../../util/brand"
     },
     {
       "path": "../../typert/protocol"
-    },
-    {
-      "path": "../../runtime-diagnostics/invariants"
-    },
-    {
-      "path": "../../skill/skill"
     }
   ]
 }

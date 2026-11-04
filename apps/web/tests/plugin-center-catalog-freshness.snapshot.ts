@@ -2,12 +2,8 @@
 /** Built-bundle replay for F001/F002 discovery, exact preflight, stale fallback, and retained journeys. */
 
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { expect, it } from 'vitest'
-import {
-  installAssembledBootEnv,
-  mountAssembledApp,
-  type AssembledBootPlugin,
-} from './assembled-boot.ts'
+import { afterEach, beforeEach, expect, it } from 'vitest'
+import { installAssembledBootEnv, mountAssembledApp } from './assembled-boot.ts'
 
 type CatalogKind = 'plugin' | 'skill-pack'
 type CatalogFreshness = 'fresh' | 'stale'
@@ -113,60 +109,6 @@ interface RecoverySnapshot {
   canRetry: boolean
   canExportDiagnostics: boolean
 }
-
-const EXTRA_PLUGINS: readonly AssembledBootPlugin[] = [
-  {
-    id: '@deepseek-ai/dsh-client-ui-settings-general',
-    bundlePath: 'packages/client/ui-settings-general/lib/client.js',
-    url: '/plugins/ui-settings-general.js',
-    rev: 'fx',
-    inject: [
-      '@deepseek-ai/dsh-client-runtime',
-      '@deepseek-ai/dsh-client-ui-settings',
-      '@deepseek-ai/dsh-client-locale',
-      '@deepseek-ai/dsh-client-connection',
-      '@deepseek-ai/dsh-api-remotes',
-      '@deepseek-ai/dsh-client-ui-sidebar',
-    ],
-  },
-  {
-    id: '@deepseek-ai/dsh-client-ui-settings-plugins',
-    bundlePath: 'packages/client/ui-settings-plugins/lib/client.js',
-    url: '/plugins/ui-settings-plugins.js',
-    rev: 'fx',
-    inject: [
-      '@deepseek-ai/dsh-client-connection',
-      '@deepseek-ai/dsh-client-locale',
-      '@deepseek-ai/dsh-client-runtime',
-      '@deepseek-ai/dsh-client-ui-settings',
-      '@deepseek-ai/dsh-api-remotes',
-    ],
-  },
-  {
-    id: '@deepseek-ai/dsh-client-ui-settings-plugin-inventory',
-    bundlePath: 'packages/client/ui-settings-plugin-inventory/lib/client.js',
-    url: '/plugins/ui-settings-plugin-inventory.js',
-    rev: 'fx',
-    inject: [
-      '@deepseek-ai/dsh-api-remotes',
-      '@deepseek-ai/dsh-client-runtime',
-      '@deepseek-ai/dsh-client-ui-settings',
-      '@deepseek-ai/dsh-client-locale',
-    ],
-  },
-  {
-    id: '@deepseek-ai/dsh-client-ui-plugin-center',
-    bundlePath: 'packages/client/ui-plugin-center/lib/client.js',
-    url: '/plugins/ui-plugin-center.js',
-    rev: 'fx',
-    inject: [
-      '@deepseek-ai/dsh-client-runtime',
-      '@deepseek-ai/dsh-client-ui-layout',
-      '@deepseek-ai/dsh-client-ui-sidebar',
-      '@deepseek-ai/dsh-client-locale',
-    ],
-  },
-]
 
 const PLUGIN: CatalogSummary = {
   pluginId: 'fixture.workspace-tools',
@@ -351,90 +293,97 @@ function installedResult() {
   }
 }
 
-installAssembledBootEnv({
-  setup: () => {
-    currentFreshness = 'fresh'
-    firstRefresh = Promise.withResolvers<undefined>()
-    refreshCount = 0
-    compatibilityAllowed = true
-    mutationsEnabled = false
-    currentOperation = null
-    installedVersion = null
-    detailFailuresRemaining = 0
-    currentRecovery = null
-    recoveryListeners = new Set()
-    operationListeners = new Set()
-    Object.defineProperty(window, 'dshDesktop', {
-      configurable: true,
-      value: {
-        catalog: {
-          list: async (query: CatalogListQuery) => result(query),
-          refresh: async (query: CatalogListQuery) => {
-            refreshCount += 1
-            if (refreshCount === 1) {
-              await firstRefresh.promise
-              currentFreshness = 'stale'
-            } else {
-              currentFreshness = 'fresh'
-            }
-            return result(query)
-          },
-          detail: async () => {
-            if (detailFailuresRemaining > 0) {
-              detailFailuresRemaining -= 1
-              throw new Error('fixture registry rate limit')
-            }
-            return detail()
-          },
-          checkCompatibility: async () => compatibility(),
+// Registered before the shared environment so it runs after that teardown:
+// Vitest executes afterEach hooks in reverse registration order, and the
+// unmounting graph still reads this bridge.
+afterEach(() => {
+  delete (window as unknown as { dshDesktop?: unknown }).dshDesktop
+})
+
+installAssembledBootEnv()
+
+// The Plugin Center journey reads the Studio Desktop bridge through
+// `window.dshDesktop`; the assembled Web fixture serves no such bridge, so
+// each test installs its own before the graph mounts.
+beforeEach(() => {
+  currentFreshness = 'fresh'
+  firstRefresh = Promise.withResolvers<undefined>()
+  refreshCount = 0
+  compatibilityAllowed = true
+  mutationsEnabled = false
+  currentOperation = null
+  installedVersion = null
+  detailFailuresRemaining = 0
+  currentRecovery = null
+  recoveryListeners = new Set()
+  operationListeners = new Set()
+  Object.defineProperty(window, 'dshDesktop', {
+    configurable: true,
+    value: {
+      catalog: {
+        list: async (query: CatalogListQuery) => result(query),
+        refresh: async (query: CatalogListQuery) => {
+          refreshCount += 1
+          if (refreshCount === 1) {
+            await firstRefresh.promise
+            currentFreshness = 'stale'
+          } else {
+            currentFreshness = 'fresh'
+          }
+          return result(query)
         },
-        installedPlugins: {
-          list: async () => installedResult(),
+        detail: async () => {
+          if (detailFailuresRemaining > 0) {
+            detailFailuresRemaining -= 1
+            throw new Error('fixture registry rate limit')
+          }
+          return detail()
         },
-        pluginOperations: {
-          get mutationsEnabled() { return mutationsEnabled },
-          install: async (request: { idempotencyKey: string }) => {
-            const started = operation('preflight', request.idempotencyKey)
-            publishOperation(started)
-            return { kind: 'started', operation: started }
-          },
-          manage: async () => { throw new Error('management is not used by this replay') },
-          getOperation: async () => currentOperation,
-          onState: (listener: (operation: PluginOperation) => void) => {
-            operationListeners.add(listener)
-            return () => { operationListeners.delete(listener) }
-          },
+        checkCompatibility: async () => compatibility(),
+      },
+      installedPlugins: {
+        list: async () => installedResult(),
+      },
+      pluginOperations: {
+        get mutationsEnabled() { return mutationsEnabled },
+        install: async (request: { idempotencyKey: string }) => {
+          const started = operation('preflight', request.idempotencyKey)
+          publishOperation(started)
+          return { kind: 'started', operation: started }
         },
-        pluginOwnedData: {
-          getOffer: async () => null,
-          remove: async () => { throw new Error('owned-data removal is not used by this replay') },
-          retain: async () => { throw new Error('owned-data retention is not used by this replay') },
-        },
-        pluginRecovery: {
-          getState: async () => currentRecovery,
-          retry: async () => currentRecovery,
-          exportDiagnostics: async () => ({
-            operationId: currentRecovery?.operationId ?? 'none',
-            status: 'cancelled',
-            filename: null,
-            sha256: null,
-            bytes: null,
-          }),
-          onState: (listener: (snapshot: RecoverySnapshot) => void) => {
-            recoveryListeners.add(listener)
-            return () => { recoveryListeners.delete(listener) }
-          },
+        manage: async () => { throw new Error('management is not used by this replay') },
+        getOperation: async () => currentOperation,
+        onState: (listener: (operation: PluginOperation) => void) => {
+          operationListeners.add(listener)
+          return () => { operationListeners.delete(listener) }
         },
       },
-    })
-  },
-  cleanup: () => {
-    delete (window as unknown as { dshDesktop?: unknown }).dshDesktop
-  },
+      pluginOwnedData: {
+        getOffer: async () => null,
+        remove: async () => { throw new Error('owned-data removal is not used by this replay') },
+        retain: async () => { throw new Error('owned-data retention is not used by this replay') },
+      },
+      pluginRecovery: {
+        getState: async () => currentRecovery,
+        retry: async () => currentRecovery,
+        exportDiagnostics: async () => ({
+          operationId: currentRecovery?.operationId ?? 'none',
+          status: 'cancelled',
+          filename: null,
+          sha256: null,
+          bytes: null,
+        }),
+        onState: (listener: (snapshot: RecoverySnapshot) => void) => {
+          recoveryListeners.add(listener)
+          return () => { recoveryListeners.delete(listener) }
+        },
+      },
+    },
+  })
 })
 
 it('plugin center first-level page preserves search, detail, stale cache, retry, sessions, and Settings navigation', async () => {
-  mountAssembledApp(EXTRA_PLUGINS)
+  mountAssembledApp()
 
   const pluginEntry = await screen.findByRole('button', { name: 'Plugin Center' }, { timeout: 10_000 })
   fireEvent.click(pluginEntry)
@@ -483,7 +432,7 @@ it('plugin center first-level page preserves search, detail, stale cache, retry,
 
 it('plugin center assembled detail renders ordered preflight denial without exposing mutation', async () => {
   compatibilityAllowed = false
-  mountAssembledApp(EXTRA_PLUGINS)
+  mountAssembledApp()
 
   fireEvent.click(await screen.findByRole('button', { name: 'Plugin Center' }, { timeout: 10_000 }))
   const opener = (await screen.findAllByRole('button', { name: 'View details：Workspace tools' }))[0]!
@@ -512,7 +461,7 @@ it('plugin center assembled runtime mismatch opens the installed safe-mode manag
     canRetry: true,
     canExportDiagnostics: true,
   }
-  mountAssembledApp(EXTRA_PLUGINS)
+  mountAssembledApp()
 
   fireEvent.click(await screen.findByRole('button', { name: 'Plugin Center' }, { timeout: 10_000 }))
   expect(await screen.findByText('Plugin safe mode')).toBeTruthy()
@@ -525,7 +474,7 @@ it('plugin center assembled runtime mismatch opens the installed safe-mode manag
 
 it('plugin center assembled detail retries a temporary registry failure in place', async () => {
   detailFailuresRemaining = 1
-  mountAssembledApp(EXTRA_PLUGINS)
+  mountAssembledApp()
 
   fireEvent.click(await screen.findByRole('button', { name: 'Plugin Center' }, { timeout: 10_000 }))
   fireEvent.click((await screen.findAllByRole('button', { name: 'View details：Workspace tools' }))[0]!)
@@ -538,7 +487,7 @@ it('plugin center assembled detail retries a temporary registry failure in place
 
 it('desktop plugin install activation streams progress, commits after runtime proof, and rehydrates', async () => {
   mutationsEnabled = true
-  mountAssembledApp(EXTRA_PLUGINS)
+  mountAssembledApp()
 
   fireEvent.click(await screen.findByRole('button', { name: 'Plugin Center' }, { timeout: 10_000 }))
   fireEvent.click((await screen.findAllByRole('button', { name: 'View details：Workspace tools' }))[0]!)
@@ -573,7 +522,7 @@ it('desktop plugin install activation streams progress, commits after runtime pr
 
 it('assembled discovery keeps compatibility visible when another version is already installed', async () => {
   installedVersion = '0.9.0'
-  mountAssembledApp(EXTRA_PLUGINS)
+  mountAssembledApp()
 
   fireEvent.click(await screen.findByRole('button', { name: 'Plugin Discovery' }, { timeout: 10_000 }))
   expect((await screen.findAllByRole('button', { name: 'Manage' })).length).toBeGreaterThan(0)

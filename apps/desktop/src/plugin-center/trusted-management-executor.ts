@@ -2,10 +2,7 @@
 
 import { join } from 'node:path'
 import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
-import {
-  readProfileManifest,
-  setProfileBundleEnabled,
-} from '@deepseek-ai/dsh-app-boot'
+import { readProfileManifest } from '@deepseek-ai/dsh-app-boot'
 import type {
   CatalogVersionPreflight,
   CompatibilityFingerprint,
@@ -13,6 +10,7 @@ import type {
   SupportedPluginPlatform,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import type { HostSupervisor } from '../host-supervisor.ts'
+import { setProfileBundleEnabled } from './profile-bundles.ts'
 import { verifyPluginArtifact } from './artifact-verifier.ts'
 import type { PluginArtifactDownloader } from './artifact-downloader.ts'
 import {

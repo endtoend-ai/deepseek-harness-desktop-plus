@@ -18,8 +18,7 @@ describe('built-in applications', () => {
       dependencies: { [packageName]: 'file:/stale/application.tgz' },
       dsh: {
         profile: {
-          bundles: ['@deepseek-ai/dsh-base', packageName],
-          disabledBundles: [packageName],
+          bundles: ['@deepseek-ai/dsh-base'],
         },
       },
     }))
@@ -31,11 +30,10 @@ describe('built-in applications', () => {
 
     const updated = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
       readonly dependencies: Record<string, string>
-      readonly dsh: { readonly profile: { readonly bundles: string[]; readonly disabledBundles: string[] } }
+      readonly dsh: { readonly profile: { readonly bundles: string[] } }
     }
     expect(updated.dependencies[packageName]).toBeUndefined()
     expect(updated.dsh.profile.bundles).toContain(packageName)
-    expect(updated.dsh.profile.disabledBundles).not.toContain(packageName)
     expect(existsSync(stalePackage)).toBe(false)
   })
 })

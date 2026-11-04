@@ -5,7 +5,6 @@ import type {
   HostObservable, InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime,
 } from '@deepseek-ai/dsh-client-ui-slots'
 import type { PluginsSettingsLocaleKey } from './locales.ts'
-import type { SettingsNavigationTarget } from '@deepseek-ai/dsh-client-ui-settings/client'
 import css from './PluginsSettingsSection.module.css'
 
 /** One tab projected from a `settings.plugins.tab` contribution. */
@@ -21,8 +20,6 @@ export interface PluginsSettingsSectionInjected {
     /** Ordered, locale-aware projection of the Plugins tab ledger. */
     tabs: HostObservable<readonly PluginsSettingsTabEntry[]>
   }
-  /** Receive existing-surface links targeting one of this section's tabs. */
-  readonly subscribeNavigation: (listener: (target: SettingsNavigationTarget) => void) => () => void
 }
 
 /** Props the renderer binds for the section. */
@@ -32,23 +29,15 @@ export type PluginsSettingsSectionProps =
   & PropsRenderSlots<'settings.plugins.tab'>
   & InjectFace<PluginsSettingsSectionInjected>
 
-/** Render one Plugins page whose contents arrive from feature-owned tabs. */
-export function PluginsSettingsSection({
-  t,
-  renderSlot,
-  useTabs,
-  subscribeNavigation = () => () => {},
-}: PluginsSettingsSectionProps) {
+/** Render one Plugins page whose contents arrive from feature-owned tabs; one contribution shows as the page itself. */
+export function PluginsSettingsSection({ t, renderSlot, useTabs }: PluginsSettingsSectionProps) {
   const tabsId = useId()
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const rows = useTabs(value => value)
   const [activeId, setActiveId] = useState<string>()
   const [visitedIds, setVisitedIds] = useState<ReadonlySet<string>>(() => new Set())
   const active = rows.find(row => row.id === activeId)?.id ?? rows[0]?.id
-
-  useEffect(() => subscribeNavigation((target) => {
-    if (target.sectionId === 'plugins' && target.tabId !== undefined) setActiveId(target.tabId)
-  }), [subscribeNavigation])
+  const single = rows.length === 1 ? rows[0] : undefined
 
   // A tab mounts only when first selected, then stays mounted while hidden so
   // local drafts, disclosure state, search, and the inventory snapshot survive
@@ -65,7 +54,9 @@ export function PluginsSettingsSection({
     <div className={css.section}>
       <h2 className={css.heading}>{t('title')}</h2>
       <p className={css.intro}>{t('intro')}</p>
-      {rows.length === 0 ? <p className={css.empty}>{t('empty')}</p> : (
+      {rows.length === 0 ? <p className={css.empty}>{t('empty')}</p> : single !== undefined ? (
+        <div className={css.panel}>{renderSlot('settings.plugins.tab', {}, { only: single.id })}</div>
+      ) : (
         <>
           <div className={css.tabs} role="tablist" aria-label={t('tabs')}>
             {rows.map((row, index) => {
@@ -129,7 +120,7 @@ export function PluginsSettingsSection({
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
-    /** Plugins section, configurable-tab, and card copy. */
+    /** Built-in plugins section and plugin configuration page copy. */
     'settings.plugins': PluginsSettingsLocaleKey
   }
 }

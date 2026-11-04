@@ -12,18 +12,12 @@ export function reconcileBuiltInApplications(
   const manifest = readProfileManifest('desktop', profileDirectory)
   const profile = manifest.dsh?.profile
   const bundles = [...(profile?.bundles ?? [])]
-  const disabledBundles = [...(profile?.disabledBundles ?? [])]
   const dependencies = { ...manifest.dependencies }
   let changed = false
 
   for (const packageName of packageNames) {
     if (!bundles.includes(packageName)) {
       bundles.push(packageName)
-      changed = true
-    }
-    const disabledIndex = disabledBundles.indexOf(packageName)
-    if (disabledIndex !== -1) {
-      disabledBundles.splice(disabledIndex, 1)
       changed = true
     }
     if (dependencies[packageName] !== undefined) {
@@ -45,7 +39,7 @@ export function reconcileBuiltInApplications(
     dependencies,
     dsh: {
       ...manifest.dsh,
-      profile: { ...profile, bundles, disabledBundles },
+      profile: { ...profile, bundles },
     },
   })
 }

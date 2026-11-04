@@ -19,7 +19,7 @@ import {
 } from 'electron'
 import electronUpdater from 'electron-updater'
 import {
-  healProfilesModuleFallback, initProfile, PROFILE_TEMPLATES,
+  initProfile, PROFILE_TEMPLATES,
 } from '@deepseek-ai/dsh-app-boot'
 import {
   decodeCatalogDetailQuery,
@@ -33,6 +33,7 @@ import {
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import { AppearanceStorage } from './appearance-storage.ts'
+import { desktopChromeCss, desktopChromeScript, type DesktopChromePlatform } from './desktop-chrome.ts'
 import { reconcileBuiltInApplications } from './built-in-applications.ts'
 import { DESKTOP_CHANNELS, type DesktopAppearanceSettings } from './desktop-bridge-contract.ts'
 import { createHostSupervisor, spawnDshWeb, type HostSupervisor } from './host-supervisor.ts'
@@ -236,6 +237,26 @@ async function loadWindowHost(window: BrowserWindow, origin: string, primaryPage
     ...(primaryPage === undefined ? {} : { primaryPage }),
     previousUrl: window.webContents.getURL(),
   }))
+  await applyDesktopChrome(window)
+}
+
+/** Which platform's window controls the page must leave clear. */
+function desktopChromePlatform(platform: NodeJS.Platform): DesktopChromePlatform {
+  if (platform === 'darwin' || platform === 'win32') return platform
+  return 'linux'
+}
+
+/**
+ * Install the draggable title band on the freshly loaded Host page.
+ * A navigation drops both the marker and the stylesheet, so every load reapplies them.
+ */
+async function applyDesktopChrome(window: BrowserWindow): Promise<void> {
+  if (window.isDestroyed()) return
+  const platform = desktopChromePlatform(process.platform)
+  const contents = window.webContents
+  if (contents.isDestroyed()) return
+  await contents.insertCSS(desktopChromeCss(platform))
+  await contents.executeJavaScript(desktopChromeScript(platform))
 }
 
 async function holdCurrentWindowFrame(window: BrowserWindow): Promise<HeldReloadFrame | undefined> {
@@ -760,18 +781,10 @@ async function initializePluginOperations(backend: PluginCenterBackend): Promise
     journal,
     recovery,
     startNormalHost: async () => {
-      const webProfileBundles = PROFILE_TEMPLATES['web']
-      if (webProfileBundles === undefined) throw new Error('web Profile template is unavailable')
-      initProfile(profileDirectory, [...webProfileBundles, ...BUILT_IN_APPLICATION_BUNDLES])
+      const webTemplate = PROFILE_TEMPLATES['web']
+      if (webTemplate === undefined) throw new Error('web Profile template is unavailable')
+      initProfile(profileDirectory, [...webTemplate.bundles, ...BUILT_IN_APPLICATION_BUNDLES])
       reconcileBuiltInApplications(profileDirectory, BUILT_IN_APPLICATION_BUNDLES)
-      for (const manifestPath of backend.paths.shippedBundleManifests) {
-        const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { readonly name?: string }
-        if (manifest.name !== undefined && BUILT_IN_APPLICATION_BUNDLES.includes(
-          manifest.name as typeof BUILT_IN_APPLICATION_BUNDLES[number],
-        )) {
-          healProfilesModuleFallback(manifestPath, dshHome)
-        }
-      }
       const dshmarketMigration = await migrateLegacyDshmarketRegistration({
         profileDirectory,
         installAnchor: backend.paths.cliManifest,

@@ -2,16 +2,14 @@
 
 import { join } from 'node:path'
 import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
-import {
-  readProfileManifest,
-  setProfileBundleEnabled,
-} from '@deepseek-ai/dsh-app-boot'
+import { readProfileManifest } from '@deepseek-ai/dsh-app-boot'
 import type {
   CatalogVersionPreflight,
   CompatibilityFingerprint,
   CompatibilityReason,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import { evaluateInstalledActivationCompatibility } from './compatibility.ts'
+import { setProfileBundleEnabled } from './profile-bundles.ts'
 
 /** One external Bundle disabled before Host composition, with reproducible reasons. */
 interface StartupCompatibilityDeactivation {

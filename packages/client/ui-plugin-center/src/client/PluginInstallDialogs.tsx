@@ -7,7 +7,7 @@ import type {
   PluginOperationSnapshot,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import {
-  Button, IconCheckOutline16, IconWarningOutline16, Modal, StateDot,
+  Button, IconCheckOutlineRegular, IconWarningOutlineRegular, Modal, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PluginCenterTabProps } from './PluginCenterTab.tsx'
 import type { PluginCenterLocaleKey } from './locales.ts'
@@ -129,7 +129,7 @@ export function PluginInstallConfirmation({
         <div><dt>{t('restartRequired')}</dt><dd>{t(decision.restartRequired ? 'restartYes' : 'restartNo')}</dd></div>
       </dl>
       <div className={css.confirmWarning}>
-        <IconWarningOutline16 size={16} aria-hidden="true" />
+        <IconWarningOutlineRegular size={16} aria-hidden="true" />
         <span>
           <strong>{t('authorityTitle')}</strong>
           <span>{t('confirmInstallAuthority')}</span>
@@ -194,7 +194,7 @@ export function PluginManagementConfirmation({
       </dl>
       {action === 'update' && item.update !== null ? (
         <div className={css.confirmWarning}>
-          <IconWarningOutline16 size={16} aria-hidden="true" />
+          <IconWarningOutlineRegular size={16} aria-hidden="true" />
           <span>
             <strong>{t('riskChange')}</strong>
             <span>{item.update.changelog}</span>
@@ -204,7 +204,7 @@ export function PluginManagementConfirmation({
       ) : null}
       {action === 'uninstall' ? (
         <div className={css.confirmWarning}>
-          <IconWarningOutline16 size={16} aria-hidden="true" />
+          <IconWarningOutlineRegular size={16} aria-hidden="true" />
           <span>
             <strong>{t('configurationRetained')}</strong>
             <span>{t('ownedDataRetained')}</span>
@@ -295,7 +295,7 @@ export function PluginOwnedDataRemovalConfirmation({
       ) : (
         <>
           <div className={css.confirmWarning}>
-            <IconWarningOutline16 size={16} aria-hidden="true" />
+            <IconWarningOutlineRegular size={16} aria-hidden="true" />
             <span>
               <strong>{t('ownedDataPermanentTitle')}</strong>
               <span>{t('ownedDataPermanentWarning')}</span>
@@ -386,9 +386,9 @@ export function PluginOperationDialog({
         <header className={css.installProgressHeader}>
           <span className={css.installProgressState} data-state={failed ? 'failed' : committed ? 'done' : 'active'}>
             {failed
-              ? <IconWarningOutline16 size={18} aria-hidden="true" />
+              ? <IconWarningOutlineRegular size={18} aria-hidden="true" />
               : committed
-                ? <IconCheckOutline16 size={18} aria-hidden="true" />
+                ? <IconCheckOutlineRegular size={18} aria-hidden="true" />
                 : <StateDot state="ongoing" size={14} />}
           </span>
           <div>
@@ -421,7 +421,7 @@ export function PluginOperationDialog({
                 <li key={group.label} data-state={state}>
                   <span className={css.installStepMarker} aria-hidden="true">
                     {state === 'done'
-                      ? <IconCheckOutline16 size={12} />
+                      ? <IconCheckOutlineRegular size={12} />
                       : state === 'current'
                         ? <StateDot state="ongoing" size={10} />
                         : null}

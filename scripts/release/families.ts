@@ -16,6 +16,7 @@ import {
   readClientBuildRecord,
 } from '../client-build-environment.ts'
 import { validateTarballPayload } from '../publication-payload.ts'
+import { ON_DEMAND_BUNDLES } from '../../packages/boot/app-boot/src/official-bundle-packages.ts'
 
 /**
  * Dependency sections a consumer must publish after, because npm resolves them
@@ -36,28 +37,8 @@ const PEER_SECTIONS = ['peerDependencies'] as const
 /** The workspace root manifest, which is never a release member. */
 const WORKSPACE_ROOT_PACKAGE = '@deepseek-ai/dsh-root'
 
-/** Public app assemblies released with the dsh family; the private Electron app is excluded. */
-export const DSH_NPM_RELEASE_APP_DIRECTORIES = ['apps/cli', 'apps/web'] as const
-
-/** Manifest patterns selecting every dsh release member without the private Desktop app. */
-export const DSH_NPM_RELEASE_MANIFEST_PATTERNS = [
-  'packages/!(experimental|examples)/*/package.json',
-  'packages/examples/!(ff-llm-wiki-plugin|plugin-center-fixture|plugin-center-skill-fixture)/package.json',
-  ...DSH_NPM_RELEASE_APP_DIRECTORIES.map(directory => `${directory}/package.json`),
-] as const
-
-/**
- * Whether an application directory belongs to the public dsh npm family.
- * @param directory - repository-relative application directory.
- * @returns `true` for a published application assembly.
- */
-export function isDshNpmReleaseAppDirectory(directory: string): boolean {
-  return (DSH_NPM_RELEASE_APP_DIRECTORIES as readonly string[]).includes(directory)
-}
-
 /** One peer declaration the publish order leaves unordered. */
 interface DroppedPeerEdge {
-  /** Package declaring the peer. */
   readonly consumer: string
   /** The declared peer, which publishes after `consumer` or alongside it in a cycle. */
   readonly peer: string
@@ -71,7 +52,6 @@ interface DroppedPeerEdge {
  * log is the only one who can judge whether a newly dropped edge is expected.
  */
 export interface PublishPlan {
-  /** Members in publish order. */
   readonly order: readonly ReleaseMember[]
   /** Peer declarations left unordered, in the order the traversal reached them. */
   readonly droppedPeerEdges: readonly DroppedPeerEdge[]
@@ -79,13 +59,9 @@ export interface PublishPlan {
 
 /** One publishable package of a release family. */
 export interface ReleaseMember {
-  /** Repository-relative package directory, for example `packages/core/session`. */
   readonly directory: string
-  /** Package name from its manifest. */
   readonly name: string
-  /** Package version from its manifest. */
   readonly version: string
-  /** The parsed manifest, for payload policy and publication checks. */
   readonly manifest: Readonly<Record<string, unknown>>
 }
 
@@ -117,18 +93,16 @@ function requireString(manifest: Record<string, unknown>, field: string, context
 
 /** The executable a family's installed artifacts are driven through. */
 export interface InstalledEntry {
-  /** Package that carries the executable. */
   readonly packageName: string
-  /** Path to the executable inside that package. */
   readonly binPath: string
 }
 
 /** A release sequence: its members, its version baseline, and its tag naming. */
 export abstract class ReleaseFamily {
-  /** Workflow-facing identifier, also the `--family` argument. */
+  /** Workflow-facing `--family` identifier. */
   abstract readonly id: string
 
-  /** Glob patterns, relative to the repository root, that select this family's manifests. */
+  /** Repository-relative glob patterns selecting this family's manifests. */
   abstract readonly patterns: readonly string[]
 
   /** Git tag prefix this family publishes from. */
@@ -144,7 +118,7 @@ export abstract class ReleaseFamily {
   /**
    * Discover this family's members.
    * @param root - repository root.
-   * @returns Members sorted by directory, with names validated and deduplicated.
+   * @returns Publishable members sorted by directory, with names validated and deduplicated.
    */
   members(root: string): ReleaseMember[] {
     const manifestPaths = globSync([...this.patterns], { cwd: root }).sort()
@@ -155,6 +129,7 @@ export abstract class ReleaseFamily {
     for (const manifestPath of manifestPaths) {
       const normalized = manifestPath.replaceAll('\\', '/')
       const manifest = readManifest(resolve(root, manifestPath))
+      if (manifest.private === true) continue
       const name = requireString(manifest, 'name', normalized)
       const version = requireString(manifest, 'version', normalized)
       if (name === WORKSPACE_ROOT_PACKAGE) throw new Error(`${normalized} selected the workspace root`)
@@ -275,6 +250,13 @@ export abstract class ReleaseFamily {
   }
 
   /**
+   * Packages that must already be published before this member can advertise them.
+   * @param _member - Member being published.
+   * @returns Release prerequisites that do not become installed dependencies.
+   */
+  protected publicationPrerequisites(_member: ReleaseMember): readonly string[] { return [] }
+
+  /**
    * The family members one member declares in the given sections.
    * @param member - the dependent member.
    * @param byName - every family member by package name.
@@ -295,6 +277,13 @@ export abstract class ReleaseFamily {
         if (dependency !== undefined && dependency.name !== member.name) edges.push(dependency)
       }
     }
+    if (sections.includes('dependencies')) {
+      for (const name of this.publicationPrerequisites(member)) {
+        const prerequisite = byName.get(name)
+        if (prerequisite === undefined) throw new Error(`${member.name}: Official catalog prerequisite ${name} is missing from the public release family`)
+        if (!edges.some(edge => edge.name === name)) edges.push(prerequisite)
+      }
+    }
     return edges.sort((left, right) => left.name.localeCompare(right.name))
   }
 
@@ -313,6 +302,15 @@ export abstract class ReleaseFamily {
   abstract tagPrefixFor(member: ReleaseMember): string
 
   /**
+   * The npm dist-tag assigned while publishing a version.
+   * @param version - package version from the packed manifest.
+   * @returns `next` for a prerelease, or undefined so npm uses `latest`.
+   */
+  distTagForVersion(version: string): string | undefined {
+    return version.includes('-') ? 'next' : undefined
+  }
+
+  /**
    * The tag a member publishes from.
    * @param member - the member being published.
    * @returns The full tag name, without `refs/tags/`.
@@ -329,6 +327,17 @@ export abstract class ReleaseFamily {
   abstract validatePayload(member: ReleaseMember, files: readonly string[]): void
 
   /**
+   * Check the identity in the packed manifest before publishing its bytes.
+   * @param member - Source member selected for this release.
+   * @param manifest - Manifest read from its packed tarball.
+   */
+  validatePackedManifest(member: ReleaseMember, manifest: Readonly<Record<string, unknown>>): void {
+    if (manifest.name !== member.name || manifest.version !== member.version) {
+      throw new Error(`${member.name}: packed identity must match ${member.name}@${member.version}`)
+    }
+  }
+
+  /**
    * The executable that proves this family's artifacts install and run, or
    * `undefined` for a family that publishes no executable.
    */
@@ -338,7 +347,10 @@ export abstract class ReleaseFamily {
 /** Release packages and apps: one shared version across the whole family. */
 class DshFamily extends ReleaseFamily {
   readonly id = 'dsh'
-  readonly patterns = DSH_NPM_RELEASE_MANIFEST_PATTERNS
+  readonly patterns = [
+    'packages/*/*/package.json',
+    'apps/*/package.json',
+  ] as const
   readonly tagPrefix = 'dsh-v'
 
   /** Require current artifacts from a complete official client build. */
@@ -366,6 +378,14 @@ class DshFamily extends ReleaseFamily {
     return this.tagPrefix
   }
 
+  override distTagForVersion(version: string): string | undefined {
+    const separator = version.indexOf('-')
+    if (separator === -1) return undefined
+    const [channel] = version.slice(separator + 1).split('.')
+    if (channel === 'alpha' || channel === 'canary') return channel
+    return 'next'
+  }
+
   /**
    * Reject source and declaration-map members, the repository's publication policy.
    * @param member - the packed member.
@@ -373,6 +393,26 @@ class DshFamily extends ReleaseFamily {
    */
   validatePayload(member: ReleaseMember, files: readonly string[]): void {
     validateTarballPayload(files, member.name)
+  }
+
+  /** Publish every advertised on-demand package before the installation that offers it. */
+  protected override publicationPrerequisites(member: ReleaseMember): readonly string[] {
+    return member.name === '@deepseek-ai/dsh' ? ON_DEMAND_BUNDLES : []
+  }
+
+  /** Require the packed DSH runtime graph to stay on the shared exact release version. */
+  override validatePackedManifest(member: ReleaseMember, manifest: Readonly<Record<string, unknown>>): void {
+    super.validatePackedManifest(member, manifest)
+    for (const section of ['dependencies', 'optionalDependencies', 'peerDependencies']) {
+      const dependencies = manifest[section]
+      if (dependencies === null || typeof dependencies !== 'object' || Array.isArray(dependencies)) continue
+      for (const [name, range] of Object.entries(dependencies)) {
+        if (name !== '@deepseek-ai/dsh' && !name.startsWith('@deepseek-ai/dsh-')) continue
+        if (range !== member.version) {
+          throw new Error(`${member.name}: packed ${section}.${name} must equal ${member.version}, got ${String(range)}`)
+        }
+      }
+    }
   }
 
   readonly installedEntry = { packageName: '@deepseek-ai/dsh', binPath: 'lib/bin.js' }

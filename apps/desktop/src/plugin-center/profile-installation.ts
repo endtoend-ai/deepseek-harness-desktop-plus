@@ -5,13 +5,15 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
 import {
   loadProfile,
-  readProfileBundleState,
   readProfileManifest,
-  reconcileProfileBundles,
   resolveBundleDir,
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
 import type { CatalogVersionPreflight } from '@deepseek-ai/dsh-plugin-center-contracts'
+import {
+  readProfileBundleState,
+  reconcileProfileBundles,
+} from './profile-bundles.ts'
 
 function packagePath(profileDirectory: string, packageName: string): string {
   return join(profileDirectory, 'node_modules', ...packageName.split('/'))
@@ -83,8 +85,7 @@ export async function reconcileAndValidateInstalledBundle(input: {
   }
   const expectedEnabled = input.expectedEnabled ?? true
   const bundleState = readProfileBundleState(readProfileManifest('desktop', input.profileDirectory))
-  if (bundleState.bundles.includes(input.candidate.packageName) !== expectedEnabled
-    || bundleState.disabledBundles.includes(input.candidate.packageName) === expectedEnabled) {
+  if (bundleState.bundles.includes(input.candidate.packageName) !== expectedEnabled) {
     throw new Error(`validated package did not preserve its expected ${expectedEnabled ? 'active' : 'disabled'} Bundle state`)
   }
 
@@ -163,7 +164,7 @@ export async function reconcileAndValidateUninstalledBundle(input: {
     )
   }
   const bundleState = readProfileBundleState(reconciliation.manifest)
-  if (bundleState.bundles.includes(input.packageName) || bundleState.disabledBundles.includes(input.packageName)) {
+  if (bundleState.bundles.includes(input.packageName)) {
     throw new Error('removed package remains in active or disabled Bundle metadata')
   }
 }

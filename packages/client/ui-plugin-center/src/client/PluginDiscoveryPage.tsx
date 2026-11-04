@@ -2,8 +2,8 @@ import {
   useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode,
 } from 'react'
 import {
-  Button, IconCheckOutline14, IconCloseOutline16, IconRefreshOutline16,
-  IconSearchOutline16, IconSparkle16,
+  Button, IconCheckOutlineRegular, IconCloseOutlineRegular, IconRefreshOutlineRegular,
+  IconSearchOutlineRegular, IconSparkleRegular,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
   CatalogCapability,
@@ -50,11 +50,11 @@ export interface PluginDiscoveryInjected {
 }
 
 /** Result of handing one discovery requirement to the current Agent session. */
-export type AgentPluginFinderResult = 'sent' | 'needs-model' | 'session-starting'
+export type AgentPluginFinderResult = 'sent' | 'needs-model' | 'needs-workspace'
 
 /** Full props assembled by the independent Plugin Discovery page renderer. */
 export type PluginDiscoveryPageProps =
-  PropsRuntime<'main.page'>
+  PropsRuntime<'main'>
   & PropsLocale<'pluginCenter'>
   & InjectFace<PluginDiscoveryInjected>
 
@@ -206,7 +206,7 @@ function EntryBadges({ entry, t }: { readonly entry: CatalogSummary; readonly t:
     <span className={css.featureMeta}>
       {entry.verified ? (
         <span className={css.badge} data-state="verified">
-          <IconCheckOutline14 size={12} aria-hidden="true" />
+          <IconCheckOutlineRegular size={12} aria-hidden="true" />
           {t('verified')}
         </span>
       ) : null}
@@ -300,7 +300,7 @@ function FeatureCard({
       <button type="button" className={css.featureBody} onClick={(event) => { onOpen(entry, event.currentTarget) }}>
         <DiscoveryMark entry={entry} featured />
         <span className={css.featureCopy}>
-          <span className={css.eyebrow}><IconSparkle16 size={12} aria-hidden="true" />{t('discoveryFeaturedReason')}</span>
+          <span className={css.eyebrow}><IconSparkleRegular size={12} aria-hidden="true" />{t('discoveryFeaturedReason')}</span>
           <h2>{entry.displayName}</h2>
           <p>{entry.summary}</p>
           <EntryBadges entry={entry} t={t} />
@@ -485,7 +485,7 @@ function DetailDrawer({
       <aside className={css.drawer} aria-label={`${t('discoveryDetails')}：${entry.displayName}`}>
         <div className={css.drawerTopbar}>
           <button ref={closeRef} type="button" className={css.drawerClose} aria-label={t('discoveryCloseDetails')} onClick={onClose}>
-            <IconCloseOutline16 size={16} />
+            <IconCloseOutlineRegular size={16} />
           </button>
         </div>
         <div className={css.drawerBody}>
@@ -590,7 +590,7 @@ function DetailDrawer({
 
 const SKELETONS = [0, 1, 2, 3, 4, 5] as const
 
-type AgentFinderState = 'idle' | 'submitting' | 'needs-model' | 'session-starting' | 'error'
+type AgentFinderState = 'idle' | 'submitting' | 'needs-model' | 'needs-workspace' | 'error'
 
 /** Natural-language handoff into the bundled find-plugins skill. */
 function AgentPluginFinder({ findWithAgent, t }: {
@@ -613,14 +613,14 @@ function AgentPluginFinder({ findWithAgent, t }: {
   }
   const feedback = state === 'needs-model'
     ? t('agentFinderNeedsModel')
-    : state === 'session-starting'
-      ? t('agentFinderSessionStarting')
+    : state === 'needs-workspace'
+      ? t('agentFinderNeedsWorkspace')
       : state === 'error'
         ? t('agentFinderError')
         : null
   return (
     <section className={css.agentFinder} aria-labelledby="agent-plugin-finder-title">
-      <div className={css.agentFinderIcon} aria-hidden="true"><IconSparkle16 size={18} /></div>
+      <div className={css.agentFinderIcon} aria-hidden="true"><IconSparkleRegular size={18} /></div>
       <div className={css.agentFinderBody}>
         <div className={css.agentFinderCopy}>
           <h2 id="agent-plugin-finder-title">{t('agentFinderTitle')}</h2>
@@ -638,7 +638,7 @@ function AgentPluginFinder({ findWithAgent, t }: {
             }}
           />
           <button type="submit" disabled={requirement.trim() === '' || state === 'submitting'}>
-            <IconSparkle16 size={14} aria-hidden="true" />
+            <IconSparkleRegular size={14} aria-hidden="true" />
             {t(state === 'submitting' ? 'agentFinderSubmitting' : 'agentFinderAction')}
           </button>
         </form>
@@ -927,7 +927,7 @@ export function PluginDiscoveryPage({
       <div className={css.topbar}>
         <span className={css.freshness}>{freshness}</span>
         <button type="button" className={css.refreshButton} aria-label={t('refresh')} title={t('refresh')} onClick={retry}>
-          <IconRefreshOutline16 size={16} />
+          <IconRefreshOutlineRegular size={16} />
         </button>
       </div>
       <div className={css.scroller}>
@@ -938,7 +938,7 @@ export function PluginDiscoveryPage({
           </header>
           <AgentPluginFinder findWithAgent={findWithAgent} t={t} />
           <label className={css.search}>
-            <IconSearchOutline16 aria-hidden="true" />
+            <IconSearchOutlineRegular aria-hidden="true" />
             <span className={css.visuallyHidden}>{t('discoverySearch')}</span>
             <input
               type="search"

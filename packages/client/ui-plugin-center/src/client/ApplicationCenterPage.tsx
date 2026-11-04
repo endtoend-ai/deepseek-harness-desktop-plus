@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  Button, IconDataOutline16, IconRefreshOutline16, IconRightUpOutline16, IconSettingsOutline16,
+  Button, IconDataOutlineRegular, IconRefreshOutlineRegular, IconRightUpOutlineRegular, IconSettingsOutlineRegular,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import css from './ApplicationCenterPage.module.css'
@@ -22,7 +22,7 @@ export interface ApplicationCenterInjected {
 
 /** Full props assembled by the independent main-page renderer. */
 export type ApplicationCenterPageProps =
-  PropsRuntime<'main.page'>
+  PropsRuntime<'main'>
   & PropsLocale<'pluginCenter'>
   & InjectFace<ApplicationCenterInjected>
 
@@ -97,7 +97,7 @@ export function ApplicationCenterPage({
     <div className={css.root}>
       <div className={css.topbar}>
         <div className={css.identity}>
-          <span className={css.topbarIcon} aria-hidden="true"><IconDataOutline16 size={16} /></span>
+          <span className={css.topbarIcon} aria-hidden="true"><IconDataOutlineRegular size={16} /></span>
           <span>{t('applicationTitle')}</span>
         </div>
       </div>
@@ -141,7 +141,7 @@ export function ApplicationCenterPage({
                 <strong>{status}</strong>
                 {runtime.status === 'error' || (runtime.status === 'ready' && !runtime.value.available) ? (
                   <button type="button" onClick={inspect}>
-                    <IconRefreshOutline16 size={14} />
+                    <IconRefreshOutlineRegular size={14} />
                     {t('applicationRetry')}
                   </button>
                 ) : null}
@@ -166,7 +166,7 @@ export function ApplicationCenterPage({
                 <Button
                   variant="outline"
                   size="sm"
-                  icon={<IconSettingsOutline16 size={16} />}
+                  icon={<IconSettingsOutlineRegular size={16} />}
                   onClick={openModelSettings}
                 >
                   {t('applicationConfigureModel')}
@@ -175,7 +175,7 @@ export function ApplicationCenterPage({
               <Button
                 variant="primary"
                 size="sm"
-                icon={<IconRightUpOutline16 size={16} />}
+                icon={<IconRightUpOutlineRegular size={16} />}
                 disabled={!available}
                 onClick={openLlmWiki}
               >

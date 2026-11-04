@@ -190,6 +190,7 @@ describe('Vision enhancement composer shortcut', () => {
         groups: [],
         failures: [],
         status: 'ready',
+        pending: null,
         error: null,
       }),
       selectNativeVision,

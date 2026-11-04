@@ -4,7 +4,6 @@ import { spawnSync, type SpawnSyncReturns } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
   existsSync,
-  globSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -18,18 +17,11 @@ import { basename, dirname, isAbsolute, join, normalize, relative, resolve, sep 
 import { createInterface } from 'node:readline/promises'
 import { pathToFileURL } from 'node:url'
 import { parseArgs } from 'node:util'
+import { discoverNpmBaselineManifests } from './npm-baseline-packages.ts'
 import { validateTarballPayload } from './publication-payload.ts'
-import {
-  DSH_NPM_RELEASE_APP_DIRECTORIES,
-  DSH_NPM_RELEASE_MANIFEST_PATTERNS,
-} from './release/families.ts'
 
 const DEFAULT_REGISTRY = 'https://registry.npm.harnessment.com'
 const DEFAULT_OUTPUT_DIRECTORY = '.artifacts/npm-baseline'
-const PACKAGE_PATTERNS = [
-  'vendor/*/package.json',
-  ...DSH_NPM_RELEASE_MANIFEST_PATTERNS,
-] as const
 const DEPENDENCY_SECTIONS = [
   'dependencies',
   'devDependencies',
@@ -245,7 +237,7 @@ class WorkspacePackageSet {
   ) {}
 
   static discover(root: string): WorkspacePackageSet {
-    const manifestPaths = globSync(PACKAGE_PATTERNS, { cwd: root }).sort()
+    const manifestPaths = discoverNpmBaselineManifests(root)
     if (manifestPaths.length === 0) {
       throw new Error('no package manifests found under vendor/, packages/, or apps/')
     }
@@ -569,11 +561,10 @@ class BaselinePackager {
       )
       this.runner.run('pnpm', ['run', 'build'], worktree.path)
       this.runner.run('pnpm', ['run', 'publint'], worktree.path)
-      this.runner.run('pnpm', ['run', 'verify-built-package-invariants'], worktree.path)
       this.runner.run('pnpm', [
         '--filter', './vendor/**',
         '--filter', './packages/**',
-        ...DSH_NPM_RELEASE_APP_DIRECTORIES.flatMap(directory => ['--filter', `./${directory}`]),
+        '--filter', './apps/**',
         '--recursive',
         'pack',
         '--pack-destination', artifactDirectory,
@@ -776,9 +767,9 @@ interface InspectedTarball {
 }
 
 function inspectTarball(path: string, runner: CommandRunner): InspectedTarball {
-  const manifest = JSON.parse(
+  const manifest: unknown = JSON.parse(
     runner.capture('tar', ['-xOf', path, 'package/package.json'], dirname(path)),
-  ) as unknown
+  )
   if (!isRecord(manifest)) throw new Error(`${path} contains an invalid package.json`)
   return {
     name: expectString(manifest, 'name', path),

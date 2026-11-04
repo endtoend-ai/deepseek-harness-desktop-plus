@@ -7,7 +7,7 @@ import type {
   PluginOperationSnapshot,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import {
-  Button, IconChevronRightOutline14, IconPlusOutline16, IconWarningOutline16, StateDot,
+  Button, IconChevronRightOutlineRegular, IconPlusOutlineRegular, IconWarningOutlineRegular, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PluginCenterTabProps } from './PluginCenterTab.tsx'
 import { compatibilityReasonKey } from './compatibility-copy.ts'
@@ -147,7 +147,7 @@ function CompatibilityAction({ entry, state, mutationsEnabled, operation, onInst
       variant="primary"
       size="sm"
       className={css.installAction}
-      icon={allowed && !operationBlocksInstall && !committed ? <IconPlusOutline16 size={14} /> : undefined}
+      icon={allowed && !operationBlocksInstall && !committed ? <IconPlusOutlineRegular size={14} /> : undefined}
       title={!mutationsEnabled
         ? t('installReleaseGated')
         : operationBlocksInstall
@@ -241,7 +241,7 @@ function CompatibilityPanel({ state, mutationsEnabled, t }: {
           <span>{t('currentEnvironment')}</span>
           <span className={css.environmentSummaryMeta}>
             {fingerprint.platform}
-            <IconChevronRightOutline14 size={14} aria-hidden="true" />
+            <IconChevronRightOutlineRegular size={14} aria-hidden="true" />
           </span>
         </summary>
         <dl className={`${css.detailFacts} ${css.preflightFacts}`}>
@@ -256,7 +256,7 @@ function CompatibilityPanel({ state, mutationsEnabled, t }: {
       </details>
 
       <div className={css.authorityWarning}>
-        <IconWarningOutline16 size={16} aria-hidden="true" />
+        <IconWarningOutlineRegular size={16} aria-hidden="true" />
         <span>
           <strong>{t('authorityTitle')}</strong>
           <span>{t('authorityWarning')}</span>

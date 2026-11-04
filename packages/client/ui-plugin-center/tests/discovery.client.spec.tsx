@@ -72,8 +72,13 @@ function catalogResult(query: CatalogListQuery): CatalogListResult {
 function props(values: Partial<PluginDiscoveryPageProps> = {}): PluginDiscoveryPageProps {
   const list = async (query: CatalogListQuery): Promise<CatalogListResult> => catalogResult(query)
   return {
+    usePanelInfo: neverHook,
+    useRemoteAccess: neverHook,
     useSessions: neverHook,
+    useSessionStatus: neverHook,
+    useSessionRetainInfo: neverHook,
     useWorkspaces: neverHook,
+    useResource: neverHook,
     available: true,
     development: false,
     list,
@@ -92,7 +97,7 @@ function props(values: Partial<PluginDiscoveryPageProps> = {}): PluginDiscoveryP
     findWithAgent: async () => 'sent',
     t,
     ...values,
-  }
+  } as PluginDiscoveryPageProps
 }
 
 describe('Plugin Discovery page', () => {

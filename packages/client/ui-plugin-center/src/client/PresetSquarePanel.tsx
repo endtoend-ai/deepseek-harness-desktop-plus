@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
-  IconCloseOutline16, IconRefreshOutline16, IconSearchOutline16,
+  IconCloseOutlineRegular, IconRefreshOutlineRegular, IconSearchOutlineRegular,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
   ManagedPresetRuntimeId,
@@ -964,7 +964,7 @@ export function PresetSquarePanel({
                 setLocalRevision(value => value + 1)
               }}
             >
-              <IconRefreshOutline16 size={16} />
+              <IconRefreshOutlineRegular size={16} />
             </button>
           </header>
 
@@ -1005,7 +1005,7 @@ export function PresetSquarePanel({
           {!presetMutationsEnabled ? <p className={css.desktopNote}>{t('presetDesktopOnly')}</p> : null}
 
           {catalogView ? <label className={css.search}>
-            <IconSearchOutline16 aria-hidden="true" />
+            <IconSearchOutlineRegular aria-hidden="true" />
             <span className={css.visuallyHidden}>{t('presetSearch')}</span>
             <input
               type="search"
@@ -1145,7 +1145,7 @@ export function PresetSquarePanel({
                 disabled={installing || savingCredentials || runtimeInstallTarget !== null}
                 onClick={closeDetail}
               >
-                <IconCloseOutline16 size={16} />
+                <IconCloseOutlineRegular size={16} />
               </button>
             </header>
             <div className={css.dialogBody}>
@@ -1386,7 +1386,7 @@ export function PresetSquarePanel({
                 <h2 id="preset-remove-title">{removeTarget.name ?? removeTarget.id}</h2>
               </div>
               <button type="button" aria-label={t('close')} disabled={removing} onClick={() => { setRemoveTarget(null) }}>
-                <IconCloseOutline16 size={16} />
+                <IconCloseOutlineRegular size={16} />
               </button>
             </header>
             <div className={css.dialogBody}>

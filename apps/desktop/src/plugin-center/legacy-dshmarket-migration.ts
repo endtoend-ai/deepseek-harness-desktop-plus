@@ -3,7 +3,8 @@
 import { lstat, readFile } from 'node:fs/promises'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
-import { readProfileBundleState, readProfileManifest, resolveBundleDir } from '@deepseek-ai/dsh-app-boot'
+import { readProfileManifest, resolveBundleDir } from '@deepseek-ai/dsh-app-boot'
+import { readProfileBundleState } from './profile-bundles.ts'
 import { isMap, isScalar, isSeq, parseDocument, type YAMLMap } from 'yaml'
 
 const PACKAGE_NAME = 'dshmarket'
@@ -107,7 +108,7 @@ export async function migrateLegacyDshmarketRegistration(input: {
 }> {
   const manifest = readProfileManifest('desktop', input.profileDirectory)
   const bundleState = readProfileBundleState(manifest)
-  if (![...bundleState.bundles, ...bundleState.disabledBundles].includes(PACKAGE_NAME)) {
+  if (!bundleState.bundles.includes(PACKAGE_NAME) && !(PACKAGE_NAME in (manifest.dependencies ?? {}))) {
     return { removedEntries: 0 }
   }
 

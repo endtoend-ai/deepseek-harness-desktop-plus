@@ -154,7 +154,13 @@ export function VisionEnhancementDialog({
   }
 
   return (
-    <Modal open={open} title="开启视觉能力增强" onClose={() => { if (!busy) onClose() }} className={css['modal'] as string}>
+    <Modal
+      open={open}
+      title="开启视觉能力增强"
+      closeLabel="关闭"
+      onClose={() => { if (!busy) onClose() }}
+      className={css['modal'] as string}
+    >
       <div className={css.modalBody}>
         <div className={css.hero}>
           <div className={css.heroIcon}>{({

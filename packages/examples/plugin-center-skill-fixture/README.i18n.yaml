@@ -1,6 +1,25 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/examples/plugin-center-skill-fixture/README.md
-README.md: 13a3a3e84b03cf4fae614d9fc3df406b46e6a9cc
-README.zh.md: 7702018d83d53ec73780ea8f9f7196aa366dfe6a
+/deepseek-ai-dsh-plugin-center-skill-fixture:
+  en: 7ffca1c182fd66f4
+  zh: 4470aba8f1f73ccf
+/deepseek-ai-dsh-plugin-center-skill-fixture/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-plugin-center-skill-fixture/model-experience/fixture-harness-basics-skill:
+  en: d727d8dd0db9a3de
+  zh: d727d8dd0db9a3de
+/deepseek-ai-dsh-plugin-center-skill-fixture/model-experience/fixture-harness-basics-skill/what-the-model-sees:
+  en: 0b10883a40e6c764
+  zh: 1d16dd747412191d
+/deepseek-ai-dsh-plugin-center-skill-fixture/model-experience/fixture-harness-basics-skill/token-effect:
+  en: 4a4440d6dafb9ab9
+  zh: dbe1877a3e688497
+/deepseek-ai-dsh-plugin-center-skill-fixture/model-experience/fixture-harness-basics-skill/kv-cache-effect:
+  en: 6c725f8da223b3b5
+  zh: 77aedb27eb683e19
+/deepseek-ai-dsh-plugin-center-skill-fixture/known-limitations-and-deferred-work:
+  en: 1fb3584daede6459
+  zh: 093afa0902318976

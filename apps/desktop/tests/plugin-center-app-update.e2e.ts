@@ -81,7 +81,6 @@ describe('application-update Plugin Center compatibility', () => {
       ...manifest.dsh,
       profile: {
         bundles: [SYSTEM_PACKAGE, COMPATIBLE_PACKAGE, INCOMPATIBLE_PACKAGE, LOCAL_PACKAGE],
-        disabledBundles: [DISABLED_PACKAGE],
       },
     }
     await writeFile(join(profile, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`)
@@ -112,7 +111,6 @@ describe('application-update Plugin Center compatibility', () => {
     expect(observedAtHostStart.dependencies).toEqual(manifest.dependencies)
     expect(observedAtHostStart.dsh?.profile).toEqual({
       bundles: [SYSTEM_PACKAGE, COMPATIBLE_PACKAGE, LOCAL_PACKAGE],
-      disabledBundles: [DISABLED_PACKAGE, INCOMPATIBLE_PACKAGE],
     })
 
     const after = before.map(value => value.packageName === INCOMPATIBLE_PACKAGE

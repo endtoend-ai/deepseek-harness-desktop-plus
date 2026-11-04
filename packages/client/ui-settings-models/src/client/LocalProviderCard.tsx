@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import type { IApiClient } from '@deepseek-ai/dsh-api-remotes/client'
 import { CustomProviderCard } from './CustomProviderCard.tsx'
 import type { CustomProviderInitialValues } from './CustomProviderCard.tsx'
+import type { ModelsOperations } from './operations.ts'
 import type { en } from './locales.ts'
 import styles from './ModelsSection.module.css'
 
@@ -62,16 +62,20 @@ export interface LocalProviderCardProps {
   taken: readonly string[]
   /** Protocols accepted by the pi-ai namespace. */
   protocols: readonly string[]
+  /** Reasoning levels the pi-ai schema accepts, for the created route's models. */
+  reasoningLevels: readonly string[]
   /** Revision captured for the provider create. */
   revision: number
-  /** Wire faces used by the shared creation form. */
-  api: Pick<IApiClient, 'settings' | 'credentials' | 'llm'>
+  /** The Host operations the shared creation form writes through. */
+  operations: ModelsOperations
   /** Section copy. */
   t: (key: keyof typeof en) => string
   /** Disable writes. */
   readOnly: boolean
   /** Close the card; `changed` reports whether a route was created. */
   onClose: (changed: boolean) => void
+  /** Called once per change with whether the create or a probe is in flight. */
+  onBusyChange?: (busy: boolean) => void
 }
 
 /**
@@ -87,7 +91,7 @@ export function LocalProviderCard(props: LocalProviderCardProps): ReactNode {
   return (
     <div className={styles['localSetup']}>
       <div className={styles['localHeader']}>
-        <span className={styles['editorTitle']}>{props.t('localTitle')}</span>
+        <span className={styles['editorTitle']}>{`${props.t('localTitle')} · ${selected.displayName}`}</span>
         <p className={styles['advancedHint']}>{props.t('localDescription')}</p>
       </div>
       <div
@@ -120,13 +124,15 @@ export function LocalProviderCard(props: LocalProviderCardProps): ReactNode {
         key={selected.id}
         taken={props.taken}
         protocols={props.protocols}
+        reasoningLevels={props.reasoningLevels}
         revision={props.revision}
-        api={props.api}
+        operations={props.operations}
         t={props.t}
         readOnly={props.readOnly}
         initial={selected}
         variant="local"
         onClose={props.onClose}
+        {...props.onBusyChange === undefined ? {} : { onBusyChange: props.onBusyChange }}
       />
     </div>
   )

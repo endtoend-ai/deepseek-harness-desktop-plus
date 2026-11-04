@@ -1,4 +1,4 @@
-import { IconAgentPresetOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconAgentPresetOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { PresetSquarePanel, type PresetSquareInjected } from './PresetSquarePanel.tsx'
 import css from './PresetSquarePage.module.css'
@@ -8,7 +8,7 @@ export type PresetSquarePageInjected = PresetSquareInjected
 
 /** Full props assembled by the independent main-page renderer. */
 export type PresetSquarePageProps =
-  PropsRuntime<'main.page'>
+  PropsRuntime<'main'>
   & PropsLocale<'pluginCenter'>
   & InjectFace<PresetSquarePageInjected>
 
@@ -38,7 +38,7 @@ export function PresetSquarePage({
     >
       <div className={css.topbar}>
         <div className={css.identity}>
-          <span className={css.icon} aria-hidden="true"><IconAgentPresetOutline16 size={16} /></span>
+          <span className={css.icon} aria-hidden="true"><IconAgentPresetOutlineRegular size={16} /></span>
           <span>{t('presetTitle')}</span>
         </div>
       </div>

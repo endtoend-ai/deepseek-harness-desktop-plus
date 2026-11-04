@@ -1,34 +1,15 @@
-/**
- * Browser half of the native directory-picker backend: fills ui-workspace's
- * two directory-flow holes with a renderless occupant that answers each
- * `open` by driving Electron's fixed preload operation when present, or
- * `host.pickDirectory` in an ordinary local Web deployment, and reporting
- * the one outcome — picked path, cancellation, or failure — back through the
- * owner conversation. Mounting this package composes the Host fallback and
- * client interaction with one cordis.yml row; no client code branches on a
- * capability kind.
- */
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+/** Native directory flow using the local desktop bridge or the Host's OS chooser. */
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // Type-only: pulls the SlotMap merge declaring the directory-flow holes.
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
+// Type-only: pulls the SlotRegistry service merge (ctx.slots).
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type { NativeFlowInjected } from './flow.ts'
 import { NativeDirectoryFlow } from './flow.ts'
 
-/** Narrow optional face added by the sandboxed Electron preload. */
-interface DesktopDirectoryPickerBridge {
-  readonly workspace: {
-    pickDirectory(): Promise<string | null>
-  }
-}
 
-/** Prefer Electron's in-process dialog while retaining the local Web Host path. */
-function pickDirectory(ctx: ClientContext): Promise<string | null> {
-  const desktop = (window as unknown as { dshDesktop?: DesktopDirectoryPickerBridge }).dshDesktop
-  return desktop === undefined ? ctx.workspaces.pickDirectory() : desktop.workspace.pickDirectory()
-}
-
-/** Required services (cordis fiber inject): the slot registry and the wire-facing workspace service. */
-export const inject = ['slots', 'workspaces']
+/** Required services (cordis fiber inject): the slot registry and workspace UI service. */
+export const inject = ['slots', 'uiWorkspace']
 
 /**
  * Client plugin body: register the renderless native flow into both
@@ -37,7 +18,11 @@ export const inject = ['slots', 'workspaces']
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
-  const injected = (): NativeFlowInjected => ({ pick: () => pickDirectory(ctx) })
+  const desktop = (globalThis as typeof globalThis & {
+    __DSH_DIRECTORY_PICKER__?: NativeFlowInjected
+  }).__DSH_DIRECTORY_PICKER__
+  const pick = desktop === undefined ? () => ctx.uiWorkspace.pickDirectory() : () => desktop.pick()
+  const injected = (): NativeFlowInjected => ({ pick })
   // Both declaration lifetimes must be live before the pair installs; the
   // generator makes the two registrations one transactional effect. The
   // outer/inner nesting order is arbitrary; neither hole has precedence.

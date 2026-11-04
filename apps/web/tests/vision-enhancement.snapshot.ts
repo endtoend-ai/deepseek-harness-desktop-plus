@@ -1,4 +1,12 @@
-/** Assembled keyless snapshot for Bailian image augmentation and restart reuse. */
+/**
+ * Assembled keyless snapshot for Bailian image augmentation and restart reuse.
+ *
+ * TODO(dsh-0.2.1): this journey still targets the retired `dsh-host-apiproxy`
+ * host surface and its `ctx.apiProxy`, `ctx.sessionPersistence`, and
+ * `Session.events` APIs. It is excluded from the apps/web compiler program and
+ * waits for the product's relocated vision controller; rebuild it against that
+ * package instead of patching the 0.1.x calls here.
+ */
 
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'

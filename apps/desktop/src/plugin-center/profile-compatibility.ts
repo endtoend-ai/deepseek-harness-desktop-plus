@@ -156,12 +156,9 @@ export function readProfileCompatibilityFingerprint(input: ProfileCompatibilityR
   const profile = optionalRecord(dsh?.['profile'], `${manifestPath} dsh.profile`)
   const dependencyNames = packageNames(manifest['dependencies'], `${manifestPath} dependencies`)
   const bundleNames = bundles(profile?.['bundles'], `${manifestPath} dsh.profile.bundles`)
-  const disabledBundleNames = bundles(profile?.['disabledBundles'], `${manifestPath} dsh.profile.disabledBundles`)
-  const disabled = new Set(disabledBundleNames)
-  const overlap = bundleNames.find(packageName => disabled.has(packageName))
-  if (overlap !== undefined) throw new Error(`${manifestPath} lists ${overlap} as both active and disabled`)
   const protectedNames = new Set(input.systemComponents.packageNames)
-  const externalNames = [...new Set([...dependencyNames, ...bundleNames, ...disabledBundleNames])]
+  // An installed dependency outside the active Bundle list is the profile's disabled state.
+  const externalNames = [...new Set([...dependencyNames, ...bundleNames])]
     .filter(packageName => !protectedNames.has(packageName))
     .sort()
   const enabled = new Set(bundleNames)

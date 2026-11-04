@@ -96,8 +96,6 @@ describe('Plugin Center reviewed fixture real profile activation', () => {
         expect.objectContaining({ entryId: 'include:fixture.workspace-tools', fiberPhase: 'active' }),
         expect.objectContaining({ entryId: 'include:fixture.harness-basics-provider', fiberPhase: 'active' }),
       ]))
-      expect(evidence.clientModules).toContain('@deepseek-ai/dsh-plugin-center-fixture')
-      expect(evidence.skillIds).toContain('fixture-harness-basics')
       expect(ctx.get('pluginCenterFixture')).toEqual({ status: 'running', capability: 'workspace-tools' })
       expect(await readFile(join(fixtureDirectory, 'lib/client.js'), 'utf8'))
         .toContain('data-plugin-center-fixture-capability')

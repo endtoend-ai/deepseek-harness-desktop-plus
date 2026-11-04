@@ -5,12 +5,21 @@
     "outDir": "lib/types",
     "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo"
   },
-  "files": ["src/index.ts", "src/invariant.ts"],
+  "files": [
+    "src/index.ts"
+  ],
   "references": [
-    { "path": "../../../vendor/cordis" },
-    { "path": "../../credentials/credentials" },
-    { "path": "../../host/webserver" },
-    { "path": "../../runtime-diagnostics/invariants" },
-    { "path": "../../util/home-paths" }
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../credentials/credentials"
+    },
+    {
+      "path": "../../host/webserver"
+    },
+    {
+      "path": "../../util/home-paths"
+    }
   ]
 }

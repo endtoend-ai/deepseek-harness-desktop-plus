@@ -109,7 +109,6 @@ async function harness(
     ...manifest.dsh,
     profile: {
       bundles: initiallyEnabled ? [PACKAGE_NAME] : [],
-      disabledBundles: initiallyEnabled ? [] : [PACKAGE_NAME],
     },
   }
   await writeFile(join(profile, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`)
@@ -293,7 +292,7 @@ describe('installed Plugin Center management', () => {
     expect(value.reloads).toHaveLength(1)
     expect(readProfileManifest('test', value.profile)).toMatchObject({
       dependencies: { [PACKAGE_NAME]: CURRENT_VERSION },
-      dsh: { profile: { bundles: [], disabledBundles: [PACKAGE_NAME] } },
+      dsh: { profile: { bundles: [] } },
     })
     expect(value.invocations).toEqual([])
 
@@ -301,14 +300,14 @@ describe('installed Plugin Center management', () => {
     expect(value.reloads).toHaveLength(2)
     expect(readProfileManifest('test', value.profile)).toMatchObject({
       dependencies: { [PACKAGE_NAME]: CURRENT_VERSION },
-      dsh: { profile: { bundles: [PACKAGE_NAME], disabledBundles: [] } },
+      dsh: { profile: { bundles: [PACKAGE_NAME] } },
     })
 
     await value.run({ action: 'uninstall', version: CURRENT_VERSION })
     expect(value.reloads).toHaveLength(3)
     const after = readProfileManifest('test', value.profile)
     expect(after.dependencies).not.toHaveProperty(PACKAGE_NAME)
-    expect(after.dsh?.profile).toMatchObject({ bundles: [], disabledBundles: [] })
+    expect(after.dsh?.profile).toMatchObject({ bundles: [] })
     expect(value.invocations.at(-1)?.args).toContain('remove')
     await expect(readFile(value.configPath, 'utf8')).resolves.toBe('{"retained":true}\n')
   })
@@ -328,8 +327,8 @@ describe('installed Plugin Center management', () => {
     const after = readProfileManifest('test', value.profile)
     expect(after.dependencies).toMatchObject({ [PACKAGE_NAME]: TARGET_VERSION })
     expect(after.dsh?.profile).toMatchObject(enabled
-      ? { bundles: [PACKAGE_NAME], disabledBundles: [] }
-      : { bundles: [], disabledBundles: [PACKAGE_NAME] })
+      ? { bundles: [PACKAGE_NAME] }
+      : { bundles: [] })
     expect(value.invocations.at(-1)?.args).toContain('add')
     await expect(readFile(value.configPath, 'utf8')).resolves.toBe('{"retained":true}\n')
   })
