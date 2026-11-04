@@ -4,6 +4,8 @@ import { useSyncExternalStore } from 'react'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+// Type-only: the slot-registry service merge this plugin registers through.
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import css from './Plugin.module.css'
 
@@ -20,7 +22,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-type NavProps = PropsRuntime<'sidebar.primary.action'> & PropsLocale<'ffLlmWiki'>
+type NavProps = PropsRuntime<'sidebar.footer.action'> & PropsLocale<'ffLlmWiki'>
 
 function sidebarVisible(): boolean {
   try {
@@ -103,14 +105,18 @@ function WikiNav({ wide, t }: NavProps) {
 
 export const inject = ['slots', 'locale']
 
-/** Register one launcher without replacing any DSH main-page surface. */
+/** Register one launcher in the sidebar foot without claiming a main panel. */
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, {
     zh: { nav: 'FF - LLM Wiki', openFailed: '无法启动 FF - LLM Wiki', openHint: '在新窗口打开' },
     en: { nav: 'FF - LLM Wiki', openFailed: 'Unable to launch FF - LLM Wiki', openHint: 'Open in a new window' },
   }), 'ff-llm-wiki: dictionaries')
-  ctx.slots.inject('sidebar.primary.action', () => ctx.slots.register({
-    name: 'sidebar.primary.action',
+  // The foot stacks every occupant above Settings in both sidebar widths, and
+  // hands it the column state; the wiki opens an external window, so it must
+  // not claim a main panel that the sidebar would then try to select.
+  const { slots } = ctx
+  slots.inject('sidebar.footer.action', () => slots.register({
+    name: 'sidebar.footer.action',
     id: 'ff-llm-wiki',
     order: 35,
     locale: NS,

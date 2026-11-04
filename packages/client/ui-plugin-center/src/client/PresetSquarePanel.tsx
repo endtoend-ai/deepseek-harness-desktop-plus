@@ -51,6 +51,8 @@ export interface PresetSquareInjected {
   readonly presetAvailable: boolean
   readonly presetDevelopment: boolean
   readonly presetMutationsEnabled: boolean
+  /** Whether the Host can commit an imported archive; previews stay available either way. */
+  readonly presetInstallSupported: boolean
   readonly listPresetSquare: (query: PresetSquareListQuery) => Promise<PresetSquareListResult>
   readonly detailPresetSquare: (query: PresetSquareDetailQuery) => Promise<PresetSquareDetailResult>
   readonly previewPresetInstall: (request: PresetInstallPreviewRequest) => Promise<PresetInstallPreviewResult>
@@ -406,6 +408,7 @@ export function PresetSquarePanel({
   presetAvailable,
   presetDevelopment,
   presetMutationsEnabled,
+  presetInstallSupported,
   listPresetSquare,
   detailPresetSquare,
   previewPresetInstall,
@@ -697,6 +700,10 @@ export function PresetSquarePanel({
   }
 
   const confirmInstall = (): void => {
+    if (!presetInstallSupported) {
+      setFeedback('presetInstallUnavailable')
+      return
+    }
     if (selectedItem === null || installing || !acknowledged || targetId.trim() === '') return
     setInstalling(true)
     setFeedback(null)
@@ -1360,10 +1367,14 @@ export function PresetSquarePanel({
                         />
                         <span>{t('presetTrustAcknowledge')}</span>
                       </label>
+                      {presetInstallSupported ? null : (
+                        <p className={css.desktopNote}>{t('presetInstallUnavailable')}</p>
+                      )}
                       <button
                         type="button"
                         className={css.primaryWide}
-                        disabled={installing || !acknowledged || preview.value.conflict || targetId !== preview.value.targetId}
+                        disabled={!presetInstallSupported || installing || !acknowledged
+                          || preview.value.conflict || targetId !== preview.value.targetId}
                         onClick={confirmInstall}
                       >
                         {installing ? t('presetInstalling') : t('confirmInstall')}

@@ -1824,6 +1824,20 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'presetController',
+    summary: 'Host service backing the generated `ctx.remote.preset` namespace.',
+    description: 'Host service backing the generated `ctx.remote.preset` namespace. It adds the request bounds, the roster lookup, and the refusal mapping the archive validator does not carry.',
+    methods: [
+      {
+        signature: '@Remote async importArchive( data: string, request: PresetArchiveImportRequest, signal: AbortSignal, ): Promise<PresetArchivePreview>',
+        description: 'Validate one `.dshpreset` archive and answer the evidence its reviewer needs. A write request is refused because this deployment\'s preset model cannot host an imported package.',
+        parameters: [{ name: 'data', description: 'canonical Base64 of the compressed archive Desktop downloaded and verified.' }, { name: 'request', description: 'target identity and whether to commit the archive.' }, { name: 'signal', description: 'caller lifetime; abort cancels before any read completes.' }],
+        returns: 'the validated preview, with `installed` false.',
+        throws: ['RemoteError when the archive is refused, the roster is unavailable, or a write was requested.'],
+      },
+    ],
+  },
+  {
     key: 'productAnalytics',
     summary: 'Authenticated event intake; disabled instances do not inspect identity or accept new events.',
     description: 'Authenticated event intake; disabled instances do not inspect identity or accept new events.',
@@ -3609,6 +3623,53 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         parameters: [{ name: 'request', description: 'Questions, owner agent, and abort signal.' }],
         returns: 'The answer chosen or typed by the human.',
         throws: ['{UserQuestionError} code `ASK_ABORTED` when the supplied signal is already or becomes aborted, `CALLER_NOT_LIVE` when a supplied agent is not the registry\'s exact live instance, or `DELEGATED_CALLER` when that live agent is owned by another agent.'],
+      },
+    ],
+  },
+  {
+    key: 'visionController',
+    summary: 'Host service backing the generated `ctx.remote.vision` namespace.',
+    description: 'Host service backing the generated `ctx.remote.vision` namespace. It adds the wire obligations the visual-enhancement runtime does not carry: request bounds, cancellation classification, and refusal mapping.',
+    methods: [
+      {
+        signature: 'readonly entryId: string | undefined',
+        description: 'Profile entry whose volatile fields are the live settings.',
+        parameters: [],
+      },
+      {
+        signature: '@Remote async status(): Promise<VisionStatusView>',
+        description: 'Read the Host-authoritative status, including every provider\'s value-free readiness and the persisted selection.',
+        parameters: [],
+        returns: 'the current enabled state, selection, and provider roster.',
+        throws: ['RemoteError when the stored selection cannot be resolved.'],
+      },
+      {
+        signature: '@Remote async route(modelProvider: string, model: string): Promise<VisionRouteView>',
+        description: 'Resolve the exact image path the Host would use for one session route.',
+        parameters: [{ name: 'modelProvider', description: 'provider route the client selected.' }, { name: 'model', description: 'exact model id the client selected.' }],
+        returns: '`off`, `native`, `compatible`, or `unavailable` for that route.',
+        throws: ['RemoteError when the route or the stored selection cannot be resolved.'],
+      },
+      {
+        signature: '@Remote async activate(modelProvider: string, model: string): Promise<VisionRouteView>',
+        description: 'Turn automatic enhancement on for one session route after verifying that a compatible provider can serve it.',
+        parameters: [{ name: 'modelProvider', description: 'provider route the client selected.' }, { name: 'model', description: 'exact model id the client selected.' }],
+        returns: 'the route the Host will now use for images.',
+        throws: ['RemoteError when no compatible provider is ready for a text-only route.'],
+      },
+      {
+        signature: '@Remote async test(input: VisionTestInput, signal: AbortSignal): Promise<VisionTestView>',
+        description: 'Verify the stored provider with one image probe.',
+        parameters: [{ name: 'input', description: 'validated image, optional question, and optional display name.' }, { name: 'signal', description: 'caller lifetime; abort cancels the provider request.' }],
+        returns: 'the provider\'s description of the probe image.',
+        throws: ['RemoteError when the probe is invalid, refused, or cancelled.'],
+      },
+      {
+        signature: '@Remote async enable(input: VisionEnableInput, signal: AbortSignal): Promise<VisionTestView>',
+        description: 'Persist a provider selection and credential, verify them with one image probe, then enable automatic enhancement.',
+        parameters: [{ name: 'input', description: 'image probe plus optional credential and provider selection.' }, { name: 'signal', description: 'caller lifetime; abort cancels the provider request.' }],
+        returns: 'the verifying provider\'s description of the probe image.',
+        throws: ['RemoteError when the selection, credential, or probe is refused or cancelled.'],
       },
     ],
   },
@@ -6478,6 +6539,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type PrepareSessionOptions = (CreateSessionOptions & {\n    readonly eventState?: undefined;\n}) | RestoredSessionOptions;',
   },
   {
+    name: 'PresetArchiveImportRequest',
+    declaration: 'export interface PresetArchiveImportRequest {\n    readonly targetId?: string;\n    readonly install: boolean;\n}',
+  },
+  {
+    name: 'PresetArchivePreview',
+    declaration: 'export interface PresetArchivePreview {\n    readonly targetId: string;\n    readonly sourcePresetId: string;\n    readonly name: string | null;\n    readonly description: string | null;\n    readonly sourceDshVersion: string | null;\n    readonly fileCount: number;\n    readonly warnings: readonly PresetArchiveWarning[];\n    readonly conflict: boolean;\n    readonly installed: boolean;\n}',
+  },
+  {
     name: 'PresetDefinition',
     declaration: 'export interface PresetDefinition {\n    readonly id: string;\n    readonly name?: string;\n    readonly description?: string;\n    readonly order?: number;\n    readonly plugins: readonly (Omit<EntryOptions, \'id\' | \'disabled\'> & {\n        id?: string;\n        disabled?: EntryOptions[\'disabled\'] | JsExpr;\n    })[];\n}',
   },
@@ -8556,6 +8625,38 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'VerifiedWebhookDelivery',
     declaration: 'export interface VerifiedWebhookDelivery<K extends string = string> {\n    readonly kind: K;\n    readonly source: WebhookSourceId;\n    readonly deliveryId: WebhookDeliveryId;\n    readonly event: WebhookEventOf<K>;\n    readonly receivedAt: number;\n}',
+  },
+  {
+    name: 'VisionEnableInput',
+    declaration: 'export interface VisionEnableInput extends VisionTestInput {\n    apiKey?: string | undefined;\n    provider?: VisionProvider | undefined;\n    model?: string | undefined;\n    baseUrl?: string | undefined;\n}',
+  },
+  {
+    name: 'VisionProvider',
+    declaration: 'export type VisionProvider = \'bailian\' | \'openrouter\' | \'ollama\' | \'vllm\' | \'sglang\' | \'custom\';',
+  },
+  {
+    name: 'VisionProviderView',
+    declaration: 'export interface VisionProviderView {\n    id: VisionProvider;\n    name: string;\n    configured: boolean;\n    defaultModel: string;\n    apiKeyUrl: string;\n    modelEditable: boolean;\n    defaultBaseUrl?: string;\n    baseUrlEditable?: boolean;\n    apiKeyRequired?: boolean;\n}',
+  },
+  {
+    name: 'VisionRouteMode',
+    declaration: 'export type VisionRouteMode = \'off\' | \'native\' | \'compatible\' | \'unavailable\';',
+  },
+  {
+    name: 'VisionRouteView',
+    declaration: 'export interface VisionRouteView {\n    mode: VisionRouteMode;\n    modelProvider: string;\n    model: string;\n    provider?: VisionProvider;\n    providerName?: string;\n    visionModel?: string;\n}',
+  },
+  {
+    name: 'VisionStatusView',
+    declaration: 'export interface VisionStatusView {\n    enabled: boolean;\n    configured: boolean;\n    provider: VisionProvider;\n    model: string;\n    apiKeyUrl: string;\n    baseUrl?: string;\n    providers: readonly VisionProviderView[];\n}',
+  },
+  {
+    name: 'VisionTestInput',
+    declaration: 'export interface VisionTestInput {\n    mediaType: ImageMediaType;\n    data: string;\n    question?: string | undefined;\n    name?: string | undefined;\n}',
+  },
+  {
+    name: 'VisionTestView',
+    declaration: 'export interface VisionTestView {\n    provider: VisionProvider;\n    model: string;\n    baseUrl?: string;\n    description: string;\n}',
   },
   {
     name: 'WebBootBatch',

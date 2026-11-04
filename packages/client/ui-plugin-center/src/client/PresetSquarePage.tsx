@@ -17,6 +17,7 @@ export function PresetSquarePage({
   presetAvailable,
   presetDevelopment,
   presetMutationsEnabled,
+  presetInstallSupported,
   listPresetSquare,
   detailPresetSquare,
   previewPresetInstall,
@@ -46,6 +47,7 @@ export function PresetSquarePage({
         presetAvailable={presetAvailable}
         presetDevelopment={presetDevelopment}
         presetMutationsEnabled={presetMutationsEnabled}
+        presetInstallSupported={presetInstallSupported}
         listPresetSquare={listPresetSquare}
         detailPresetSquare={detailPresetSquare}
         previewPresetInstall={previewPresetInstall}

@@ -278,6 +278,12 @@
       "path": "./packages/context/file-reference"
     },
     {
+      "path": "./packages/examples/ff-llm-wiki-plugin/tsconfig.client.json"
+    },
+    {
+      "path": "./packages/examples/plugin-center-fixture/tsconfig.client.json"
+    },
+    {
       "path": "./packages/experimental/client-ui-agent-team"
     },
     {

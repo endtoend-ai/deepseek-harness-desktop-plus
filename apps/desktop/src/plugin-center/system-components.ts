@@ -75,18 +75,23 @@ export function deriveProtectedSystemComponents(manifestPaths: readonly string[]
     if (typeof manifest.name !== 'string' || !PACKAGE_NAME.test(manifest.name)) {
       throw new Error(`${manifestPath} has no valid package name`)
     }
-    const declaredPatch = manifest.dsh?.bundle?.patch
-    if (typeof declaredPatch !== 'string' || declaredPatch === '') {
+    const declared = manifest.dsh?.bundle?.patch
+    const declaredPatches = typeof declared === 'string'
+      ? [declared]
+      : Array.isArray(declared) ? declared.filter((entry): entry is string => typeof entry === 'string') : []
+    if (declaredPatches.length === 0 || declaredPatches.some(entry => entry === '')) {
       throw new Error(`${manifestPath} declares no dsh.bundle.patch`)
     }
     const root = dirname(manifestPath)
-    const patchPath = resolve(root, declaredPatch)
-    const fromRoot = relative(root, patchPath)
-    if (fromRoot === '..' || fromRoot.startsWith('../') || fromRoot.startsWith('..\\')) {
-      throw new Error(`${manifestPath} declares a Bundle patch outside its package`)
-    }
     packageNames.add(manifest.name)
-    collectPatchIdentities(readFileSync(patchPath, 'utf8'), patchPath, entryIds, packageNames)
+    for (const declaredPatch of declaredPatches) {
+      const patchPath = resolve(root, declaredPatch)
+      const fromRoot = relative(root, patchPath)
+      if (fromRoot === '..' || fromRoot.startsWith('../') || fromRoot.startsWith('..\\')) {
+        throw new Error(`${manifestPath} declares a Bundle patch outside its package`)
+      }
+      collectPatchIdentities(readFileSync(patchPath, 'utf8'), patchPath, entryIds, packageNames)
+    }
   }
   return {
     packageNames: [...packageNames].sort(),

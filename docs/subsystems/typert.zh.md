@@ -503,6 +503,28 @@ interface TypertClientRemote extends TypertRemoteNamespaceMap {
 
 Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.zh.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
 
+<a id="ctxpresetcontroller--presetcontroller"></a>
+
+### `ctx.presetController` — `PresetController`
+
+Host service backing the generated `ctx.remote.preset` namespace. It adds the request bounds, the roster lookup, and the refusal mapping the archive validator does not carry.
+
+```ts cordis-catalog
+/**
+ * Validate one `.dshpreset` archive and answer the evidence its reviewer
+ * needs. A write request is refused because this deployment's preset model
+ * cannot host an imported package.
+ * @param data - canonical Base64 of the compressed archive Desktop downloaded and verified.
+ * @param request - target identity and whether to commit the archive.
+ * @param signal - caller lifetime; abort cancels before any read completes.
+ * @returns the validated preview, with `installed` false.
+ * @throws RemoteError when the archive is refused, the roster is unavailable, or a write was requested.
+ */
+@Remote async importArchive( data: string, request: PresetArchiveImportRequest, signal: AbortSignal, ): Promise<PresetArchivePreview>
+```
+
+Source: [`packages/api/preset-controller/src/index.ts`](../../packages/api/preset-controller/src/index.ts)
+
 <a id="ctxremoteaccess--remoteaccessservice"></a>
 
 ### `ctx.remoteAccess` — `RemoteAccessService`
@@ -687,4 +709,60 @@ async stream(request: InvokeRemoteRequest): Promise<AsyncIterable<unknown>>
 ```
 
 Source: [`packages/api/gateway/src/index.ts`](../../packages/api/gateway/src/index.ts)
+
+<a id="ctxvisioncontroller--visioncontroller"></a>
+
+### `ctx.visionController` — `VisionController`
+
+Host service backing the generated `ctx.remote.vision` namespace. It adds the wire obligations the visual-enhancement runtime does not carry: request bounds, cancellation classification, and refusal mapping.
+
+```ts cordis-catalog
+/**
+ * Read the Host-authoritative status, including every provider's value-free
+ * readiness and the persisted selection.
+ * @returns the current enabled state, selection, and provider roster.
+ * @throws RemoteError when the stored selection cannot be resolved.
+ */
+@Remote async status(): Promise<VisionStatusView>
+
+/**
+ * Resolve the exact image path the Host would use for one session route.
+ * @param modelProvider - provider route the client selected.
+ * @param model - exact model id the client selected.
+ * @returns `off`, `native`, `compatible`, or `unavailable` for that route.
+ * @throws RemoteError when the route or the stored selection cannot be resolved.
+ */
+@Remote async route(modelProvider: string, model: string): Promise<VisionRouteView>
+
+/**
+ * Turn automatic enhancement on for one session route after verifying that a
+ * compatible provider can serve it.
+ * @param modelProvider - provider route the client selected.
+ * @param model - exact model id the client selected.
+ * @returns the route the Host will now use for images.
+ * @throws RemoteError when no compatible provider is ready for a text-only route.
+ */
+@Remote async activate(modelProvider: string, model: string): Promise<VisionRouteView>
+
+/**
+ * Verify the stored provider with one image probe.
+ * @param input - validated image, optional question, and optional display name.
+ * @param signal - caller lifetime; abort cancels the provider request.
+ * @returns the provider's description of the probe image.
+ * @throws RemoteError when the probe is invalid, refused, or cancelled.
+ */
+@Remote async test(input: VisionTestInput, signal: AbortSignal): Promise<VisionTestView>
+
+/**
+ * Persist a provider selection and credential, verify them with one image
+ * probe, then enable automatic enhancement.
+ * @param input - image probe plus optional credential and provider selection.
+ * @param signal - caller lifetime; abort cancels the provider request.
+ * @returns the verifying provider's description of the probe image.
+ * @throws RemoteError when the selection, credential, or probe is refused or cancelled.
+ */
+@Remote async enable(input: VisionEnableInput, signal: AbortSignal): Promise<VisionTestView>
+```
+
+Source: [`packages/api/vision-controller/src/index.ts`](../../packages/api/vision-controller/src/index.ts)
 <!-- END GENERATED cordis-surface -->

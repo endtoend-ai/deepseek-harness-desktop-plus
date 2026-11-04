@@ -1,6 +1,6 @@
 /** Fixed-origin Preset Square reader and integrity-checked Host importer. */
 
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import {
   decodePresetInstallPreviewRequest,
   decodePresetInstallPreviewResult,
@@ -30,6 +30,40 @@ const PRESET_SQUARE_ROOT = `${PRESET_SQUARE_ORIGIN}/preset/`
 const MAX_METADATA_BYTES = 512 * 1024
 const MAX_ARCHIVE_BYTES = 16 * 1024 * 1024
 const REQUEST_TIMEOUT_MS = 10_000
+/** Host Remote the Desktop calls after verifying a downloaded Preset archive. */
+const PRESET_IMPORT_METHOD = 'preset/importArchive'
+
+/** Result envelope the Host returns for one typed Remote call. */
+type PresetImportResult =
+  | { readonly ok: true; readonly value: Record<string, unknown> }
+  | { readonly ok: false; readonly error: { readonly code: string; readonly message: string } }
+
+function isRecordValue(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/**
+ * Read the Host's `server-response` envelope for one Remote call.
+ * @param value - parsed response body.
+ * @returns the decoded result, or a refusal carrying its Remote error code.
+ * @throws {Error} when the envelope is not a valid Host response.
+ */
+function presetImportResult(value: unknown): PresetImportResult {
+  if (!isRecordValue(value) || value['type'] !== 'server-response' || !isRecordValue(value['result'])) {
+    throw new Error('Preset import returned an invalid Host response envelope')
+  }
+  const result = value['result']
+  if (result['ok'] === true) {
+    const decoded = result['value']
+    if (!isRecordValue(decoded)) throw new Error('Preset import returned an invalid Host result')
+    return { ok: true, value: decoded }
+  }
+  const error = result['error']
+  if (!isRecordValue(error) || typeof error['code'] !== 'string' || typeof error['message'] !== 'string') {
+    throw new Error('Preset import returned an invalid Host failure')
+  }
+  return { ok: false, error: { code: error['code'], message: error['message'] } }
+}
 
 function assertSquareUrl(url: URL): void {
   if (url.protocol !== 'https:' || !PRESET_SQUARE_ALLOWED_ORIGINS.has(url.origin)
@@ -192,28 +226,31 @@ export class PresetSquareClient {
   }> {
     const origin = this.hostOrigin()
     if (origin === undefined) throw new Error('Desktop Host is unavailable')
-    const url = new URL('/api/agent-preset.import', origin)
-    if (targetId !== null) url.searchParams.set('targetId', targetId)
-    if (install) url.searchParams.set('install', '1')
+    const url = new URL(`/api/${PRESET_IMPORT_METHOD}`, origin)
+    // One typed Host Remote call, using the Connection protocol envelope the
+    // browser transport posts: the Desktop shell has no Cordis client context.
+    const request = {
+      type: 'client-request',
+      rpcId: randomUUID(),
+      method: PRESET_IMPORT_METHOD,
+      payload: {
+        args: [
+          Buffer.from(data).toString('base64'),
+          { install, ...targetId === null ? {} : { targetId } },
+        ],
+      },
+    }
     const response = await this.fetcher(url, {
       method: 'POST',
       redirect: 'error',
-      headers: {
-        'content-type': 'application/vnd.dsh.preset+zip',
-        'content-length': String(data.length),
-      },
-      body: Buffer.from(data),
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(request),
     })
+    if (!response.ok) throw new Error(`Preset import returned HTTP ${String(response.status)}`)
     const body = await this.readBoundedJson(response, MAX_METADATA_BYTES)
-    if (!response.ok || typeof body !== 'object' || body === null || Array.isArray(body)
-      || (body as Record<string, unknown>)['ok'] !== true) {
-      const message = typeof body === 'object' && body !== null && !Array.isArray(body)
-        && typeof (body as Record<string, unknown>)['error'] === 'string'
-        ? (body as Record<string, string>)['error']
-        : `Preset import returned HTTP ${String(response.status)}`
-      throw new Error(message)
-    }
-    const source = body as Record<string, unknown>
+    const result = presetImportResult(body)
+    if (!result.ok) throw new Error(result.error.message)
+    const source = result.value
     const normalized = {
       targetId: source['targetId'],
       sourcePresetId: source['sourcePresetId'],

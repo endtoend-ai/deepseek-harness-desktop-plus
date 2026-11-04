@@ -444,6 +444,7 @@ export const zh = {
   presetUseNotReady: 'Preset 已安装，但当前运行环境加载失败。请打开详情，核对本机依赖与凭据配置。',
   presetWorkspaceNeeded: '请先添加一个工作区，再使用这个 Preset 创建新会话。',
   presetDesktopOnly: '安装、删除和使用 Preset 仅在 Desktop 中可用。',
+  presetInstallUnavailable: '暂不支持安装：0.2.1 的 Preset 由 profile 组合行声明，旧版目录式安装包无法落地。预览、删除与使用仍可用。',
 } satisfies Record<string, string>
 
 /** Locale keys rendered by the Plugin Center. */
@@ -894,4 +895,5 @@ export const en = {
   presetUseNotReady: 'The preset is installed, but its runtime could not load. Open details and check local dependencies and credentials.',
   presetWorkspaceNeeded: 'Add a workspace before creating a new session with this preset.',
   presetDesktopOnly: 'Installing, deleting, and using presets is available in Desktop only.',
+  presetInstallUnavailable: 'Installation is not supported yet: DSH 0.2.1 declares presets as profile composition rows, so a 0.1.1 archive package has nowhere to be installed. Preview, removal, and use still work.',
 } satisfies Record<PluginCenterLocaleKey, string>

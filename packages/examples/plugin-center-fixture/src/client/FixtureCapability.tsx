@@ -2,11 +2,13 @@
 
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+// Type-only: the slot-registry service merge this plugin registers through.
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 
-const PAGE_ID = 'fixture-workspace-tools'
+const PAGE_ID = 'fixture-workspace-tools' as MainPanelId
 const NS = 'pluginCenterFixture'
 
 type FixtureLocaleKey = 'nav' | 'title' | 'description' | 'running'
@@ -17,26 +19,17 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-interface NavInjected {
-  readonly pageId: string
-  readonly open: () => void
-}
+type NavProps = PropsRuntime<'sidebar.panellist'> & PropsLocale<'pluginCenterFixture'>
+type PageProps = PropsRuntime<'main'> & PropsLocale<'pluginCenterFixture'>
 
-type NavProps = PropsRuntime<'sidebar.primary.action'> & PropsLocale<'pluginCenterFixture'> & InjectFace<NavInjected>
-type PageProps = PropsRuntime<'main.page'> & PropsLocale<'pluginCenterFixture'>
-
-function FixtureNav({ wide, primaryPage, pageId, open, t }: NavProps) {
-  return (
-    <button
-      type="button"
-      aria-current={primaryPage === pageId ? 'page' : undefined}
-      aria-label={t('nav')}
-      data-plugin-center-fixture-nav="workspace-tools"
-      onClick={open}
-    >
-      <span aria-hidden="true">◇</span>{wide ? <span>{t('nav')}</span> : null}
-    </button>
-  )
+/**
+ * Panel glyph: the sidebar owns the row, its label, the selected state, and the
+ * click that selects this page in the main column.
+ * @param props - the sidebar's icon share: requested edge and selection.
+ * @returns the fixture glyph at that edge.
+ */
+function FixtureNav({ size }: NavProps) {
+  return <span aria-hidden="true" data-plugin-center-fixture-nav="workspace-tools" style={{ fontSize: size, lineHeight: 1 }}>◇</span>
 }
 
 function FixturePage({ t }: PageProps) {
@@ -67,17 +60,23 @@ export function apply(ctx: ClientContext): void {
       running: 'Plugin running',
     },
   }), 'plugin-center-fixture: dictionaries')
-  ctx.slots.inject('sidebar.primary.action', () => ctx.slots.register({
-    name: 'sidebar.primary.action',
+  const t = ctx.locale.bind(NS)
+  const { slots } = ctx
+  // One panel, addressed by the same id from the sidebar launcher and the main
+  // column; the sidebar renders the row and selects it on click.
+  slots.inject('sidebar.panellist', () => slots.register({
+    name: 'sidebar.panellist',
     id: PAGE_ID,
     order: 30,
     locale: NS,
-    inject: () => ({ pageId: PAGE_ID, open: () => { ctx.layout.openPrimaryPage(PAGE_ID) } }),
+    label: () => t('nav'),
   }, FixtureNav))
-  ctx.slots.inject('main.page', () => ctx.slots.register({
-    name: 'main.page',
+  slots.inject('main', () => slots.register({
+    name: 'main',
     key: PAGE_ID,
     locale: NS,
   }, FixturePage))
-  ctx.effect(() => () => { ctx.layout.closePrimaryPage(PAGE_ID) }, 'plugin-center-fixture: close page')
+  ctx.effect(() => () => {
+    if (ctx.layout.panelInfo.getSnapshot().activePanelId === PAGE_ID) ctx.layout.selectPanel(null)
+  }, 'plugin-center-fixture: release its main panel')
 }

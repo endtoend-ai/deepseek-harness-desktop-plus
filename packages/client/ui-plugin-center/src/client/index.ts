@@ -66,6 +66,7 @@ export function apply(ctx: ClientContext): void {
     presetAvailable: bridge?.presetSquare !== undefined,
     presetDevelopment: resolved.development,
     presetMutationsEnabled: bridge?.presetSquare?.mutationsEnabled ?? false,
+    presetInstallSupported: bridge?.presetSquare?.installSupported ?? false,
     listPresetSquare: query => bridge?.presetSquare?.list(query) ?? unavailable(),
     detailPresetSquare: query => bridge?.presetSquare?.detail(query) ?? unavailable(),
     previewPresetInstall: request => bridge?.presetSquare?.previewInstall(request) ?? unavailable(),

@@ -257,10 +257,14 @@ export async function verifyPluginArtifact(input: ArtifactVerificationInput): Pr
 
   const manifestPackageName = typeof manifest?.name === 'string' ? manifest.name : null
   const manifestVersion = typeof manifest?.version === 'string' ? manifest.version : null
-  const manifestBundlePatch = typeof manifest?.dsh?.bundle?.patch === 'string' ? manifest.dsh.bundle.patch : null
+  const declaredBundlePatch = manifest?.dsh?.bundle?.patch
+  const manifestBundlePatches = typeof declaredBundlePatch === 'string'
+    ? [declaredBundlePatch]
+    : Array.isArray(declaredBundlePatch) ? declaredBundlePatch.filter((entry): entry is string => typeof entry === 'string') : []
+  const manifestBundlePatch = manifestBundlePatches[0] ?? null
   const observedPackageName = manifestPackageName !== null && PACKAGE_NAME.test(manifestPackageName) ? manifestPackageName : null
   const observedVersion = manifestVersion !== null && EXACT_VERSION.test(manifestVersion) ? manifestVersion : null
-  const observedBundlePatch = manifestBundlePatch === input.candidate.bundlePatch ? manifestBundlePatch : null
+  const observedBundlePatch = manifestBundlePatches.includes(input.candidate.bundlePatch) ? input.candidate.bundlePatch : null
   if (manifest !== undefined) {
     if (manifestPackageName !== input.candidate.packageName) {
       add('package-name-mismatch', manifestPackageName ?? '<missing>')
@@ -268,7 +272,7 @@ export async function verifyPluginArtifact(input: ArtifactVerificationInput): Pr
     if (manifestVersion !== input.candidate.version) {
       add('package-version-mismatch', manifestVersion ?? '<missing>')
     }
-    if (manifestBundlePatch !== input.candidate.bundlePatch) {
+    if (!manifestBundlePatches.includes(input.candidate.bundlePatch)) {
       add('bundle-patch-mismatch', manifestBundlePatch ?? '<missing>')
     }
     if (typeof manifest.scripts === 'object' && manifest.scripts !== null && !Array.isArray(manifest.scripts)) {

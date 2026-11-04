@@ -66,6 +66,8 @@ export interface DesktopCatalogBridge {
   /** Fixed-origin Preset Square reads and Desktop-only verified archive installation. */
   readonly presetSquare?: {
     readonly mutationsEnabled: boolean
+    /** Whether the Host can commit an imported Preset archive; previews stay available either way. */
+    readonly installSupported: boolean
     list(query: PresetSquareListQuery): Promise<PresetSquareListResult>
     detail(query: PresetSquareDetailQuery): Promise<PresetSquareDetailResult>
     previewInstall(request: PresetInstallPreviewRequest): Promise<PresetInstallPreviewResult>

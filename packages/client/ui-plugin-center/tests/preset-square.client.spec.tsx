@@ -128,6 +128,7 @@ function props(values: Partial<PresetSquareInjected> = {}): PresetSquareInjected
     presetAvailable: true,
     presetDevelopment: false,
     presetMutationsEnabled: true,
+    presetInstallSupported: true,
     listPresetSquare: async () => ({
       items: [ITEM], total: 1, sort: 'downloads', fetchedAt: '2026-08-17T08:00:00.000Z',
     }),

@@ -105,6 +105,12 @@ export interface DesktopBridge {
   readonly presetSquare: {
     /** Browser fixtures may browse, but only Desktop can mutate the local roster. */
     readonly mutationsEnabled: boolean
+    /**
+     * Whether this Host can commit an imported Preset archive. DSH 0.2.1 declares
+     * Presets as profile composition rows, so Desktop previews archives but
+     * cannot install them.
+     */
+    readonly installSupported: boolean
     list(query: PresetSquareListQuery): Promise<PresetSquareListResult>
     detail(query: PresetSquareDetailQuery): Promise<PresetSquareDetailResult>
     previewInstall(request: PresetInstallPreviewRequest): Promise<PresetInstallPreviewResult>

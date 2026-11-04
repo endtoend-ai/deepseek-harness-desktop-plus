@@ -26,7 +26,9 @@ import type {
   PresetRuntimeSnapshot,
   PresetSquareItem,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
-import { COMPATIBILITY_ACTIONS } from '@deepseek-ai/dsh-plugin-center-contracts'
+import type { CompatibilityAction } from '@deepseek-ai/dsh-plugin-center-contracts'
+/** Client-side mirror of the closed mutation intents; the contract types stay in the Host package. */
+const COMPATIBILITY_ACTIONS: readonly CompatibilityAction[] = ['install', 'update', 'enable', 'disable', 'uninstall']
 import type { DesktopCatalogBridge } from './bridge.ts'
 import { PLUGIN_OPERATION_PHASES, isTrustedInstallPhase } from './operation-phases.ts'
 
@@ -903,6 +905,7 @@ export function developmentCatalogBridge(): DesktopCatalogBridge | undefined {
     },
     presetSquare: {
       mutationsEnabled: false,
+      installSupported: false,
       list: ({ query, sort }) => {
         const needle = query.trim().toLocaleLowerCase()
         const items = PRESET_FIXTURES

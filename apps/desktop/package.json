@@ -7,15 +7,16 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json && tsdown",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json",
+    "build:applications": "pnpm --filter @fufan/dsh-plugin-llm-wiki run build:application",
+    "bundle": "tsc -p tsconfig.json && tsdown",
     "dev": "node --import tsx scripts/dev-desktop.ts",
     "dev:rebuild": "node --import tsx scripts/dev-desktop.ts --rebuild",
-    "build:applications": "pnpm --filter @fufan/dsh-plugin-llm-wiki run build:application",
-    "package": "pnpm run build:applications && pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && electron-builder --dir",
     "dist": "pnpm run build:applications && pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && electron-builder",
     "dist:mac": "node --import tsx scripts/release-mac.ts",
     "dist:win": "pnpm run build:applications && pnpm --workspace-root run build && DSH_DESKTOP_TARGET_PLATFORM=win32 DSH_DESKTOP_TARGET_ARCH=x64 node --import tsx scripts/stage-runtime.ts && node --import tsx scripts/release-win.ts",
-    "publish:update": "node --import tsx scripts/publish-update.ts"
+    "package": "pnpm run build:applications && pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && electron-builder --dir",
+    "publish:update": "node --import tsx scripts/publish-update.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json"
   },
   "license": "MIT",
   "dependencies": {

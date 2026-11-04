@@ -75,6 +75,7 @@ const bridge: DesktopBridge = Object.freeze({
   }),
   presetSquare: Object.freeze({
     mutationsEnabled: true,
+    installSupported: false,
     list: (query: PresetSquareListQuery) =>
       ipcRenderer.invoke(DESKTOP_CHANNELS.presetSquareList, query) as Promise<PresetSquareListResult>,
     detail: (query: PresetSquareDetailQuery) =>
