@@ -22,10 +22,10 @@ export function PlaceholderPage({
           {description}
         </p>
         <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-[13px] text-amber-300">
-          阶段：{stage}
+          Stage: {stage}
         </div>
         <p className="mt-4 text-[13px] text-slate-500">
-          本模块将在后续迭代中交付（本轮未实现相关算法与模型调用）
+          This module ships in a later iteration; its algorithms and model calls are not implemented yet.
         </p>
       </div>
     </div>

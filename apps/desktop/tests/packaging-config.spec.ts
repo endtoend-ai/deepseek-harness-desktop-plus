@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { PINNED_PACKAGE_MANAGER_VERSION } from '../src/plugin-center/package-manager.ts'
 
 interface DesktopPackage {
   readonly dependencies: Readonly<Record<string, string>>
@@ -43,8 +44,9 @@ interface RuntimePackage {
 const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const repositoryRoot = resolve(desktopRoot, '../..')
 const workspaceConfiguration = readFileSync(resolve(repositoryRoot, 'pnpm-workspace.yaml'), 'utf8')
-const builderPatch = readFileSync(resolve(repositoryRoot, 'patches/app-builder-lib@26.15.3.patch'), 'utf8')
+const builderPatch = readFileSync(resolve(repositoryRoot, 'patches/app-builder-lib@26.17.0.patch'), 'utf8')
 const macReleaseScript = readFileSync(resolve(desktopRoot, 'scripts/release-mac.ts'), 'utf8')
+const windowsReleaseScript = readFileSync(resolve(desktopRoot, 'scripts/release-win.ts'), 'utf8')
 const windowsInstallerInclude = readFileSync(resolve(desktopRoot, 'build/installer.nsh'), 'utf8')
 const desktopPackage = JSON.parse(
   readFileSync(resolve(desktopRoot, 'package.json'), 'utf8'),
@@ -59,7 +61,7 @@ const runtimePackage = JSON.parse(
 describe('desktop packaging configuration', () => {
   it('lets electron-builder resolve the target-platform Electron distribution', () => {
     expect(desktopPackage.build).not.toHaveProperty('electronDist')
-    expect(workspaceConfiguration).toContain("'app-builder-lib@26.15.3>@electron/get': '3.1.0'")
+    expect(workspaceConfiguration).toContain('  - electron@44.7.0')
   })
 
   it('maps the staged Host node_modules directory as the copy root', () => {
@@ -71,7 +73,7 @@ describe('desktop packaging configuration', () => {
   })
 
   it('stages the pinned package manager with the Host dependency tree', () => {
-    expect(runtimePackage.dependencies.pnpm).toBe('11.7.0')
+    expect(runtimePackage.dependencies.pnpm).toBe(PINNED_PACKAGE_MANAGER_VERSION)
   })
 
   it('owns the app-boot runtime peers that must be packaged in app.asar', () => {
@@ -85,12 +87,11 @@ describe('desktop packaging configuration', () => {
     }
   })
 
-  it('unlocks the temporary signing Keychain with its own password', () => {
+  it('pins the patched app-builder-lib that adds the LZMA DMG format', () => {
     expect(workspaceConfiguration).toContain(
-      'app-builder-lib@26.15.3: patches/app-builder-lib@26.15.3.patch',
+      'app-builder-lib@26.17.0: patches/app-builder-lib@26.17.0.patch',
     )
-    expect(builderPatch).toContain('cscPasswords, keychainPassword')
-    expect(builderPatch).toContain('"-k", keychainPassword, keychainFile')
+    expect(builderPatch).toContain('ULMO')
   })
 
   it('keeps the rounded RGBA icon byte-for-byte and shares it across macOS and Windows', () => {
@@ -105,7 +106,7 @@ describe('desktop packaging configuration', () => {
 
   it('builds and stages the complete workspace before local packaging', () => {
     expect(desktopPackage.scripts['build:applications'])
-      .toBe('pnpm --filter @fufan/dsh-plugin-llm-wiki run build:application')
+      .toBe('pnpm --filter dsh-plugin-llm-wiki run build:application')
     for (const name of ['package', 'dist']) {
       expect(desktopPackage.scripts[name]).toContain('pnpm run build:applications')
       expect(desktopPackage.scripts[name]).toContain('pnpm --workspace-root run build')
@@ -119,17 +120,19 @@ describe('desktop packaging configuration', () => {
     expect(desktopPackage.scripts.dev).toBe('node --import tsx scripts/dev-desktop.ts')
     expect(desktopPackage.scripts['dev:rebuild'])
       .toBe('node --import tsx scripts/dev-desktop.ts --rebuild')
-    expect(rootPackage.scripts['dev:desktop'])
-      .toBe('pnpm --filter @deepseek-ai/dsh-desktop run dev')
-    expect(rootPackage.scripts['dev:desktop:rebuild'])
-      .toBe('pnpm --filter @deepseek-ai/dsh-desktop run dev:rebuild')
+  })
+
+  it('ships no release provider with the application package', () => {
+    expect(desktopPackage.build).not.toHaveProperty('publish')
+    expect(desktopPackage.scripts).not.toHaveProperty('publish:update')
+    expect(rootPackage.scripts).not.toHaveProperty('publish:desktop-update')
   })
 
   it('makes the macOS DMG and ZIP update path signed, hardened, and notarized', () => {
     const command = desktopPackage.scripts['dist:mac']
 
     expect(command).toBe('node --import tsx scripts/release-mac.ts')
-    expect(macReleaseScript).toContain("'@fufan/dsh-plugin-llm-wiki', 'run', 'build:application'")
+    expect(macReleaseScript).toContain("'dsh-plugin-llm-wiki', 'run', 'build:application'")
     expect(macReleaseScript).toContain("'--mac', 'dmg', 'zip'")
     expect(desktopPackage.build.mac.hardenedRuntime).toBe(true)
     expect(desktopPackage.build.mac.notarize).toBe(true)
@@ -140,7 +143,7 @@ describe('desktop packaging configuration', () => {
     expect(desktopPackage.scripts['dist:win']).toContain('DSH_DESKTOP_TARGET_PLATFORM=win32')
     expect(desktopPackage.scripts['dist:win']).toContain('DSH_DESKTOP_TARGET_ARCH=x64')
     expect(desktopPackage.scripts['dist:win']).toContain('scripts/release-win.ts')
-    expect(builderPatch).toContain('ELECTRON_BUILDER_NSIS_TEMPLATE_DIR')
+    expect(windowsReleaseScript).toContain('ELECTRON_BUILDER_NSIS_TEMPLATE_DIR')
     expect(desktopPackage.build.win.target).toEqual(['nsis'])
     expect(desktopPackage.build.win.artifactName)
       .toBe('DeepSeek-Harness-Desktop-Windows-x64-${version}-Setup.${ext}')
@@ -212,14 +215,14 @@ describe('desktop packaging configuration', () => {
     expect(windowsInstallerInclude).not.toContain('DeleteRegKey SHELL_CONTEXT')
   })
 
-  it('exposes generic, macOS, and Windows release commands at the repository root', () => {
-    expect(rootPackage.scripts['dist:desktop'])
-      .toBe('pnpm --filter @deepseek-ai/dsh-desktop run dist')
-    expect(rootPackage.scripts['dist:mac:desktop'])
+  it('exposes the macOS and Windows release commands at the repository root', () => {
+    expect(rootPackage.scripts['build:desktop'])
+      .toBe('pnpm --filter @deepseek-ai/dsh-desktop run build')
+    expect(rootPackage.scripts['typecheck:desktop'])
+      .toBe('pnpm --filter @deepseek-ai/dsh-desktop run typecheck')
+    expect(rootPackage.scripts['dist:desktop:mac'])
       .toBe('pnpm --filter @deepseek-ai/dsh-desktop run dist:mac')
-    expect(rootPackage.scripts['dist:win:desktop'])
+    expect(rootPackage.scripts['dist:desktop:win'])
       .toBe('pnpm --filter @deepseek-ai/dsh-desktop run dist:win')
-    expect(rootPackage.scripts['publish:desktop-update'])
-      .toBe('pnpm --filter @deepseek-ai/dsh-desktop run publish:update')
   })
 })

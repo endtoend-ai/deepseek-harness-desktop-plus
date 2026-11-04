@@ -1,4 +1,4 @@
-/** Host launcher for the unmodified FF - LLM Wiki standalone application. */
+/** Host launcher for the LLM Wiki standalone application. */
 
 import { spawn, type ChildProcess } from 'node:child_process'
 import { cp, mkdir, readFile, stat, writeFile } from 'node:fs/promises'
@@ -122,7 +122,7 @@ class StandaloneApplication {
       child.kill('SIGTERM')
       this.child = undefined
       const suffix = diagnostics.trim().length > 0 ? `\n${diagnostics.trim()}` : ''
-      throw new Error(`FF - LLM Wiki 启动失败：${error instanceof Error ? error.message : String(error)}${suffix}`)
+      throw new Error(`Failed to start LLM Wiki: ${error instanceof Error ? error.message : String(error)}${suffix}`)
     }
   }
 
@@ -208,7 +208,7 @@ function proxyApi(request: IncomingMessage, response: ServerResponse, port: numb
       return
     }
     response.writeHead(502, { 'content-type': 'application/json; charset=utf-8' })
-    response.end(JSON.stringify({ message: 'FF - LLM Wiki API 暂不可用' }))
+    response.end(JSON.stringify({ message: 'LLM Wiki API is temporarily unavailable' }))
   })
   request.pipe(upstream)
 }

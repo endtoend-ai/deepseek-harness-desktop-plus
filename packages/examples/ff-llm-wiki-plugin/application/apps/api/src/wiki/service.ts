@@ -112,6 +112,6 @@ export function recompileWiki(
     ok: true,
     stats: manifest.stats,
     pages: manifest.stats.pages,
-    message: `重新编译完成：${manifest.stats.pages} 个知识页已更新`,
+    message: `Recompile finished: ${manifest.stats.pages} knowledge pages updated`,
   }
 }

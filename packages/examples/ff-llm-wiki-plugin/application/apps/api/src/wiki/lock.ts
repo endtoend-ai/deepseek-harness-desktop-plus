@@ -69,7 +69,7 @@ export function withWikiLock<T>(fn: () => T): T {
       if (Date.now() > deadline) {
         rmSync(LOCK_PATH, { force: true })
         throw new Error(
-          `获取编译锁超时（${LOCK_TIMEOUT_MS}ms），已清除残留锁 content/.wiki.lock，请重试`,
+          `Timed out waiting ${LOCK_TIMEOUT_MS}ms for the compile lock; the stale lock content/.wiki.lock was cleared, retry`,
         )
       }
       sleepSync(LOCK_POLL_MS)

@@ -320,7 +320,7 @@
     "@deepseek-ai/node-addon-system-linux-arm64": "workspace:^",
     "@deepseek-ai/node-addon-system-linux-x64": "workspace:^",
     "@deepseek-ai/schemastery": "workspace:^",
-    "@fufan/dsh-plugin-llm-wiki": "workspace:^",
+    "dsh-plugin-llm-wiki": "workspace:^",
     "pnpm": "11.28.5"
   }
 }

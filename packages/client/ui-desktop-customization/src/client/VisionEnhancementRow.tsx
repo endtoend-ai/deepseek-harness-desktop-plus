@@ -22,10 +22,10 @@ export function VisionEnhancementRow({
   useEffect(() => { void load() }, [load])
 
   const status = useMemo(() => {
-    if (state.status === 'idle' || state.status === 'loading') return '读取中'
-    if (state.status === 'saving') return '处理中'
-    if (state.enabled) return '已开启'
-    return '未开启'
+    if (state.status === 'idle' || state.status === 'loading') return 'Reading'
+    if (state.status === 'saving') return 'Saving'
+    if (state.enabled) return 'On'
+    return 'Off'
   }, [state.enabled, state.status])
 
   const busy = state.status === 'idle' || state.status === 'loading' || state.status === 'saving'
@@ -47,12 +47,12 @@ export function VisionEnhancementRow({
       <div className={css.row} data-testid="vision-enhancement-row">
         <div className={css.rowText}>
           <div className={css.titleLine}>
-            <span className={css.spark}>视</span>
-            <span className={css.title}>视觉能力增强</span>
-            <span className={css.model}>兼容视觉 · {providerName} · {state.model}</span>
+            <span className={css.spark}>V</span>
+            <span className={css.title}>Visual enhancement</span>
+            <span className={css.model}>Compatible vision · {providerName} · {state.model}</span>
           </div>
           <div className={css.desc} role={state.error === null ? undefined : 'alert'}>
-            {state.error ?? '会话内的“视觉增强”用于切换官方图文模型；这里配置纯文本模型的兼容视觉备用服务。'}
+            {state.error ?? 'The in-conversation Vision Enhancement switch selects the official multimodal model; this row configures a compatible fallback for text-only models.'}
           </div>
         </div>
         <div className={css.control}>
@@ -62,7 +62,7 @@ export function VisionEnhancementRow({
             className={state.enabled ? css.toggleOn : css.toggle}
             role="switch"
             aria-checked={state.enabled}
-            aria-label="视觉能力增强"
+            aria-label="Visual enhancement"
             disabled={busy}
             onClick={activate}
           ><span /></button>

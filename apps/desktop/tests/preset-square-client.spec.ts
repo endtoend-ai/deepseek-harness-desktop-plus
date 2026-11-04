@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
+import { BUNDLED_PRESET_SOURCE } from '../src/preset-square/bundled-catalog.ts'
 import { PresetSquareClient } from '../src/preset-square/client.ts'
 
 const archive = new TextEncoder().encode('fixture-preset-archive')
@@ -30,16 +31,21 @@ function json(value: unknown, status = 200): Response {
 
 function hostPreview(installed: boolean): Response {
   return json({
-    ok: true,
-    targetId: ITEM.presetId,
-    sourcePresetId: ITEM.presetId,
-    name: ITEM.title,
-    description: ITEM.description,
-    sourceDshVersion: ITEM.artifact.sourceDshVersion,
-    fileCount: 9,
-    warnings: [],
-    conflict: false,
-    installed,
+    type: 'server-response',
+    result: {
+      ok: true,
+      value: {
+        targetId: ITEM.presetId,
+        sourcePresetId: ITEM.presetId,
+        name: ITEM.title,
+        description: ITEM.description,
+        sourceDshVersion: ITEM.artifact.sourceDshVersion,
+        fileCount: 9,
+        warnings: [],
+        conflict: false,
+        installed,
+      },
+    },
   })
 }
 
@@ -47,7 +53,12 @@ describe('Desktop Preset Square client', () => {
   it('lists, searches, previews and installs only through fixed authorities', async () => {
     const fetcher = vi.fn<typeof fetch>(async (input, init) => {
       const url = new URL(input instanceof Request ? input.url : input.toString())
-      if (url.origin === 'http://127.0.0.1:4321') return hostPreview(url.searchParams.get('install') === '1')
+      if (url.origin === 'http://127.0.0.1:4321') {
+        const body = JSON.parse(String(init?.body)) as {
+          readonly payload: { readonly args: readonly [string, { readonly install?: boolean }] }
+        }
+        return hostPreview(body.payload.args[1].install === true)
+      }
       if (url.pathname.endsWith('/download')) {
         return new Response(archive, { headers: { 'content-length': String(archive.length) } })
       }
@@ -84,8 +95,13 @@ describe('Desktop Preset Square client', () => {
       const url = new URL(input instanceof Request ? input.url : input.toString())
       if (url.origin === 'http://127.0.0.1:4321') {
         const response = hostPreview(false)
-        const body = await response.json() as Record<string, unknown>
-        return json({ ...body, sourcePresetId: 'another-preset' })
+        const body = await response.json() as {
+          readonly result: { readonly value: Record<string, unknown> }
+        }
+        return json({
+          ...body,
+          result: { ...body.result, value: { ...body.result.value, sourcePresetId: 'another-preset' } },
+        })
       }
       return url.pathname.endsWith('/download') ? new Response(archive) : json(ITEM)
     })
@@ -99,7 +115,7 @@ describe('Desktop Preset Square client', () => {
   })
 
   it('keeps bundled first-party entries available and installable when the community service is offline', async () => {
-    const official = { ...ITEM, source: 'fufan-official' as const, publisher: { username: '赋范官方' } }
+    const official = { ...ITEM, source: BUNDLED_PRESET_SOURCE, publisher: { username: 'DeepSeek Harness' } }
     const fetcher = vi.fn<typeof fetch>(async (input) => {
       const url = new URL(input instanceof Request ? input.url : input.toString())
       if (url.origin === 'http://127.0.0.1:4321') return hostPreview(false)
@@ -116,8 +132,8 @@ describe('Desktop Preset Square client', () => {
       },
     )
 
-    await expect(client.list({ query: '赋范', sort: 'downloads' })).resolves.toMatchObject({
-      items: [{ source: 'fufan-official' }],
+    await expect(client.list({ query: 'studio', sort: 'downloads' })).resolves.toMatchObject({
+      items: [{ source: BUNDLED_PRESET_SOURCE }],
       total: 1,
     })
     await expect(client.previewInstall({ slug: official.slug, targetId: null })).resolves.toMatchObject({

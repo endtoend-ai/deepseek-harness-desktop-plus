@@ -21,5 +21,12 @@ export function assertDesktopRequestOwner(identity: DesktopInvokeIdentity, owner
   try { origin = new URL(identity.senderFrameUrl).origin } catch {
     throw new Error('Desktop bridge request has an invalid renderer URL')
   }
-  if (origin !== owner.origin) throw new Error('Desktop bridge request origin is not current')
+  // The Host readiness URL carries the authenticated token; ownership is the
+  // scheme/host/port triple, so compare against that origin and not the
+  // full URL that also opens the window.
+  let ownerOrigin: string
+  try { ownerOrigin = new URL(owner.origin).origin } catch {
+    throw new Error('Desktop bridge owner URL is invalid')
+  }
+  if (origin !== ownerOrigin) throw new Error('Desktop bridge request origin is not current')
 }

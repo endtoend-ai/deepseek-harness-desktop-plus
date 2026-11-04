@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
 
 const CONTENT_PRESET_ID = 'ai-content-image-studio'
-const CONTENT_PRESET_SLUG = 'fufan-content-factory'
+const CONTENT_PRESET_SLUG = 'content-factory'
 const LEGACY_ENTRY_ID = 'dsh-content-imagen-tools'
 const CURRENT_ENTRY_ID = 'content-imagegen-tools'
 const LEGACY_PACKAGE = /^\s+name:\s*['"]?dsh-content-imagen['"]?\s*$/mu

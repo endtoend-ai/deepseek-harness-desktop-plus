@@ -281,7 +281,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           </>
         )}
       <div className={styles['field']}>
-        <span className={styles['fieldLabel']}>{t('baseUrl')}</span>
+        <span className={styles['fieldLabel']}>{t(local ? 'localBaseUrl' : 'baseUrl')}</span>
         <input
           className={styles['input']}
           type="text"
@@ -289,7 +289,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           placeholder={t(protocol === 'anthropic-messages'
             ? 'customAnthropicBaseUrlPlaceholder'
             : 'customBaseUrlPlaceholder')}
-          aria-label={t('baseUrl')}
+          aria-label={t(local ? 'localBaseUrl' : 'baseUrl')}
           aria-invalid={baseUrlInvalid}
           disabled={profileDisabled}
           onChange={(event) => { setBaseURL(event.target.value) }}

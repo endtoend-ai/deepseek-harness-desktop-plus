@@ -15,7 +15,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
       </div>
       {!compact && (
         <div className="whitespace-nowrap text-[13px] font-semibold tracking-tight text-white lg:text-[15px]">
-          FF - LLM Wiki 企业知识库
+          LLM Wiki Enterprise Knowledge Base
         </div>
       )}
     </div>

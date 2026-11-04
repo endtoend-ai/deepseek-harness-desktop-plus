@@ -12,19 +12,19 @@ import type { DocumentChunkInput, DocumentRepository } from '../data/repository.
 import type { DynamicWikiPublisher } from '../wiki/dynamic.js'
 
 const STAGE_LABELS: Record<DocumentProcessingStageKey, string> = {
-  upload: '文件接收',
-  parse: '内容解析',
-  segment: '文本分段',
-  index: '知识入库',
-  complete: '处理完成',
+  upload: 'File received',
+  parse: 'Content parsing',
+  segment: 'Text segmentation',
+  index: 'Knowledge indexing',
+  complete: 'Processing complete',
 }
 
 const STAGE_MESSAGES: Record<DocumentProcessingStageKey, string> = {
-  upload: '原文件已持久化并完成完整性校验',
-  parse: '正在提取正文与可检索文本',
-  segment: '正在清洗文本并生成语义分段',
-  index: '正在写入 SQLite 知识分段索引',
-  complete: '资料已进入可检索状态',
+  upload: 'The original file is persisted and its integrity checked',
+  parse: 'Extracting the body text and searchable content',
+  segment: 'Cleaning the text and building semantic segments',
+  index: 'Writing the SQLite knowledge segment index',
+  complete: 'The document is now searchable',
 }
 
 const STAGE_PROGRESS: Record<DocumentProcessingStageKey, number> = {
@@ -41,7 +41,7 @@ function stageList(now: string): DocumentProcessingStage[] {
     label: STAGE_LABELS[key],
     status: key === 'upload' ? 'done' : 'pending',
     progress: key === 'upload' ? STAGE_PROGRESS.upload : 0,
-    message: key === 'upload' ? STAGE_MESSAGES.upload : '等待上一步完成',
+    message: key === 'upload' ? STAGE_MESSAGES.upload : 'Waiting for the previous stage',
     startedAt: key === 'upload' ? now : null,
     completedAt: key === 'upload' ? now : null,
   }))
@@ -111,12 +111,12 @@ async function extractText(buffer: Buffer, kind: DocumentRecord['kind']): Promis
     }
   }
 
-  throw new Error(`暂不支持解析 ${kind.toUpperCase()} 文件`)
+  throw new Error(`Parsing ${kind.toUpperCase()} files is not supported yet`)
 }
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim()) return error.message
-  return '资料解析失败，请检查文件内容后重试'
+  return 'Document parsing failed. Check the file content and try again.'
 }
 
 /**
@@ -171,7 +171,7 @@ export class DocumentProcessor {
   ): Promise<void> {
     const now = new Date().toISOString()
     const stage = job.stages.find(item => item.key === key)
-    if (!stage) throw new Error(`未知处理阶段：${key}`)
+    if (!stage) throw new Error(`Unknown processing stage: ${key}`)
 
     job.currentStage = key
     stage.status = status
@@ -295,14 +295,14 @@ export class DocumentProcessor {
       await this.holdForVisibility()
       const buffer = await readFile(this.sourcePath(doc))
       const text = normalizeText(await extractText(buffer, doc.kind))
-      if (!text) throw new Error('未从文件中提取到可用文本，请检查文件是否为空或仅包含扫描图片')
+      if (!text) throw new Error('No usable text was extracted. Check whether the file is empty or contains only scanned images.')
       job.extractedChars = text.length
-      await this.markStage(job, 'parse', 'done', `已提取 ${text.length.toLocaleString('zh-CN')} 个字符`)
+      await this.markStage(job, 'parse', 'done', `Extracted ${text.length.toLocaleString('en-US')} characters`)
 
       await this.markStage(job, 'segment', 'running', STAGE_MESSAGES.segment)
       await this.holdForVisibility()
       const chunks = segmentText(text)
-      if (chunks.length === 0) throw new Error('文本分段失败，未生成有效知识片段')
+      if (chunks.length === 0) throw new Error('Text segmentation produced no usable knowledge segments')
       job.chunkCount = chunks.length
       const outputDir = this.outputDir(doc)
       await mkdir(outputDir, { recursive: true })
@@ -310,7 +310,7 @@ export class DocumentProcessor {
         writeFile(join(outputDir, 'extracted.txt'), text, 'utf8'),
         writeFile(join(outputDir, 'chunks.json'), JSON.stringify(chunks, null, 2), 'utf8'),
       ])
-      await this.markStage(job, 'segment', 'done', `已生成 ${chunks.length} 个可追溯分段`)
+      await this.markStage(job, 'segment', 'done', `Generated ${chunks.length} traceable segments`)
 
       await this.markStage(job, 'index', 'running', STAGE_MESSAGES.index)
       await this.holdForVisibility()
@@ -322,10 +322,10 @@ export class DocumentProcessor {
         job,
         'index',
         'done',
-        `已写入 ${inserted} 个知识分段，并发布关联 Wiki`,
+        `Indexed ${inserted} knowledge segments and published the linked Wiki pages`,
       )
 
-      await this.markStage(job, 'complete', 'running', '正在校验处理结果')
+      await this.markStage(job, 'complete', 'running', 'Verifying the processing result')
       await this.holdForVisibility()
       job.status = 'ready'
       job.error = null

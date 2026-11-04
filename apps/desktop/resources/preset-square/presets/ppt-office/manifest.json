@@ -1,0 +1,8 @@
+{
+  "format": "dsh-preset",
+  "version": 1,
+  "id": "dsh-motion-deck-studio",
+  "name": "Motion Deck Studio",
+  "description": "PPT Office workflow: one Agent Preset, one Skill, and the bundled motion-deck runtime adapter.",
+  "sourceDshVersion": "0.1.0-rc.8"
+}

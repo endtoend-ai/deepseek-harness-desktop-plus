@@ -5,13 +5,22 @@ import { readFile, readdir } from 'node:fs/promises'
 import { join, relative, sep } from 'node:path'
 import {
   decodePresetSquareItem,
+  PRESET_SQUARE_SOURCES,
   type PresetSquareItem,
+  type PresetSquareSource,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import { zipSync, type Zippable } from 'fflate'
 
 const ARCHIVE_MTIME = new Date('2026-08-17T00:00:00.000Z')
-const PUBLISHER = '赋范官方'
+const PUBLISHER = 'DeepSeek Harness'
 const SOURCE_DSH_VERSION = '0.1.0-rc.8'
+
+/**
+ * Catalog provenance for entries shipped inside the Desktop app. The published
+ * vocabulary is owned by the plugin-center contracts, so the value is derived
+ * from it rather than repeated here.
+ */
+export const BUNDLED_PRESET_SOURCE: PresetSquareSource = PRESET_SQUARE_SOURCES[0]
 
 interface BundledPresetDefinition {
   readonly id: string
@@ -24,59 +33,59 @@ interface BundledPresetDefinition {
 }
 
 const DEFINITIONS = [{
-  id: 'fufan-case-07-llm-wiki-producer',
-  slug: 'fufan-llm-wiki-producer',
+  id: 'bundled-case-07-llm-wiki-producer',
+  slug: 'llm-wiki-producer',
   presetId: 'llm-wiki-fullstack',
   title: 'LLM Wiki Producer',
-  description: '1 套 Agent Preset + 1 个 Skill，面向企业知识库项目按阶段完成开发、验证与交付。',
+  description: 'One Agent Preset and one Skill for staged development, verification, and delivery of enterprise knowledge-base projects.',
   visualVariant: 6,
   createdAt: '2026-08-17T06:07:00.000Z',
 }, {
-  id: 'fufan-case-01-ai-webapp',
-  slug: 'fufan-ai-webapp',
+  id: 'bundled-case-01-ai-webapp',
+  slug: 'ai-webapp',
   presetId: 'ai-product-developer',
   title: 'AI WebApp',
-  description: '1 套 Agent Preset + 3 个 Skills，覆盖需求澄清、规格整理与 TDD 的 Web 产品开发流程。',
+  description: 'One Agent Preset and three Skills covering requirement clarification, spec synthesis, and test-driven web product development.',
   visualVariant: 0,
   createdAt: '2026-08-17T06:01:00.000Z',
 }, {
-  id: 'fufan-case-02-ppt-office',
-  slug: 'fufan-ppt-office',
+  id: 'bundled-case-02-ppt-office',
+  slug: 'ppt-office',
   presetId: 'dsh-motion-deck-studio',
   title: 'PPT Office',
-  description: '1 套 Agent Preset + 1 个 Skill，把大纲生成并验收为 8 页可交互动效演示。',
+  description: 'One Agent Preset and one Skill that turn an outline into a verified eight-page interactive motion deck.',
   visualVariant: 1,
   createdAt: '2026-08-17T06:02:00.000Z',
 }, {
-  id: 'fufan-case-03-video-generation',
-  slug: 'fufan-video-generation',
+  id: 'bundled-case-03-video-generation',
+  slug: 'video-generation',
   presetId: 'product-video-director',
-  title: '视频生成',
-  description: '1 套 Agent Preset + 1 个 Skill，从调研、分镜到 HyperFrames MP4；运行需 FFmpeg。',
+  title: 'Video Generation',
+  description: 'One Agent Preset and one Skill covering research, storyboard, and HyperFrames MP4; FFmpeg is required.',
   visualVariant: 2,
   createdAt: '2026-08-17T06:03:00.000Z',
 }, {
-  id: 'fufan-case-04-content-factory',
-  slug: 'fufan-content-factory',
+  id: 'bundled-case-04-content-factory',
+  slug: 'content-factory',
   presetId: 'ai-content-image-studio',
-  title: '内容工厂',
-  description: '1 套 Agent Preset + 1 个 Skill + 1 个图像生成 Plugin；生图需本机已登录 Codex CLI。',
+  title: 'Content Factory',
+  description: 'One Agent Preset, one Skill, and one image-generation Plugin; image generation needs a signed-in Codex CLI on this machine.',
   visualVariant: 3,
   createdAt: '2026-08-17T06:04:00.000Z',
 }, {
-  id: 'fufan-case-05-ai-report',
-  slug: 'fufan-ai-report',
+  id: 'bundled-case-05-ai-report',
+  slug: 'ai-report',
   presetId: 'ai-report-analyst',
-  title: 'AI 报表',
-  description: '1 套 Agent Preset + 1 个 Skill，把本地 Excel 生成可验收的离线交互报告。',
+  title: 'AI Report',
+  description: 'One Agent Preset and one Skill that turn a local Excel workbook into a verifiable offline interactive report.',
   visualVariant: 4,
   createdAt: '2026-08-17T06:05:00.000Z',
 }, {
-  id: 'fufan-case-06-feishu-digital-employee',
-  slug: 'fufan-feishu-digital-employee',
+  id: 'bundled-case-06-feishu-digital-employee',
+  slug: 'feishu-digital-employee',
   presetId: 'feishu-digital-employee',
-  title: '飞书数字员工',
-  description: '1 套 Agent Preset + 1 个 Skill，并接入飞书 MCP 与时间解析 MCP；使用前需配置飞书应用凭证。',
+  title: 'Feishu Digital Employee',
+  description: 'One Agent Preset and one Skill with the Feishu MCP and datetime MCP servers; Feishu app credentials are required.',
   visualVariant: 5,
   createdAt: '2026-08-17T06:06:00.000Z',
 }] as const satisfies readonly BundledPresetDefinition[]
@@ -146,7 +155,7 @@ export class ResourcePresetSquareCatalog implements PresetSquareBundledCatalog {
         archive,
         item: decodePresetSquareItem({
           ...definition,
-          source: 'fufan-official',
+          source: BUNDLED_PRESET_SOURCE,
           publisher: { username: PUBLISHER },
           artifact: {
             downloadUrl,

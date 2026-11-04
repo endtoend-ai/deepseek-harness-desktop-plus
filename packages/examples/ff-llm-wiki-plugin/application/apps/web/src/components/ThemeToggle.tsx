@@ -28,8 +28,8 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      aria-label="切换明暗主题"
-      title={dark ? '切换到浅色主题' : '切换到深色主题'}
+      aria-label="Toggle color theme"
+      title={dark ? 'Switch to light theme' : 'Switch to dark theme'}
       className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[15px] text-slate-300 transition-colors hover:border-emerald-300/30 hover:bg-emerald-300/[0.07] hover:text-slate-100"
     >
       <span aria-hidden className="text-[15px] leading-none">{dark ? '☀' : '☾'}</span>

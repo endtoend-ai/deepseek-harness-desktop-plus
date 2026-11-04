@@ -23,28 +23,28 @@ const THEME_COPY: Readonly<Record<BuiltinAppearanceTheme, {
   readonly description: string
 }>> = Object.freeze({
   official: Object.freeze({
-    name: '官方原版',
-    description: '不使用背景图片，恢复 DeepSeek Harness 原生界面。',
+    name: 'Official',
+    description: 'No background image: the native DeepSeek Harness interface.',
   }),
   'whale-maid': Object.freeze({
-    name: '大肥鱼拟人',
-    description: '蓝白鲸灵助手与明亮宫殿，中央留白适配对话区。',
+    name: 'Whale Spirit',
+    description: 'A blue-and-white whale assistant in a bright hall, with open space for the conversation.',
   }),
   'cloud-cat': Object.freeze({
-    name: '云端猫咪',
-    description: '柔和蓝白猫咪背景，清爽、安静、低干扰。',
+    name: 'Cloud Cat',
+    description: 'A soft blue-and-white cat backdrop: calm, quiet, low distraction.',
   }),
   'jiutian-deep-space': Object.freeze({
-    name: '九天·深空算力穹顶',
-    description: '深空环形算力场，沉稳冷峻，适合深色科技演示。',
+    name: 'Jiutian · Deep-space Compute Dome',
+    description: 'A deep-space ring of compute: restrained and cool, for dark technical demos.',
   }),
   'jiutian-quantum-glass': Object.freeze({
-    name: '九天·量子玻璃实验室',
-    description: '珍珠白与冰蓝玻璃结构，纯净理性、低干扰。',
+    name: 'Jiutian · Quantum Glass Lab',
+    description: 'Pearl white and ice-blue glass: clean, rational, low distraction.',
   }),
   'jiutian-dawn-horizon': Object.freeze({
-    name: '九天·晨曦算力网络',
-    description: '象牙白、浅蓝与香槟金光轨，明亮而有发布会气质。',
+    name: 'Jiutian · Dawn Compute Grid',
+    description: 'Ivory, pale blue and champagne light trails for a bright launch-day feel.',
   }),
 })
 
@@ -101,7 +101,7 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
     setPreviewUrl(url)
     setFocusY(50)
     setFileLabel(`${file.name} · ${(file.size / 1024 / 1024).toFixed(1)} MB`)
-    setLocalMessage('图片只在本机处理，不会上传。')
+    setLocalMessage('The image is processed on this machine and never uploaded.')
   }
 
   const selectBuiltinTheme = (themeId: BuiltinAppearanceTheme): void => {
@@ -112,12 +112,12 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
     setPreviewUrl(theme.imageUrl)
     setFocusY(theme.focusY)
     setGlassStrength(theme.glassStrength)
-    setFileLabel(`内置皮肤 · ${THEME_COPY[themeId].name}`)
-    setLocalMessage('已预览这套皮肤，点击“保存并应用”完成切换。')
+    setFileLabel(`Built-in skin · ${THEME_COPY[themeId].name}`)
+    setLocalMessage('Previewing this skin. Choose "Save and apply" to switch.')
   }
 
   const save = async (): Promise<void> => {
-    setLocalMessage('正在处理 1920 × 1080 WebP…')
+    setLocalMessage('Processing a 1920 × 1080 WebP…')
     try {
       let imageDataUrl = snapshot.settings.imageDataUrl
       let palette = snapshot.settings.palette
@@ -134,7 +134,7 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
       if (selectedUrl !== undefined) URL.revokeObjectURL(selectedUrl)
       setSelectedUrl(undefined)
       setDraftDirty(false)
-      setLocalMessage('背景已保存，重新启动应用后仍会保留。')
+      setLocalMessage('Background saved; it survives an application restart.')
     } catch (error) {
       setLocalMessage(error instanceof Error ? error.message : String(error))
     }
@@ -151,7 +151,7 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
       setPreviewUrl(theme.imageUrl)
       setFocusY(theme.focusY)
       setGlassStrength(theme.glassStrength)
-      setLocalMessage('已恢复大肥鱼拟人默认皮肤。')
+      setLocalMessage('Restored the default Whale Spirit skin.')
     } catch (error) {
       setLocalMessage(error instanceof Error ? error.message : String(error))
     }
@@ -160,12 +160,12 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
   return (
     <section className={css.section}>
       <div>
-        <h2 className={css.title}>皮肤与界面氛围</h2>
-        <p className={css.intro}>切换内置皮肤，或选择自己的图片；Harness 会在本机完成裁切和配色，并自动适配浅色、深色界面。</p>
+        <h2 className={css.title}>Skin and interface mood</h2>
+        <p className={css.intro}>Switch between built-in skins or choose your own image. Harness crops and color-matches it locally and adapts it to light and dark interfaces.</p>
       </div>
       <div>
-        <h3 className={css.themeHeading}>内置皮肤</h3>
-        <div className={css.themeGrid} role="group" aria-label="内置皮肤">
+        <h3 className={css.themeHeading}>Built-in skins</h3>
+        <div className={css.themeGrid} role="group" aria-label="Built-in skins">
           {(Object.keys(BUNDLED_APPEARANCE_THEMES) as BuiltinAppearanceTheme[]).map((themeId) => {
             const theme = BUNDLED_APPEARANCE_THEMES[themeId]
             const selected = selectedUrl === undefined && draftTheme === themeId
@@ -182,11 +182,11 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
                   className={`${css.themeThumbnail}${theme.imageUrl === null ? ` ${css.originalThemeThumbnail}` : ''}`}
                   style={{ backgroundImage: theme.imageUrl === null ? 'none' : `url("${theme.imageUrl}")` }}
                 >
-                  {theme.imageUrl === null && <span className={css.originalThemeLabel}>原版界面</span>}
-                  {selected && <span className={css.themeSelected}>当前选择</span>}
+                  {theme.imageUrl === null && <span className={css.originalThemeLabel}>Native interface</span>}
+                  {selected && <span className={css.themeSelected}>Selected</span>}
                 </span>
                 <span className={css.themeDetails}>
-                  <strong>{THEME_COPY[themeId].name}{themeId === DEFAULT_BUILTIN_APPEARANCE_THEME ? ' · 默认' : ''}</strong>
+                  <strong>{THEME_COPY[themeId].name}{themeId === DEFAULT_BUILTIN_APPEARANCE_THEME ? ' · Default' : ''}</strong>
                   <small>{THEME_COPY[themeId].description}</small>
                 </span>
               </button>
@@ -194,32 +194,32 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
           })}
         </div>
       </div>
-      <div className={css.preview} style={previewStyle} role="img" aria-label="当前背景预览">
+      <div className={css.preview} style={previewStyle} role="img" aria-label="Current background preview">
         <div className={css.previewChrome}>
           <span />
           <strong>DeepSeek Harness</strong>
         </div>
         <div className={css.previewGlass}>
-          <span>背景预览</span>
+          <span>Background preview</span>
           <small>1920 × 1080 WebP</small>
         </div>
       </div>
       <div className={css.fileRow}>
         <div>
           <strong>{fileLabel}</strong>
-          <small>支持 PNG、JPG、WebP，原图不超过 16 MB</small>
+          <small>PNG, JPG or WebP, up to 16 MB</small>
         </div>
         <label className={css.secondaryButton}>
-          选择图片
+          Choose image
           <input type="file" accept="image/png,image/jpeg,image/webp" onChange={selectFile} />
         </label>
       </div>
       <label className={css.rangeRow}>
-        <span><b>主体焦点</b><output>{focusY}%</output></span>
+        <span><b>Subject focus</b><output>{focusY}%</output></span>
         <input type="range" min="0" max="100" value={focusY} disabled={busy || originalSelected} onChange={(event) => { setFocusY(Number(event.target.value)) }} />
       </label>
       <label className={css.rangeRow}>
-        <span><b>界面玻璃层</b><output>{glassStrength}%</output></span>
+        <span><b>Interface glass</b><output>{glassStrength}%</output></span>
         <input type="range" min="35" max="92" value={glassStrength} disabled={busy || originalSelected} onChange={(event) => { setGlassStrength(Number(event.target.value)) }} />
       </label>
       {(localMessage ?? snapshot.message) !== undefined && (
@@ -227,10 +227,10 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
       )}
       <div className={css.actions}>
         <button type="button" className={css.primaryButton} disabled={busy} onClick={() => { void save() }}>
-          {busy ? '保存中…' : '保存并应用'}
+          {busy ? 'Saving…' : 'Save and apply'}
         </button>
         <button type="button" className={css.secondaryButton} disabled={busy} onClick={() => { void reset() }}>
-          恢复默认
+          Restore default
         </button>
       </div>
     </section>
@@ -238,6 +238,6 @@ function LoadedAppearance({ controller }: AppearanceSectionInjected): ReactNode 
 }
 
 function appearanceLabel(settings: AppearanceSettings): string {
-  if (settings.builtinTheme !== null) return `内置皮肤 · ${THEME_COPY[settings.builtinTheme].name}`
-  return '当前使用自定义背景'
+  if (settings.builtinTheme !== null) return `Built-in skin · ${THEME_COPY[settings.builtinTheme].name}`
+  return 'Using a custom background'
 }

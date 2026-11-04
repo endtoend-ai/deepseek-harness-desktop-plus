@@ -88,14 +88,14 @@ describe('plugin center release environment', () => {
     expect(systemComponents.packageNames).toContain('@deepseek-ai/dsh-base')
     expect(systemComponents.packageNames).toContain('@deepseek-ai/dsh-web-app')
     expect(systemComponents.packageNames).toContain('@deepseek-ai/dsh-client-ui-plugin-center')
-    expect(systemComponents.packageNames).toContain('@fufan/dsh-plugin-llm-wiki')
+    expect(systemComponents.packageNames).toContain('dsh-plugin-llm-wiki')
     expect(systemComponents.entryIds).toContain('agent-loop')
     expect(systemComponents.entryIds).toContain('ui-plugin-center')
-    expect(systemComponents.entryIds).toContain('fufan.llm-wiki')
+    expect(systemComponents.entryIds).toContain('llm-wiki')
     expect(systemComponents.entryIds.length).toBeGreaterThan(100)
 
     const policyHash = createHash('sha256').update(JSON.stringify(systemComponents)).digest('hex')
-    expect(policyHash).toBe('4f78ee84e5243080258ff8f8956a7688915beb283657c52603df00fd6704d976')
+    expect(policyHash).toBe('2f813745f87d54b7e36acd9f2b361c2a0e146b9de33e491f09b71bb4565c3ba6')
 
     const fingerprint = resolveCompatibilityFingerprint({
       desktopVersion: manifestVersion(desktopManifest),
@@ -112,7 +112,7 @@ describe('plugin center release environment', () => {
     })
     expect(fingerprint).toMatchObject({
       desktopVersion: '0.1.0-rc.19',
-      dshVersion: '0.1.1-rc.2',
+      dshVersion: '0.2.1-rc.5',
       nodeVersion: '22.22.0',
       platform: 'darwin-arm64',
       catalogEtag: 'catalog-v1',

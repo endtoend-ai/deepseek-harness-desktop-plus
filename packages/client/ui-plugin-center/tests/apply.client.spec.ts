@@ -33,6 +33,8 @@ async function bench() {
   const ctx = new Context()
   await ctx.plugin(SlotRegistry).await()
   const locale = new LocaleRuntime(ctx)
+  // Labels are asserted in Chinese, so the bench pins the active locale.
+  locale.setLocale('zh')
   const state = { activePanelId: null as string | null }
   const panelInfo = {
     getSnapshot: () => ({ activePanelId: state.activePanelId }),
@@ -59,6 +61,7 @@ async function bench() {
   ctx.provide('workspaces', workspaces as never)
   ctx.provide('uiWorkspace', uiWorkspace as never)
   ctx.provide('remote', remote as never)
+  ctx.provide('remote.credentials', remote.credentials as never)
   return {
     ctx,
     slots: ctx.get('slots') as SlotRegistry,

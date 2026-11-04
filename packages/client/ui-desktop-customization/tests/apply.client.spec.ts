@@ -8,7 +8,6 @@ import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
 import { describe, expect, it, vi } from 'vitest'
 import { apply, inject } from '@deepseek-ai/dsh-client-ui-desktop-customization/client'
 import { AppearanceSection } from '../src/client/AppearanceSection.tsx'
-import { BrandBadge } from '../src/client/BrandBadge.tsx'
 import { validateImageFile } from '../src/client/background-image.ts'
 import { UpdateSection } from '../src/client/UpdateSection.tsx'
 import { VisionEnhancementRow } from '../src/client/VisionEnhancementRow.tsx'
@@ -46,7 +45,7 @@ async function bench() {
           enabled: false, configured: false, provider: 'bailian', model: 'qwen3.8-max',
           apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key',
           providers: [
-            { id: 'bailian', name: '阿里云百炼', configured: false, defaultModel: 'qwen3.8-max', apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key', modelEditable: false },
+            { id: 'bailian', name: 'Alibaba Cloud Bailian', configured: false, defaultModel: 'qwen3.8-max', apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key', modelEditable: false },
             { id: 'openrouter', name: 'OpenRouter', configured: false, defaultModel: 'openai/gpt-4.1-mini', apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true },
           ],
         } } }),
@@ -78,7 +77,6 @@ describe('Desktop customization client plugin', () => {
     const sections = b.slots.entries('settings.section')
     expect(sections.map(entry => entry.component)).toEqual([AppearanceSection, UpdateSection])
     expect(sections.map(entry => resolveSlotLabel(entry.options.label))).toEqual(['背景', '软件更新'])
-    expect(b.slots.entries('sidebar.footer.action')[0]?.component).toBe(BrandBadge)
     expect(b.slots.entries('settings.general.item')[0]?.component).toBe(VisionEnhancementRow)
     const shortcut = b.slots.entries('conversation.input.left')[0]
     expect(shortcut?.component).toBe(VisionEnhancementShortcut)

@@ -39,16 +39,16 @@ const G6KnowledgeGraph = dynamic(() => import('./G6KnowledgeGraph').then(m => m.
   ssr: false,
   loading: () => (
     <div className="flex h-[620px] items-center justify-center text-[15px] text-slate-500">
-      正在加载 G6 知识图谱…
+      Loading the G6 knowledge graph…
     </div>
   ),
 })
 
 const STAT_CARDS = [
-  { key: 'nodes' as const, label: '图谱节点', icon: GraphIcon, cls: 'from-emerald-400/15 to-emerald-300/5 text-emerald-200' },
-  { key: 'edges' as const, label: '图谱边', icon: GraphIcon, cls: 'from-teal-400/15 to-cyan-300/5 text-teal-200' },
-  { key: 'pageNodes' as const, label: '知识页节点', icon: WikiIcon, cls: 'from-lime-300/15 to-emerald-300/5 text-lime-200' },
-  { key: 'sourceNodes' as const, label: '来源文档节点', icon: LayersIcon, cls: 'from-amber-300/15 to-yellow-300/5 text-amber-200' },
+  { key: 'nodes' as const, label: 'Nodes', icon: GraphIcon, cls: 'from-emerald-400/15 to-emerald-300/5 text-emerald-200' },
+  { key: 'edges' as const, label: 'Edges', icon: GraphIcon, cls: 'from-teal-400/15 to-cyan-300/5 text-teal-200' },
+  { key: 'pageNodes' as const, label: 'Page nodes', icon: WikiIcon, cls: 'from-lime-300/15 to-emerald-300/5 text-lime-200' },
+  { key: 'sourceNodes' as const, label: 'Source document nodes', icon: LayersIcon, cls: 'from-amber-300/15 to-yellow-300/5 text-amber-200' },
 ]
 
 type LoadState = 'loading' | 'ready' | 'error'
@@ -89,7 +89,7 @@ export function GraphView() {
       setEdges(edgesRes.edges)
       setState('ready')
     } catch (e) {
-      setError(e instanceof Error ? e.message : '图谱数据加载失败')
+      setError(e instanceof Error ? e.message : 'Failed to load graph data')
       setState('error')
     }
   }, [])
@@ -99,15 +99,15 @@ export function GraphView() {
   }, [load])
 
   const badge =
-    state === 'ready' ? '知识关系 · 已就绪' : state === 'error' ? '连接异常' : '加载中'
+    state === 'ready' ? 'Relationships · ready' : state === 'error' ? 'Connection error' : 'Loading'
 
   const stats = overview?.stats
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title="知识图谱 · 可交互画布"
-        description="以主题知识簇组织企业内容，探索知识页、来源与业务关系"
+        title="Knowledge graph"
+        description="Organize enterprise content into topic clusters and explore pages, sources, and business relationships"
         badge={badge}
       />
 
@@ -138,11 +138,11 @@ export function GraphView() {
         })}
       </section>
 
-      {/* 视图切换 + 画布：语义星图为主视图，结构视图保留为完整关系视角 */}
+      {/* 视图切换 + 画布：语义星图为主视图，Structure view保留为完整关系视角 */}
       {state === 'error' ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
           <AlertCircleIcon className="h-10 w-10 text-rose-400" />
-          <p className="mt-4 text-[15px] text-slate-300">图谱数据加载失败</p>
+          <p className="mt-4 text-[15px] text-slate-300">Failed to load graph data</p>
           <p className="mt-1 text-[13px] text-slate-500">{error}</p>
         </div>
       ) : (
@@ -158,7 +158,7 @@ export function GraphView() {
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                G6 聚类图
+                Cluster view
               </button>
               <button
                 onClick={() => setView('structure')}
@@ -168,7 +168,7 @@ export function GraphView() {
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                结构视图
+                Structure view
               </button>
             </div>
 
@@ -176,7 +176,7 @@ export function GraphView() {
               onClick={() => graphRef.current?.relayout()}
               className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[13px] text-slate-300 transition-colors hover:border-emerald-300/20 hover:bg-emerald-300/[0.05] hover:text-emerald-100"
             >
-              聚类复位
+              Reset layout
             </button>
 
             <button
@@ -186,7 +186,7 @@ export function GraphView() {
               }}
               className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[13px] text-slate-300 transition-colors hover:bg-white/10"
             >
-              适配全图
+              Fit to view
             </button>
 
             <div className="relative ml-auto">
@@ -205,7 +205,7 @@ export function GraphView() {
                     graphRef.current?.focusNode(match.id)
                   }
                 }}
-                placeholder="搜索节点…"
+                placeholder="Search nodes…"
                 className="w-44 rounded-xl border border-white/10 bg-white/[0.04] py-1.5 pl-8 pr-2 text-[13px] text-slate-200 placeholder:text-slate-500 focus:border-emerald-300/35 focus:outline-none"
               />
             </div>
@@ -213,7 +213,7 @@ export function GraphView() {
 
           {/* 筛选条：类型 + 关系 */}
           <div className="flex flex-wrap items-center gap-1.5 border-b border-white/5 px-4 py-2">
-            <span className="mr-1 text-[13px] text-slate-500">类型</span>
+            <span className="mr-1 text-[13px] text-slate-500">Type</span>
             {NODE_TYPE_ORDER.map((type) => {
               const on = visibleTypes.has(type)
               return (
@@ -240,7 +240,7 @@ export function GraphView() {
               )
             })}
             <span className="mx-2 text-slate-700">|</span>
-            <span className="mr-1 text-[13px] text-slate-500">关系</span>
+            <span className="mr-1 text-[13px] text-slate-500">Relation</span>
             {SEMANTIC_ORDER.map((sem) => {
               const on = visibleSemantics.has(sem)
               return (
@@ -279,7 +279,7 @@ export function GraphView() {
             <GraphCanvas nodes={nodes} edges={edges} />
           )}
 
-          {/* HUD + 图例 + 详情（只在 G6 聚类图显示，结构视图 GraphCanvas 自带） */}
+          {/* HUD + 图例 + 详情（只在 Cluster view显示，Structure view GraphCanvas 自带） */}
           {view === 'graph' && (
             <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] border-t border-white/5">
               <HudLegend
@@ -308,8 +308,8 @@ export function GraphView() {
       {/* 分布面板：节点类型 / 边语义 */}
       <section className="grid gap-6 lg:grid-cols-2">
         <div className="panel-highlight rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
-          <h3 className="text-[15px] font-semibold text-white">节点类型分布</h3>
-          <p className="mt-0.5 text-[13px] text-slate-500">四类节点：知识页 / 来源文档 / 主题 / 页面类型</p>
+          <h3 className="text-[15px] font-semibold text-white">Node types</h3>
+          <p className="mt-0.5 text-[13px] text-slate-500">Four kinds: pages, source documents, topics, and page types</p>
           <ul className="mt-4 space-y-2.5">
             {(overview?.nodeTypes ?? []).map(t => (
               <li key={t.type} className="flex items-center justify-between">
@@ -325,8 +325,8 @@ export function GraphView() {
         </div>
 
         <div className="panel-highlight rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
-          <h3 className="text-[15px] font-semibold text-white">边语义分布</h3>
-          <p className="mt-0.5 text-[13px] text-slate-500">基础字段 relation 恒为 CO_OCCURS_IN，语义存入扩展字段 semantic</p>
+          <h3 className="text-[15px] font-semibold text-white">Edge semantics</h3>
+          <p className="mt-0.5 text-[13px] text-slate-500">The base `relation` field is always CO_OCCURS_IN; the meaning lives in the `semantic` extension field</p>
           <ul className="mt-4 space-y-2.5">
             {(overview?.edgeSemantics ?? []).map(s => (
               <li key={s.semantic} className="flex items-center justify-between">
@@ -383,20 +383,20 @@ function HudLegend({
       {/* 真实 HUD 读数 */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[13px] tabular-nums text-slate-400">
         <span>
-          知识图谱 <span className="text-slate-100">{totalNodes}</span> 节点 ·{' '}
-          <span className="text-slate-100">{totalEdges}</span> 关系
+          Knowledge graph <span className="text-slate-100">{totalNodes}</span> nodes ·{' '}
+          <span className="text-slate-100">{totalEdges}</span> relations
         </span>
         <span>
-          当前可见 <span className="text-slate-100">{visibleNodeCount}</span> 节点
+          <span className="text-slate-100">{visibleNodeCount}</span> nodes visible
         </span>
         {q && (
           <span>
-            搜索命中 <span className="text-emerald-200">{matchCount}</span>
+            Matches <span className="text-emerald-200">{matchCount}</span>
           </span>
         )}
         {selected && (
           <span className="inline-flex items-center gap-1.5">
-            <span className="text-slate-500">已选：</span>
+            <span className="text-slate-500">Selected: </span>
             <span
               className="h-2 w-2 rounded-full"
               style={{ backgroundColor: NODE_TYPE_COLOR[selected.type] }}
@@ -405,12 +405,12 @@ function HudLegend({
             <span className="text-slate-600">· {NODE_TYPE_LABEL[selected.type]}</span>
           </span>
         )}
-        {!selected && <span className="text-slate-600">未选中节点</span>}
+        {!selected && <span className="text-slate-600">No node selected</span>}
       </div>
 
       {/* 底部图例（始终在场） */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-slate-400">
-        <span className="text-[13px] uppercase tracking-wider text-slate-600">图例</span>
+        <span className="text-[13px] uppercase tracking-wider text-slate-600">Legend</span>
         {NODE_TYPE_ORDER.map(type => (
           <button
             key={type}
@@ -481,7 +481,7 @@ function BloomNodeDetail({
   if (!node) {
     return (
       <div className="flex items-center justify-center p-5 text-center text-[13px] text-slate-500">
-        点击画布中的节点查看详情
+        Select a node on the canvas to see its details
       </div>
     )
   }
@@ -510,7 +510,7 @@ function BloomNodeDetail({
             className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-gradient-to-r from-emerald-700 to-teal-600 px-2.5 py-1.5 text-[13px] font-medium text-white transition-colors hover:from-emerald-600 hover:to-teal-500"
           >
             <WikiIcon className="h-3.5 w-3.5" />
-            打开 Wiki
+            Open Wiki
           </Link>
         )}
       </div>
@@ -518,18 +518,18 @@ function BloomNodeDetail({
       {info && (
         <dl className="mt-3 space-y-2 text-[13px]">
           <div className="flex items-center justify-between border-b border-white/5 pb-2">
-            <dt className="text-slate-500">连接数</dt>
+            <dt className="text-slate-500">Connections</dt>
             <dd className="tabular-nums text-slate-100">{info.degree}</dd>
           </div>
           {info.topics.length > 0 && (
-            <Row label="主题" chips={info.topics.map(t => t.label ?? t.name)} borderColor={NODE_TYPE_COLOR.TOPIC} />
+            <Row label="Topics" chips={info.topics.map(t => t.label ?? t.name)} borderColor={NODE_TYPE_COLOR.TOPIC} />
           )}
           {info.pageTypes.length > 0 && (
-            <Row label="页面类型" chips={info.pageTypes.map(t => t.label ?? t.name)} borderColor={NODE_TYPE_COLOR.PAGE_TYPE} />
+            <Row label="Page types" chips={info.pageTypes.map(t => t.label ?? t.name)} borderColor={NODE_TYPE_COLOR.PAGE_TYPE} />
           )}
           {info.linkedPages.length > 0 && (
             <div>
-              <dt className="text-slate-500">互链知识页</dt>
+              <dt className="text-slate-500">Linked pages</dt>
               <dd className="mt-1 flex flex-wrap gap-1.5">
                 {uniqueNodes(info.linkedPages).map(p => (
                   <button

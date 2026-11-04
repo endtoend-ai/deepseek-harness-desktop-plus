@@ -40,37 +40,37 @@ const OPERATION_STORAGE_KEY = 'dsh.plugin-center.development-operation.v1'
 const INSTALLED_STORAGE_KEY = 'dsh.plugin-center.development-installed.v1'
 const OPERATION_INTERVAL_MS = 180
 
-const FUFAN_PRESET_FIXTURES = [{
-  slug: 'fufan-llm-wiki-producer', presetId: 'llm-wiki-fullstack', title: 'LLM Wiki Producer',
+const OFFICIAL_PRESET_FIXTURES = [{
+  slug: 'official-llm-wiki-producer', presetId: 'llm-wiki-fullstack', title: 'LLM Wiki Producer',
   description: '1 套 Agent Preset + 1 个 Skill，面向企业知识库项目按阶段完成开发、验证与交付。',
 }, {
-  slug: 'fufan-ai-webapp', presetId: 'ai-product-developer', title: 'AI WebApp',
+  slug: 'official-ai-webapp', presetId: 'ai-product-developer', title: 'AI WebApp',
   description: '1 套 Agent Preset + 3 个 Skills，覆盖需求澄清、规格整理与 TDD 的 Web 产品开发流程。',
 }, {
-  slug: 'fufan-ppt-office', presetId: 'dsh-motion-deck-studio', title: 'PPT Office',
+  slug: 'official-ppt-office', presetId: 'dsh-motion-deck-studio', title: 'PPT Office',
   description: '1 套 Agent Preset + 1 个 Skill，把大纲生成并验收为 8 页可交互动效演示。',
 }, {
-  slug: 'fufan-video-generation', presetId: 'product-video-director', title: '视频生成',
+  slug: 'official-video-generation', presetId: 'product-video-director', title: '视频生成',
   description: '1 套 Agent Preset + 1 个 Skill，从调研、分镜到 HyperFrames MP4；运行需 FFmpeg。',
 }, {
-  slug: 'fufan-content-factory', presetId: 'ai-content-image-studio', title: '内容工厂',
+  slug: 'official-content-factory', presetId: 'ai-content-image-studio', title: '内容工厂',
   description: '1 套 Agent Preset + 1 个 Skill + 1 个图像生成 Plugin；生图需本机已登录 Codex CLI。',
 }, {
-  slug: 'fufan-ai-report', presetId: 'ai-report-analyst', title: 'AI 报表',
+  slug: 'official-ai-report', presetId: 'ai-report-analyst', title: 'AI 报表',
   description: '1 套 Agent Preset + 1 个 Skill，把本地 Excel 生成可验收的离线交互报告。',
 }, {
-  slug: 'fufan-feishu-digital-employee', presetId: 'feishu-digital-employee', title: '飞书数字员工',
+  slug: 'official-feishu-digital-employee', presetId: 'feishu-digital-employee', title: '飞书数字员工',
   description: '1 套 Agent Preset + 1 个 Skill，并接入飞书 MCP 与时间解析 MCP；使用前需配置飞书应用凭证。',
 }] as const
 
 const PRESET_FIXTURES: readonly PresetSquareItem[] = [
-  ...FUFAN_PRESET_FIXTURES.map((entry, index): PresetSquareItem => ({
+  ...OFFICIAL_PRESET_FIXTURES.map((entry, index): PresetSquareItem => ({
     id: entry.presetId === 'llm-wiki-fullstack'
-      ? 'fufan-case-07-llm-wiki-producer'
-      : `fufan-case-0${String(index)}`,
+      ? 'official-case-07-llm-wiki-producer'
+      : `official-case-0${String(index)}`,
     ...entry,
-    source: 'fufan-official',
-    publisher: { username: '赋范官方' },
+    source: 'official',
+    publisher: { username: 'Official' },
     artifact: {
       downloadUrl: `https://www.dshdesktop.com/preset/api/v1/presets/${entry.slug}/download`,
       sha256: String(index + 1).repeat(64),

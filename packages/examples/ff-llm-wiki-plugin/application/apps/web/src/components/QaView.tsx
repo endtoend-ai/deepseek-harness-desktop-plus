@@ -35,27 +35,27 @@ import {
 
 const SUGGESTIONS = [
   {
-    category: '平台治理',
-    title: '网关是如何做统一鉴权和限流的？',
-    description: '定位接口安全、访问控制与流量治理规范',
+    category: 'Platform governance',
+    title: 'How does the gateway handle unified authentication and rate limiting?',
+    description: 'Find the API security, access control, and traffic governance rules',
     icon: '⌘',
   },
   {
-    category: '变更管理',
-    title: '生产环境变更要走什么流程？',
-    description: '梳理申请、审批、发布与回滚的完整链路',
+    category: 'Change management',
+    title: 'What process does a production change follow?',
+    description: 'Walk the request, approval, release, and rollback chain',
     icon: '↗',
   },
   {
-    category: '安全响应',
-    title: '数据泄露后应该怎么应急？',
-    description: '核查事件分级、响应角色和处置时限',
+    category: 'Security response',
+    title: 'How should a data leak be handled?',
+    description: 'Check severity levels, response roles, and handling deadlines',
     icon: '◇',
   },
   {
-    category: '服务标准',
-    title: 'SLA 的首次响应时限是怎么定义的？',
-    description: '从服务制度中提取可执行的时效口径',
+    category: 'Service standards',
+    title: 'How is the SLA first-response deadline defined?',
+    description: 'Extract the enforceable timing rules from the service policy',
     icon: '◷',
   },
 ]
@@ -105,7 +105,7 @@ function MarkdownAnswer({
                 type="button"
                 onClick={() => onCite(id)}
                 className={`qa-cite ${litId === id ? 'qa-cite-lit' : ''}`}
-                aria-label={`定位引用 ${id}`}
+                aria-label={`Locate citation ${id}`}
               >
                 {id}
               </button>
@@ -125,7 +125,7 @@ function MarkdownAnswer({
 }
 
 function sourceLabel(citation: QaCitation) {
-  if (!citation.sourcePath) return citation.origin === 'conclusion' ? '知识页结论' : '原文证据'
+  if (!citation.sourcePath) return citation.origin === 'conclusion' ? 'Page conclusion' : 'Source evidence'
   return citation.sourcePath.split('/').pop() ?? citation.sourcePath
 }
 
@@ -135,9 +135,9 @@ function scoreLabel(score: number) {
 }
 
 function formatTime(value: string | null) {
-  if (!value) return '当前编译版本'
+  if (!value) return 'Current compiled version'
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '当前编译版本'
+  if (Number.isNaN(date.getTime())) return 'Current compiled version'
   return new Intl.DateTimeFormat('zh-CN', {
     month: '2-digit',
     day: '2-digit',
@@ -183,7 +183,7 @@ export function QaView() {
         }
       })
       .catch((error: unknown) => {
-        setModelConfigError(error instanceof Error ? error.message : '无法读取模型配置')
+        setModelConfigError(error instanceof Error ? error.message : 'Failed to read the model configuration')
       })
   }, [])
 
@@ -370,9 +370,9 @@ export function QaView() {
   const copyAnswer = useCallback(async (turn: Turn) => {
     try {
       await navigator.clipboard.writeText(turn.answers.map(answer => answer.text).join('\n\n'))
-      setNotice('回答已复制')
+      setNotice('Answer copied')
     } catch {
-      setNotice('复制失败，请重试')
+      setNotice('Copy failed. Try again.')
     }
   }, [])
 
@@ -383,7 +383,7 @@ export function QaView() {
       else next[turnId] = value
       return next
     })
-    setNotice(value === 'up' ? '已记录：回答有帮助' : '已记录：需要改进')
+    setNotice(value === 'up' ? 'Recorded: this answer helped' : 'Recorded: needs improvement')
   }, [])
 
   const startNew = useCallback(() => {
@@ -406,7 +406,7 @@ export function QaView() {
         provider: 'deepseek',
         model: modelPreferences.model,
         latencyMs: 0,
-        message: error instanceof Error ? error.message : '连接测试失败',
+        message: error instanceof Error ? error.message : 'Connection test failed',
       })
     } finally {
       setTestingConnection(false)
@@ -435,36 +435,36 @@ export function QaView() {
               <div>
                 <span className="qa-model-logo">DS</span>
                 <div>
-                  <h2 id="qa-model-panel-title">模型连接与生成配置</h2>
-                  <p>密钥由后端凭证中心托管，浏览器不会接触明文 Key</p>
+                  <h2 id="qa-model-panel-title">Model connection and generation</h2>
+                  <p>The backend credential store holds the key; the browser never sees it in plaintext</p>
                 </div>
               </div>
-              <button type="button" onClick={() => setModelPanelOpen(false)} aria-label="关闭模型配置">×</button>
+              <button type="button" onClick={() => setModelPanelOpen(false)} aria-label="Close model settings">×</button>
             </header>
 
             <div className="qa-provider-card">
               <div className="qa-provider-identity">
                 <span className="qa-model-logo compact">DS</span>
-                <div><strong>DeepSeek API</strong><small>{modelConfig?.endpoint ?? '读取配置中…'}</small></div>
+                <div><strong>DeepSeek API</strong><small>{modelConfig?.endpoint ?? 'Reading configuration…'}</small></div>
               </div>
               <span className={`qa-provider-state ${modelConfig?.configured ? 'is-online' : ''}`}>
-                <i />{modelConfig?.configured ? '凭证已加载' : '等待凭证'}
+                <i />{modelConfig?.configured ? 'Credentials loaded' : 'Awaiting credentials'}
               </span>
               <div className="qa-credential-row">
-                <span>API Key</span><code>{modelConfig?.credentialLabel ?? '检测中'}</code>
-                <em>{modelConfig?.credentialSource === 'credentials-file' ? '凭证中心' : modelConfig?.credentialSource === 'environment' ? '环境变量' : '未配置'}</em>
+                <span>API Key</span><code>{modelConfig?.credentialLabel ?? 'Checking'}</code>
+                <em>{modelConfig?.credentialSource === 'credentials-file' ? 'Credential store' : modelConfig?.credentialSource === 'environment' ? 'Environment variable' : 'Not configured'}</em>
               </div>
               <div className="qa-store-row">
-                <span><i />知识数据层</span>
+                <span><i />Knowledge data layer</span>
                 <strong>{modelConfig?.knowledgeStore.engine ?? 'SQLite'}</strong>
-                <em>{modelConfig ? `${modelConfig.knowledgeStore.pages} 页 · ${modelConfig.knowledgeStore.chunks} 个证据片段` : '正在同步知识数据'}</em>
-                <b>{modelConfig?.knowledgeStore.persistent ? '持久化' : '内存模式'}</b>
+                <em>{modelConfig ? `${modelConfig.knowledgeStore.pages} pages · ${modelConfig.knowledgeStore.chunks} evidence segments` : 'Syncing knowledge data'}</em>
+                <b>{modelConfig?.knowledgeStore.persistent ? 'Persistent' : 'In-memory'}</b>
               </div>
             </div>
 
             <div className="qa-model-form">
               <label>
-                <span>回答模式<small>决定是否调用模型</small></span>
+                <span>Answer mode<small>Decides whether the model is called</small></span>
                 <div className="qa-segmented-control">
                   <button
                     type="button"
@@ -475,12 +475,12 @@ export function QaView() {
                     type="button"
                     className={modelPreferences.generationMode === 'local' ? 'is-active' : ''}
                     onClick={() => setModelPreferences(previous => ({ ...previous, generationMode: 'local' }))}
-                  >本地检索</button>
+                  >Local retrieval</button>
                 </div>
               </label>
 
               <label>
-                <span>模型<small>按问题复杂度选择</small></span>
+                <span>Model<small>Chosen by question complexity</small></span>
                 <select
                   value={modelPreferences.model}
                   onChange={event => setModelPreferences(previous => ({ ...previous, model: event.target.value as QaModelId }))}
@@ -494,7 +494,7 @@ export function QaView() {
               </label>
 
               <label>
-                <span>生成温度<small>越低越稳定、越适合知识问答</small></span>
+                <span>Temperature<small>Lower is steadier and better for knowledge Q&A</small></span>
                 <div className="qa-temperature-control">
                   <input
                     type="range"
@@ -510,7 +510,7 @@ export function QaView() {
               </label>
 
               <label>
-                <span>最大输出<small>控制单次回答的内容长度</small></span>
+                <span>Maximum output<small>Caps the length of one answer</small></span>
                 <div className="qa-temperature-control">
                   <input
                     type="range"
@@ -530,17 +530,17 @@ export function QaView() {
             {connectionTest && (
               <div className={`qa-config-message ${connectionTest.ok ? 'is-ok' : 'is-error'}`}>
                 <span>{connectionTest.ok ? '✓' : '!'}</span>
-                <div><strong>{connectionTest.message}</strong><small>{connectionTest.latencyMs > 0 ? `${connectionTest.latencyMs} ms` : '请检查后端配置'}</small></div>
+                <div><strong>{connectionTest.message}</strong><small>{connectionTest.latencyMs > 0 ? `${connectionTest.latencyMs} ms` : 'Check the backend configuration'}</small></div>
               </div>
             )}
 
             <footer>
-              <p><i />模型只能读取本次检索命中的证据片段</p>
+              <p><i />The model may read only the evidence segments this retrieval matched</p>
               <div>
                 <button type="button" className="qa-test-button" onClick={runConnectionTest} disabled={testingConnection}>
-                  {testingConnection ? <SpinnerIcon className="h-4 w-4 animate-spin" /> : '测试连接'}
+                  {testingConnection ? <SpinnerIcon className="h-4 w-4 animate-spin" /> : 'Test connection'}
                 </button>
-                <button type="button" className="qa-save-button" onClick={() => setModelPanelOpen(false)}>应用配置</button>
+                <button type="button" className="qa-save-button" onClick={() => setModelPanelOpen(false)}>Apply</button>
               </div>
             </footer>
           </section>
@@ -554,23 +554,23 @@ export function QaView() {
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="qa-ink text-lg font-semibold tracking-tight">知识问答工作台</h1>
-              <span className="qa-status-dot"><i />检索服务在线</span>
+              <h1 className="qa-ink text-lg font-semibold tracking-tight">Knowledge Q&A workbench</h1>
+              <span className="qa-status-dot"><i />Retrieval online</span>
             </div>
-            <p className="qa-faint mt-0.5 truncate text-[13px]">基于企业知识库回答，结论与原文证据双向定位</p>
+            <p className="qa-faint mt-0.5 truncate text-[13px]">Answer from the enterprise knowledge base with conclusions and source evidence linked both ways</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <span className="qa-stat-pill"><strong>47</strong> 知识页</span>
-          <span className="qa-stat-pill"><strong>98</strong> 原文引用</span>
-          <span className="qa-stat-pill"><strong>3,210</strong> 关系</span>
+          <span className="qa-stat-pill"><strong>47</strong> pages</span>
+          <span className="qa-stat-pill"><strong>98</strong> citations</span>
+          <span className="qa-stat-pill"><strong>3,210</strong> relations</span>
           <button type="button" onClick={() => setModelPanelOpen(true)} className="qa-model-trigger">
             <span className="qa-model-trigger-mark">DS</span>
-            <span><strong>{modelPreferences.generationMode === 'deepseek' ? modelPreferences.model : '本地检索'}</strong><small>{modelConfig?.configured ? 'DeepSeek 已连接' : '检查模型配置'}</small></span>
+            <span><strong>{modelPreferences.generationMode === 'deepseek' ? modelPreferences.model : 'Local retrieval'}</strong><small>{modelConfig?.configured ? 'DeepSeek connected' : 'Check model settings'}</small></span>
             <em>⌄</em>
           </button>
           <button type="button" onClick={startNew} className="qa-primary-button">
-            <span>＋</span> 新建对话
+            <span>＋</span> New chat
           </button>
         </div>
       </header>
@@ -579,8 +579,8 @@ export function QaView() {
         <aside className="qa-panel qa-history-panel">
           <div className="qa-section-heading">
             <div>
-              <span className="qa-ink">最近对话</span>
-              <small>{history.length} 条记录</small>
+              <span className="qa-ink">Recent questions</span>
+              <small>{history.length} entries</small>
             </div>
           </div>
 
@@ -588,7 +588,7 @@ export function QaView() {
             {history.length === 0 ? (
               <div className="qa-empty-compact">
                 <QaIcon className="h-5 w-5" />
-                <span>提问后将自动保存会话</span>
+                <span>Sessions are saved automatically once you ask</span>
               </div>
             ) : (
               history.map((item, index) => (
@@ -597,14 +597,14 @@ export function QaView() {
                     <span className="qa-history-index">{String(index + 1).padStart(2, '0')}</span>
                     <span className="min-w-0 flex-1">
                       <strong>{item}</strong>
-                      <small>{index === 0 ? '刚刚访问' : '历史问题'}</small>
+                      <small>{index === 0 ? 'Just now' : 'Earlier question'}</small>
                     </span>
                   </button>
                   <button
                     type="button"
                     onClick={() => removeHistory(item)}
                     className="qa-history-remove"
-                    aria-label={`移除历史问题：${item}`}
+                    aria-label={`Remove history entry: ${item}`}
                   >
                     ×
                   </button>
@@ -616,14 +616,14 @@ export function QaView() {
           <div className="qa-space-card">
             <div className="flex items-center gap-2">
               <WikiIcon className="h-4 w-4" />
-              <span>当前知识空间</span>
+              <span>Current knowledge space</span>
             </div>
-            <strong>工业知识库</strong>
+            <strong>LLM Wiki knowledge base</strong>
             <div className="qa-space-metrics">
-              <span><b>128</b> 文档</span>
-              <span><b>6</b> 业务域</span>
+              <span><b>128</b> documents</span>
+              <span><b>6</b> domains</span>
             </div>
-            <div className="qa-freshness"><i />知识索引已同步</div>
+            <div className="qa-freshness"><i />Knowledge index synced</div>
           </div>
         </aside>
 
@@ -631,18 +631,18 @@ export function QaView() {
           <div className="qa-conversation-bar">
             <div>
               <span className="qa-ink text-[15px] font-semibold">
-                {activeTurn ? '知识库助手' : '开始一次可溯源问答'}
+                {activeTurn ? 'Knowledge assistant' : 'Start a traceable Q&A turn'}
               </span>
               <span className="qa-faint ml-2 text-[13px]">
-                {activeTurn ? formatTime(activeTurn.compiledAt) : 'RAG · 检索增强生成'}
+                {activeTurn ? formatTime(activeTurn.compiledAt) : 'RAG · retrieval-augmented generation'}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <button type="button" className="qa-mode-pill" onClick={() => setModelPanelOpen(true)}>
-                <i />{activeTurn?.mode === 'deepseek-rag' ? activeTurn.model : activeTurn?.mode === 'local-fallback' ? '模型降级' : modelPreferences.generationMode === 'deepseek' ? modelPreferences.model : '本地检索'}
+                <i />{activeTurn?.mode === 'deepseek-rag' ? activeTurn.model : activeTurn?.mode === 'local-fallback' ? 'Model fallback' : modelPreferences.generationMode === 'deepseek' ? modelPreferences.model : 'Local retrieval'}
               </button>
               {activeTurn?.confidence && (
-                <span className="qa-confidence-pill">{activeTurn.confidence === 'high' ? '高' : activeTurn.confidence === 'medium' ? '中' : '低'}置信</span>
+                <span className="qa-confidence-pill">{activeTurn.confidence === 'high' ? 'High' : activeTurn.confidence === 'medium' ? 'Medium' : 'Low'} confidence</span>
               )}
             </div>
           </div>
@@ -653,8 +653,8 @@ export function QaView() {
                 <div className="qa-launcher-title">
                   <span className="qa-launcher-orbit"><SearchIcon className="h-6 w-6" /></span>
                   <div>
-                    <h2>想从知识库中了解什么？</h2>
-                    <p>选择一个问题，查看系统如何检索、筛选并组织可信证据。</p>
+                    <h2>What would you like to learn from the knowledge base?</h2>
+                    <p>Pick a question to see how the system retrieves, filters, and organizes trustworthy evidence.</p>
                   </div>
                 </div>
 
@@ -678,9 +678,9 @@ export function QaView() {
                 </div>
 
                 <div className="qa-capability-strip">
-                  <span><SearchIcon className="h-4 w-4" /><b>加权检索</b><small>字段权重 + 片段召回</small></span>
-                  <span><LayersIcon className="h-4 w-4" /><b>证据重排</b><small>按相关度筛选片段</small></span>
-                  <span><DocumentIcon className="h-4 w-4" /><b>模型生成</b><small>DeepSeek 基于证据回答</small></span>
+                  <span><SearchIcon className="h-4 w-4" /><b>Weighted retrieval</b><small>Field weights plus segment recall</small></span>
+                  <span><LayersIcon className="h-4 w-4" /><b>Evidence reranking</b><small>Filter segments by relevance</small></span>
+                  <span><DocumentIcon className="h-4 w-4" /><b>Model generation</b><small>DeepSeek answers from the evidence</small></span>
                 </div>
               </div>
             )}
@@ -689,7 +689,7 @@ export function QaView() {
               <section key={turn.id} className="qa-turn" onClick={() => setActiveTurnId(turn.id)}>
                 <div className="qa-user-row">
                   <div className="qa-user-message">{turn.question}</div>
-                  <div className="qa-user-avatar">我</div>
+                  <div className="qa-user-avatar">You</div>
                 </div>
 
                 <div className="qa-answer-row">
@@ -697,21 +697,21 @@ export function QaView() {
                   <div className="min-w-0 flex-1">
                     <div className="qa-answer-meta">
                       <div>
-                        <strong>知识库助手</strong>
-                        <span>{turn.mode === 'deepseek-chat' ? '通用对话' : '基于已编译知识资产'}</span>
+                        <strong>Knowledge assistant</strong>
+                        <span>{turn.mode === 'deepseek-chat' ? 'General chat' : 'From compiled knowledge assets'}</span>
                       </div>
                       {(turn.generation || (turn.metrics && turn.mode !== 'deepseek-chat')) && (
                         <div className="flex items-center gap-2">
                           {turn.generation && (
                             <span className={`qa-generation-chip ${turn.mode === 'deepseek-rag' || turn.mode === 'deepseek-chat' ? 'is-model' : 'is-local'}`}>
-                              {turn.mode === 'deepseek-rag' || turn.mode === 'deepseek-chat' ? `${turn.generation.model} · ${(turn.generation.latencyMs / 1000).toFixed(1)}s` : '本地降级'}
+                              {turn.mode === 'deepseek-rag' || turn.mode === 'deepseek-chat' ? `${turn.generation.model} · ${(turn.generation.latencyMs / 1000).toFixed(1)}s` : 'Local fallback'}
                             </span>
                           )}
                           {turn.metrics && turn.mode !== 'deepseek-chat' && (
                             <div className="qa-result-metrics">
-                              <span>扫描 <b>{turn.metrics.searched}</b></span>
-                              <span>命中 <b>{turn.metrics.matched}</b></span>
-                              <span>采用 <b>{turn.metrics.adopted}</b></span>
+                              <span>Scanned <b>{turn.metrics.searched}</b></span>
+                              <span>Matched <b>{turn.metrics.matched}</b></span>
+                              <span>Used <b>{turn.metrics.adopted}</b></span>
                             </div>
                           )}
                         </div>
@@ -721,7 +721,7 @@ export function QaView() {
                     {turn.state === 'loading' && (
                       <div className="qa-searching-state">
                         <SpinnerIcon className="h-4 w-4 animate-spin" />
-                        正在跨知识页检索相关片段…
+                        Searching related segments across knowledge pages…
                       </div>
                     )}
 
@@ -729,8 +729,8 @@ export function QaView() {
                       <div className="qa-error-state">
                         <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
                         <div>
-                          <p>{turn.error ?? '问答请求失败'}</p>
-                          <button type="button" onClick={() => ask(turn.question)}>重新检索</button>
+                          <p>{turn.error ?? 'The question request failed'}</p>
+                          <button type="button" onClick={() => ask(turn.question)}>Search again</button>
                         </div>
                       </div>
                     )}
@@ -738,7 +738,7 @@ export function QaView() {
                     {turn.generation?.fallbackReason && turn.mode === 'local-fallback' && (
                       <div className="qa-model-fallback">
                         <AlertCircleIcon className="h-3.5 w-3.5" />
-                        DeepSeek 未完成生成，已返回可追溯的本地检索结果：{turn.generation.fallbackReason}
+                        DeepSeek did not finish generating; the traceable local retrieval result follows: {turn.generation.fallbackReason}
                       </div>
                     )}
 
@@ -759,7 +759,7 @@ export function QaView() {
                                     type="button"
                                     onClick={() => focusCitation(turn.id, citationId)}
                                     className={`qa-cite ${activeTurn?.id === turn.id && litCitationId === citationId ? 'qa-cite-lit' : ''}`}
-                                    aria-label={`定位引用 ${citationId}`}
+                                    aria-label={`Locate citation ${citationId}`}
                                   >
                                     {citationId}
                                   </button>
@@ -776,8 +776,8 @@ export function QaView() {
                       <div className="qa-no-evidence-state">
                         <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
                         <div>
-                          <strong>当前证据不足，未生成确定性结论</strong>
-                          <p>右侧仍列出最接近的知识页，建议调整问题范围后再次检索。</p>
+                          <strong>Evidence is insufficient for a definite conclusion</strong>
+                          <p>The closest pages are still listed on the right; narrow or reword the question and search again.</p>
                         </div>
                       </div>
                     )}
@@ -785,17 +785,17 @@ export function QaView() {
                     {turn.state === 'answered' && (
                       <div className="space-y-3">
                         <div className="qa-answer-actions">
-                          <button type="button" onClick={() => copyAnswer(turn)}>复制回答</button>
+                          <button type="button" onClick={() => copyAnswer(turn)}>Copy answer</button>
                           <button type="button" onClick={() => ask(turn.question)}>
-                            <RefreshIcon className="h-3.5 w-3.5" />重新检索
+                            <RefreshIcon className="h-3.5 w-3.5" />Search again
                           </button>
                           <span className="qa-action-divider" />
-                          <span>这条回答有帮助吗？</span>
+                          <span>Was this answer helpful?</span>
                           <button
                             type="button"
                             className={feedback[turn.id] === 'up' ? 'is-selected' : ''}
                             onClick={() => vote(turn.id, 'up')}
-                            aria-label="回答有帮助"
+                            aria-label="Answer was helpful"
                           >
                             ↑
                           </button>
@@ -803,16 +803,16 @@ export function QaView() {
                             type="button"
                             className={feedback[turn.id] === 'down' ? 'is-selected' : ''}
                             onClick={() => vote(turn.id, 'down')}
-                            aria-label="回答需要改进"
+                            aria-label="Answer needs improvement"
                           >
                             ↓
                           </button>
                         </div>
                         <div className="qa-followups">
-                          <span>继续追问</span>
-                          <button type="button" onClick={() => ask(`${turn.question} 请整理成可执行的检查清单。`)}>整理执行清单</button>
-                          <button type="button" onClick={() => ask(`${turn.question} 其中最容易遗漏的风险点有哪些？`)}>查看风险点</button>
-                          <button type="button" onClick={() => ask(`${turn.question} 相关职责与时间要求分别是什么？`)}>核查职责时限</button>
+                          <span>Keep asking</span>
+                          <button type="button" onClick={() => ask(`${turn.question} Please turn this into an actionable checklist.`)}>Make a checklist</button>
+                          <button type="button" onClick={() => ask(`${turn.question} Which risk points are easiest to miss?`)}>List the risk points</button>
+                          <button type="button" onClick={() => ask(`${turn.question} What are the responsibilities and deadlines?`)}>Check responsibilities</button>
                         </div>
                       </div>
                     )}
@@ -835,49 +835,49 @@ export function QaView() {
                   }
                 }}
                 rows={1}
-                placeholder={isBusy ? '正在处理当前问题…' : '输入问题，Enter 发送，Shift + Enter 换行'}
+                placeholder={isBusy ? 'Processing the current question…' : 'Ask a question. Enter sends; Shift + Enter adds a line'}
                 disabled={isBusy}
-                aria-label="向知识库提问"
+                aria-label="Ask the knowledge base"
               />
               <div className="qa-composer-tools">
-                <span>知识库</span>
+                <span>Knowledge base</span>
                 <button
                   type="button"
                   onClick={() => ask(input)}
                   disabled={!input.trim() || isBusy}
-                  aria-label="发送问题"
+                  aria-label="Send question"
                 >
                   {isBusy ? <SpinnerIcon className="h-4 w-4 animate-spin" /> : '↑'}
                 </button>
               </div>
             </div>
-            <p>回答仅使用可核查资料 · 点击引用编号可在右侧定位证据</p>
+            <p>Answers use verifiable material only · click a citation number to locate its evidence</p>
           </div>
         </main>
 
         <aside className="qa-panel qa-evidence-panel">
           <div className="qa-section-heading qa-evidence-heading">
             <div>
-              <span className="qa-ink">证据工作区</span>
-              <small>{activeTurn ? `问题 #${activeTurn.id}` : '等待检索'}</small>
+              <span className="qa-ink">Evidence workspace</span>
+              <small>{activeTurn ? `Question #${activeTurn.id}` : 'Awaiting retrieval'}</small>
             </div>
-            <span className="qa-evidence-count">{activeTurn?.citations.length ?? 0} 条采用</span>
+            <span className="qa-evidence-count">{activeTurn?.citations.length ?? 0} used</span>
           </div>
 
           <div className="qa-evidence-summary">
-            <div><span>检索范围</span><strong>{activeTurn?.metrics?.searched ?? 47} 页</strong></div>
-            <div><span>命中片段</span><strong>{activeTurn?.metrics?.matched ?? 0} 条</strong></div>
-            <div><span>采用证据</span><strong>{activeTurn?.metrics?.adopted ?? 0} 条</strong></div>
+            <div><span>Scanned</span><strong>{activeTurn?.metrics?.searched ?? 47} pages</strong></div>
+            <div><span>Matched</span><strong>{activeTurn?.metrics?.matched ?? 0} segments</strong></div>
+            <div><span>Evidence used</span><strong>{activeTurn?.metrics?.adopted ?? 0} items</strong></div>
           </div>
 
           <div className="qa-evidence-list">
             {!activeTurn && (
               <div className="qa-evidence-empty">
                 <span className="qa-evidence-radar"><i /><i /><i /><SearchIcon className="h-5 w-5" /></span>
-                <strong>等待一次知识检索</strong>
-                <p>提问后，系统采用的原文证据会按相关度排列在这里。</p>
+                <strong>Waiting for a retrieval</strong>
+                <p>After you ask, the source evidence the system used appears here in relevance order.</p>
                 <div>
-                  <span>引用定位</span><span>置信分级</span><span>原文回跳</span>
+                  <span>Citation locate</span><span>Confidence tiers</span><span>Source jump</span>
                 </div>
               </div>
             )}
@@ -903,8 +903,8 @@ export function QaView() {
                     <span className="qa-source-number">{citation.id}</span>
                     <span className="min-w-0 flex-1">
                       <span className="qa-source-kicker">
-                        <b>{citation.origin === 'evidence' ? '原文证据' : '知识页结论'}</b>
-                        <em>{citation.confidence === 'high' ? '高置信' : citation.confidence === 'medium' ? '中置信' : '低置信'}</em>
+                        <b>{citation.origin === 'evidence' ? 'Source evidence' : 'Page conclusion'}</b>
+                        <em>{citation.confidence === 'high' ? 'High confidence' : citation.confidence === 'medium' ? 'Medium confidence' : 'Low confidence'}</em>
                       </span>
                       <strong className="qa-source-title">{citation.pageTitle}</strong>
                       <small>{sourceLabel(citation)}</small>
@@ -915,7 +915,7 @@ export function QaView() {
                     <p>{citation.snippet}</p>
                     <div>
                       <span>{citation.pageType}</span>
-                      <button type="button" onClick={() => openWiki(citation.pageSlug)}>查看 Wiki 原文 →</button>
+                      <button type="button" onClick={() => openWiki(citation.pageSlug)}>Open the Wiki page →</button>
                     </div>
                   </div>
                 </article>
@@ -937,7 +937,7 @@ export function QaView() {
           </div>
 
           <div className="qa-evidence-footer">
-            <span><i />证据来自当前编译知识库</span>
+            <span><i />Evidence comes from the current compiled knowledge base</span>
             <small>
               {activeTurn?.generation?.provider === 'deepseek'
                 ? `${activeTurn.generation.totalTokens ?? '—'} tokens · ${activeTurn.generation.latencyMs} ms`

@@ -40,15 +40,15 @@ describe('Desktop appearance themes', () => {
     render(<AppearanceSection controller={fixture.controller} />)
     await act(async () => {})
 
-    const whale = screen.getByRole('button', { name: /大肥鱼拟人/ })
-    const cat = screen.getByRole('button', { name: /云端猫咪/ })
+    const whale = screen.getByRole('button', { name: /Whale Spirit/ })
+    const cat = screen.getByRole('button', { name: /Cloud Cat/ })
     expect(whale.getAttribute('aria-pressed')).toBe('true')
     expect(document.body.style.getPropertyValue('--dsh-desktop-background-image'))
       .toContain(BUNDLED_APPEARANCE_THEMES['whale-maid'].imageUrl)
 
     fireEvent.click(cat)
     expect(cat.getAttribute('aria-pressed')).toBe('true')
-    fireEvent.click(screen.getByRole('button', { name: '保存并应用' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save and apply' }))
 
     await waitFor(() => {
       expect(fixture.save).toHaveBeenCalledWith({
@@ -72,10 +72,10 @@ describe('Desktop appearance themes', () => {
     render(<AppearanceSection controller={fixture.controller} />)
     await act(async () => {})
 
-    const official = screen.getByRole('button', { name: /官方原版/ })
+    const official = screen.getByRole('button', { name: /Official/ })
     fireEvent.click(official)
     expect(official.getAttribute('aria-pressed')).toBe('true')
-    fireEvent.click(screen.getByRole('button', { name: '保存并应用' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save and apply' }))
 
     await waitFor(() => {
       expect(fixture.save).toHaveBeenCalledWith({
@@ -98,10 +98,10 @@ describe('Desktop appearance themes', () => {
     render(<AppearanceSection controller={fixture.controller} />)
     await act(async () => {})
 
-    expect(screen.getByRole('button', { name: /九天·量子玻璃实验室/ })).toBeTruthy()
-    const dawn = screen.getByRole('button', { name: /九天·晨曦算力网络/ })
+    expect(screen.getByRole('button', { name: /Quantum Glass Lab/ })).toBeTruthy()
+    const dawn = screen.getByRole('button', { name: /Dawn Compute Grid/ })
     fireEvent.click(dawn)
-    fireEvent.click(screen.getByRole('button', { name: '保存并应用' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save and apply' }))
 
     await waitFor(() => {
       expect(fixture.save).toHaveBeenCalledWith({

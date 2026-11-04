@@ -40,11 +40,11 @@ const TYPE_STYLE: Record<WikiPageType, string> = {
 }
 
 const TYPE_FILTERS: { value: WikiTypeFilter; label: string }[] = [
-  { value: 'all', label: '全部' },
-  { value: 'concept', label: '概念' },
-  { value: 'system', label: '系统' },
-  { value: 'playbook', label: '手册' },
-  { value: 'policy', label: '策略' },
+  { value: 'all', label: 'All' },
+  { value: 'concept', label: 'Concept' },
+  { value: 'system', label: 'System' },
+  { value: 'playbook', label: 'Playbook' },
+  { value: 'policy', label: 'Policy' },
 ]
 
 type StatKey = 'pages' | 'sourceCitations' | 'interlinks' | 'topicsCovered'
@@ -55,10 +55,10 @@ const STAT_CARDS: {
   icon: ComponentType<SVGProps<SVGSVGElement>>
   iconClass: string
 }[] = [
-  { key: 'pages', label: '知识页', icon: WikiIcon, iconClass: 'from-emerald-500/20 to-teal-500/10 text-emerald-300' },
-  { key: 'sourceCitations', label: '来源引用', icon: LayersIcon, iconClass: 'from-sky-500/20 to-indigo-500/10 text-sky-300' },
-  { key: 'interlinks', label: '互链', icon: GraphIcon, iconClass: 'from-emerald-500/20 to-teal-500/10 text-emerald-300' },
-  { key: 'topicsCovered', label: '覆盖主题', icon: ClockIcon, iconClass: 'from-amber-500/20 to-orange-500/10 text-amber-300' },
+  { key: 'pages', label: 'Pages', icon: WikiIcon, iconClass: 'from-emerald-500/20 to-teal-500/10 text-emerald-300' },
+  { key: 'sourceCitations', label: 'Citations', icon: LayersIcon, iconClass: 'from-sky-500/20 to-indigo-500/10 text-sky-300' },
+  { key: 'interlinks', label: 'Interlinks', icon: GraphIcon, iconClass: 'from-emerald-500/20 to-teal-500/10 text-emerald-300' },
+  { key: 'topicsCovered', label: 'Topics', icon: ClockIcon, iconClass: 'from-amber-500/20 to-orange-500/10 text-amber-300' },
 ]
 
 function TypeBadge({ type }: { type: WikiPageType }) {
@@ -133,7 +133,7 @@ export function WikiView() {
       })
       setListState('ready')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Wiki 加载失败')
+      setError(e instanceof Error ? e.message : 'Failed to load the Wiki')
       setListState('error')
     }
   }, [search, type])
@@ -146,7 +146,7 @@ export function WikiView() {
       setDetailState('ready')
     } catch (e) {
       setDetailState('error')
-      setError(e instanceof Error ? e.message : '页面加载失败')
+      setError(e instanceof Error ? e.message : 'Failed to load the page')
     }
   }, [])
 
@@ -172,17 +172,17 @@ export function WikiView() {
     setRecompiling(true)
     try {
       const res = await recompileWiki()
-      showNotice('success', `${res.message}，最近编译时间已刷新`)
+      showNotice('success', `${res.message}; the last compile time was refreshed`)
       await loadList()
     } catch {
-      showNotice('error', '重新编译失败，请稍后重试')
+      showNotice('error', 'Recompile failed. Try again later.')
     } finally {
       setRecompiling(false)
     }
   }
 
   const badge =
-    listState === 'ready' ? '知识编译 · 已就绪' : listState === 'error' ? '连接异常' : '加载中'
+    listState === 'ready' ? 'Compiled · ready' : listState === 'error' ? 'Connection error' : 'Loading'
 
   const stats = list?.stats
   const sources = list?.sources ?? []
@@ -191,8 +191,8 @@ export function WikiView() {
   return (
     <div className="flex min-h-[calc(100dvh-5.3125rem)] flex-col gap-3 xl:h-[calc(100dvh-5.25rem)] xl:min-h-0">
       <PageHeader
-        title="Wiki 知识库"
-        description="把零散资料编译成可读、可互链、可追溯的知识页面"
+        title="Wiki"
+        description="Compile scattered source material into readable, interlinked, traceable knowledge pages"
         badge={badge}
       />
 
@@ -249,7 +249,7 @@ export function WikiView() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="搜索标题或摘要"
+              placeholder="Search titles or summaries"
               className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2 pl-9 pr-3 text-[15px] text-slate-200 placeholder:text-slate-500 focus:border-indigo-400/40 focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
             />
           </div>
@@ -271,8 +271,8 @@ export function WikiView() {
           </div>
 
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[13px] font-medium text-slate-300">知识页目录</span>
-            <span className="text-[13px] tabular-nums text-slate-500">{list?.total ?? 0} 页</span>
+            <span className="text-[13px] font-medium text-slate-300">Page index</span>
+            <span className="text-[13px] tabular-nums text-slate-500">{list?.total ?? 0} pages</span>
           </div>
 
           <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
@@ -283,7 +283,7 @@ export function WikiView() {
                 ))}
               </div>
             ) : pages.length === 0 ? (
-              <div className="py-8 text-center text-[13px] text-slate-500">没有匹配的知识页</div>
+              <div className="py-8 text-center text-[13px] text-slate-500">No matching pages</div>
             ) : (
               pages.map(p => (
                 <button
@@ -303,7 +303,7 @@ export function WikiView() {
                   </span>
                   <span className="flex shrink-0 items-center gap-1.5">
                     <TypeBadge type={p.type} />
-                    <span className="text-[12px] tabular-nums text-slate-500">{p.sourceCount} 源</span>
+                    <span className="text-[12px] tabular-nums text-slate-500">{p.sourceCount} sources</span>
                   </span>
                 </button>
               ))
@@ -312,8 +312,8 @@ export function WikiView() {
 
           <div className="mt-3 border-t border-white/5 pt-3">
             <div className="flex items-center justify-between text-[13px] text-slate-400">
-              <span className="font-medium text-slate-300">源资料</span>
-              <span className="tabular-nums text-slate-500">{sources.length} 份</span>
+              <span className="font-medium text-slate-300">Sources</span>
+              <span className="tabular-nums text-slate-500">{sources.length} files</span>
             </div>
             <div className="mt-2 max-h-32 space-y-1 overflow-y-auto pr-1">
               {sources.map(s => (
@@ -321,7 +321,7 @@ export function WikiView() {
                   <span className="min-w-0 truncate text-slate-500" title={s.path}>
                     {s.title}
                   </span>
-                  <span className="shrink-0 tabular-nums text-slate-600">{s.pageCount} 页</span>
+                  <span className="shrink-0 tabular-nums text-slate-600">{s.pageCount} pages</span>
                 </div>
               ))}
             </div>
@@ -333,7 +333,7 @@ export function WikiView() {
           {detailState === 'error' && !detail ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <AlertCircleIcon className="h-10 w-10 text-rose-400" />
-              <p className="mt-4 text-[15px] text-slate-300">页面加载失败</p>
+              <p className="mt-4 text-[15px] text-slate-300">Failed to load the page</p>
               <p className="mt-1 text-[13px] text-slate-500">{error}</p>
             </div>
           ) : detailState === 'loading' && !detail ? (
@@ -348,7 +348,7 @@ export function WikiView() {
                 <div className="flex flex-wrap items-center gap-2">
                   <TypeBadge type={detail.type} />
                   {detail.isDynamic && (
-                    <span className="rounded-full border border-amber-300/20 bg-amber-300/[0.08] px-2 py-0.5 text-[13px] text-amber-200">资料中心新增</span>
+                    <span className="rounded-full border border-amber-300/20 bg-amber-300/[0.08] px-2 py-0.5 text-[13px] text-amber-200">New from Documents</span>
                   )}
                   <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[13px] text-slate-300">
                     {DOCUMENT_TOPIC_LABELS[detail.topic]}
@@ -364,7 +364,7 @@ export function WikiView() {
 
               <div>
                 <h4 className="mb-3 text-[13px] font-semibold uppercase tracking-wider text-slate-500">
-                  知识要点
+                  Key points
                 </h4>
                 <div className="space-y-3">
                   {detail.conclusion.map((c, i) => (
@@ -377,7 +377,7 @@ export function WikiView() {
 
               <div>
                 <h4 className="mb-3 text-[13px] font-semibold uppercase tracking-wider text-slate-500">
-                  来源证据（{detail.sourceEvidence.length}）
+                  Source evidence ({detail.sourceEvidence.length})
                 </h4>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {detail.sourceEvidence.map(ev => (
@@ -392,7 +392,7 @@ export function WikiView() {
                         </span>
                       </div>
                       <div className="mt-1 truncate text-[13px] text-slate-500">
-                        来源：{ev.department || '企业资料中心'} · 内容可追溯
+                        Source: {ev.department || 'Enterprise documents'} · traceable
                       </div>
                       <ul className="mt-3 space-y-1.5">
                         {ev.points.map((pt, i) => (
@@ -409,7 +409,7 @@ export function WikiView() {
 
               <div>
                 <h4 className="mb-3 text-[13px] font-semibold uppercase tracking-wider text-slate-500">
-                  相关页面（{detail.links.length}）
+                  Related pages ({detail.links.length})
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {detail.links.map(l => (
@@ -429,7 +429,7 @@ export function WikiView() {
 
               <div className="flex items-center justify-between border-t border-white/5 pt-4">
                 <span className="text-[13px] text-slate-500">
-                  更新时间 {formatDate(detail.updated)}
+                  Updated {formatDate(detail.updated)}
                 </span>
                 <button
                   onClick={() => void onRecompile()}
@@ -441,7 +441,7 @@ export function WikiView() {
                   ) : (
                     <RefreshIcon className="h-4 w-4" />
                   )}
-                  重新编译
+                  Recompile
                 </button>
               </div>
             </div>

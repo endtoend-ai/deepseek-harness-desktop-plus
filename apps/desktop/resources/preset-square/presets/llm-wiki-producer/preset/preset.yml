@@ -1,0 +1,3 @@
+name: LLM Wiki Producer
+description: A staged development Agent for enterprise knowledge-base projects: each round handles only the named stage, reads the workspace and Skills first, writes a task list, runs tests/typecheck/build, accepts the UI with screenshots, then reports and waits for the next stage.
+order: 10

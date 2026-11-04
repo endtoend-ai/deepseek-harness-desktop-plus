@@ -278,7 +278,7 @@ export class SqliteKnowledgeRepository {
         sources_json: string
       }
       | undefined
-    if (!meta) throw new Error('SQLite 知识库尚未同步编译产物')
+    if (!meta) throw new Error('The SQLite knowledge base has not synced the compiled artifacts yet')
 
     const rows = this.db
       .prepare(

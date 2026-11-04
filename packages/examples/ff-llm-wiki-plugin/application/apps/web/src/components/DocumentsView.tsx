@@ -67,35 +67,35 @@ const STAT_CARDS: {
 }[] = [
   {
     key: 'total',
-    label: '总资料数',
+    label: 'Documents',
     icon: LayersIcon,
     iconClass: 'from-emerald-500/20 to-teal-500/10 text-emerald-300',
     valueClass: 'text-white',
   },
   {
     key: 'ready',
-    label: '已完成',
+    label: 'Done',
     icon: CheckCircleIcon,
     iconClass: 'from-emerald-500/20 to-teal-500/10 text-emerald-300',
     valueClass: 'text-emerald-300',
   },
   {
     key: 'processing',
-    label: '处理中',
+    label: 'Processing',
     icon: SpinnerIcon,
     iconClass: 'from-sky-500/20 to-indigo-500/10 text-sky-300',
     valueClass: 'text-sky-300',
   },
   {
     key: 'queued',
-    label: '待处理',
+    label: 'Pending',
     icon: ClockIcon,
     iconClass: 'from-slate-500/20 to-slate-500/10 text-slate-300',
     valueClass: 'text-slate-300',
   },
   {
     key: 'failed',
-    label: '异常',
+    label: 'Failed',
     icon: AlertCircleIcon,
     iconClass: 'from-rose-500/20 to-rose-500/10 text-rose-300',
     valueClass: 'text-rose-300',
@@ -103,15 +103,15 @@ const STAT_CARDS: {
 ]
 
 const STATUS_FILTERS: { value: DocumentsStatusFilter; label: string }[] = [
-  { value: 'all', label: '全部' },
-  { value: 'ready', label: '已完成' },
-  { value: 'processing', label: '处理中' },
-  { value: 'queued', label: '待处理' },
-  { value: 'failed', label: '异常' },
+  { value: 'all', label: 'All' },
+  { value: 'ready', label: 'Done' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'queued', label: 'Pending' },
+  { value: 'failed', label: 'Failed' },
 ]
 
 const KIND_FILTERS: { value: DocumentsKindFilter; label: string }[] = [
-  { value: 'all', label: '全部类型' },
+  { value: 'all', label: 'All types' },
   { value: 'pdf', label: 'PDF' },
   { value: 'docx', label: 'DOCX' },
   { value: 'xlsx', label: 'XLSX' },
@@ -120,7 +120,7 @@ const KIND_FILTERS: { value: DocumentsKindFilter; label: string }[] = [
 ]
 
 const TOPIC_FILTERS: { value: DocumentsTopicFilter; label: string }[] = [
-  { value: 'all', label: '全部主题' },
+  { value: 'all', label: 'All topics' },
   ...Object.entries(DOCUMENT_TOPIC_LABELS).map(([value, label]) => ({
     value: value as DocumentTopic,
     label,
@@ -190,7 +190,7 @@ export function DocumentsView() {
         setTotalPages(res.totalPages)
         setLoadState('ready')
       } catch (e) {
-        setError(e instanceof Error ? e.message : '资料加载失败')
+        setError(e instanceof Error ? e.message : 'Failed to load documents')
         setLoadState('error')
       }
     },
@@ -226,10 +226,10 @@ export function DocumentsView() {
     setReprocessingId(doc.id)
     try {
       await reprocessDocument(doc.id)
-      showNotice('success', `「${doc.title}」已重新提交处理`)
+      showNotice('success', `"${doc.title}" was resubmitted for processing`)
       await load({ search, status, kind, topic, page })
     } catch {
-      showNotice('error', '重新处理失败，请稍后重试')
+      showNotice('error', 'Reprocessing failed. Try again later.')
     } finally {
       setReprocessingId(null)
     }
@@ -241,16 +241,16 @@ export function DocumentsView() {
 
   const badge =
     loadState === 'ready'
-      ? '实时数据 · API'
+      ? 'Live data · API'
       : loadState === 'error'
-        ? '连接异常'
-        : '加载中'
+        ? 'Connection error'
+        : 'Loading'
 
   return (
     <div className="flex min-h-[calc(100dvh-5.3125rem)] flex-col gap-3 xl:h-[calc(100dvh-5.25rem)] xl:min-h-0">
       <PageHeader
-        title="资料中心"
-        description="统一管理企业资料，导入、查找与处理进度一目了然"
+        title="Documents"
+        description="Manage enterprise material: import, search, and follow processing progress in one place"
         badge={badge}
       />
 
@@ -271,7 +271,7 @@ export function DocumentsView() {
           <button
             onClick={() => setNotice(null)}
             className="ml-auto rounded p-0.5 text-current/70 hover:bg-white/10 hover:text-current"
-            aria-label="关闭提示"
+            aria-label="Dismiss notice"
           >
             <CloseIcon className="h-4 w-4" />
           </button>
@@ -295,7 +295,7 @@ export function DocumentsView() {
                 </div>
                 <div className="min-w-0">
                   <div className={`text-2xl font-semibold tabular-nums tracking-tight ${card.valueClass}`}>
-                    {stats[card.key].toLocaleString('zh-CN')}
+                    {stats[card.key].toLocaleString('en-US')}
                   </div>
                   <div className="text-[13px] text-slate-400">{card.label}</div>
                 </div>
@@ -313,7 +313,7 @@ export function DocumentsView() {
               <input
                 value={search}
                 onChange={e => onSearchChange(e.target.value)}
-                placeholder="搜索资料名称、文件名或来源"
+                placeholder="Search by title, file name, or source"
                 className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2 pl-9 pr-3 text-[15px] text-slate-200 placeholder:text-slate-500 focus:border-indigo-400/40 focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
               />
             </div>
@@ -341,7 +341,7 @@ export function DocumentsView() {
                 setPage(1)
               }}
               className="rounded-lg border border-white/10 bg-[#0b1213] px-2.5 py-1.5 text-[13px] text-slate-300 outline-none focus:border-emerald-400/40"
-              aria-label="按文件类型筛选"
+              aria-label="Filter by file type"
             >
               {KIND_FILTERS.map(filter => (
                 <option key={filter.value} value={filter.value}>{filter.label}</option>
@@ -354,7 +354,7 @@ export function DocumentsView() {
                 setPage(1)
               }}
               className="rounded-lg border border-white/10 bg-[#0b1213] px-2.5 py-1.5 text-[13px] text-slate-300 outline-none focus:border-emerald-400/40"
-              aria-label="按业务主题筛选"
+              aria-label="Filter by business topic"
             >
               {TOPIC_FILTERS.map(filter => (
                 <option key={filter.value} value={filter.value}>{filter.label}</option>
@@ -368,7 +368,7 @@ export function DocumentsView() {
               className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-600 px-3.5 py-2 text-[15px] font-medium text-white shadow-lg shadow-emerald-700/20 transition-colors hover:from-emerald-600 hover:to-teal-500"
             >
               <UploadIcon className="h-4 w-4" />
-              导入资料
+              Import
             </button>
           </div>
         </div>
@@ -376,14 +376,14 @@ export function DocumentsView() {
         {loadState === 'error' ? (
           <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
             <AlertCircleIcon className="h-10 w-10 text-rose-400" />
-            <p className="mt-4 text-[15px] text-slate-300">资料加载失败</p>
+            <p className="mt-4 text-[15px] text-slate-300">Failed to load documents</p>
             <p className="mt-1 text-[13px] text-slate-500">{error}</p>
             <button
               onClick={() => void load({ search, status, kind, topic, page })}
               className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[13px] font-medium text-slate-200 hover:bg-white/[0.08]"
             >
               <RefreshIcon className="h-3.5 w-3.5" />
-              重新加载
+              Reload
             </button>
           </div>
         ) : loadState === 'loading' && items.length === 0 ? (
@@ -391,13 +391,13 @@ export function DocumentsView() {
         ) : items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
             <InboxIcon className="h-10 w-10 text-slate-600" />
-            <p className="mt-4 text-[15px] text-slate-300">没有找到匹配的资料</p>
-            <p className="mt-1 text-[13px] text-slate-500">换个关键词，或清空筛选条件再看看</p>
+            <p className="mt-4 text-[15px] text-slate-300">No matching documents</p>
+            <p className="mt-1 text-[13px] text-slate-500">Try another keyword or clear the filters</p>
             <button
               onClick={clearFilters}
               className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[13px] font-medium text-slate-200 hover:bg-white/[0.08]"
             >
-              清空筛选
+              Clear filters
             </button>
           </div>
         ) : (
@@ -406,14 +406,14 @@ export function DocumentsView() {
               <table className="w-full min-w-[900px] text-[15px]">
                 <thead>
                   <tr className="text-left text-[13px] uppercase tracking-wider text-slate-500">
-                    <th className="px-2 pb-3 pr-4 font-medium">资料</th>
-                    <th className="px-2 pb-3 pr-4 font-medium">类型</th>
-                    <th className="px-2 pb-3 pr-4 font-medium">主题</th>
-                    <th className="px-2 pb-3 pr-4 font-medium">来源</th>
-                    <th className="px-2 pb-3 pr-4 font-medium">大小</th>
-                    <th className="px-2 pb-3 pr-4 font-medium">状态</th>
-                    <th className="px-2 pb-3 pr-4 font-medium">更新时间</th>
-                    <th className="px-2 pb-3 font-medium">操作</th>
+                    <th className="px-2 pb-3 pr-4 font-medium">Document</th>
+                    <th className="px-2 pb-3 pr-4 font-medium">Type</th>
+                    <th className="px-2 pb-3 pr-4 font-medium">Topic</th>
+                    <th className="px-2 pb-3 pr-4 font-medium">Source</th>
+                    <th className="px-2 pb-3 pr-4 font-medium">Size</th>
+                    <th className="px-2 pb-3 pr-4 font-medium">Status</th>
+                    <th className="px-2 pb-3 pr-4 font-medium">Updated</th>
+                    <th className="px-2 pb-3 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y divide-white/5 ${loadState === 'loading' ? 'opacity-50' : ''}`}>
@@ -458,7 +458,7 @@ export function DocumentsView() {
                             onClick={() => setSelectedId(doc.id)}
                             className="whitespace-nowrap rounded-lg border border-emerald-400/20 bg-emerald-500/[0.08] px-2.5 py-1.5 text-[13px] font-medium text-emerald-200 hover:bg-emerald-500/15"
                           >
-                            查看
+                            View
                           </button>
                           {doc.status === 'failed' && (
                             <button
@@ -471,7 +471,7 @@ export function DocumentsView() {
                               ) : (
                                 <RefreshIcon className="h-3.5 w-3.5" />
                               )}
-                              重新处理
+                              Reprocess
                             </button>
                           )}
                         </div>
@@ -483,7 +483,7 @@ export function DocumentsView() {
             </div>
 
             <div className="mt-3 flex shrink-0 items-center justify-between border-t border-white/5 pt-3">
-              <div className="text-[13px] text-slate-500">共 {total} 条资料</div>
+              <div className="text-[13px] text-slate-500">{total} documents</div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPage(Math.max(1, page - 1))}
@@ -491,17 +491,17 @@ export function DocumentsView() {
                   className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[13px] font-medium text-slate-300 transition-colors hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronLeftIcon className="h-3.5 w-3.5" />
-                  上一页
+                  Previous
                 </button>
                 <span className="text-[13px] tabular-nums text-slate-400">
-                  第 {page} / {totalPages} 页
+                  Page {page} of {totalPages}
                 </span>
                 <button
                   onClick={() => setPage(Math.min(totalPages, page + 1))}
                   disabled={page >= totalPages}
                   className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[13px] font-medium text-slate-300 transition-colors hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  下一页
+                  Next
                   <ChevronRightIcon className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -579,7 +579,7 @@ function DocumentDetailModal({
         setSource(response.document.source)
       }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '资料详情加载失败')
+      setError(reason instanceof Error ? reason.message : 'Failed to load document details')
     } finally {
       setLoading(false)
     }
@@ -591,7 +591,7 @@ function DocumentDetailModal({
 
   const save = async () => {
     if (!title.trim()) {
-      setError('资料名称不能为空')
+      setError('Document title is required')
       return
     }
     setSaving(true)
@@ -602,7 +602,7 @@ function DocumentDetailModal({
       setEditing(false)
       await loadDetail()
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '资料更新失败')
+      setError(reason instanceof Error ? reason.message : 'Failed to update the document')
     } finally {
       setSaving(false)
     }
@@ -616,7 +616,7 @@ function DocumentDetailModal({
       await onChanged(result.message)
       onClose()
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '资料删除失败')
+      setError(reason instanceof Error ? reason.message : 'Failed to delete the document')
       setDeleting(false)
     }
   }
@@ -631,17 +631,17 @@ function DocumentDetailModal({
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-white/[0.07] px-5 py-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-lg font-semibold text-white">资料详情</h3>
+              <h3 className="text-lg font-semibold text-white">Document details</h3>
               {document && <StatusChip status={document.status} />}
               {detail?.wikiPages.length ? (
                 <span className="rounded-full border border-emerald-300/20 bg-emerald-300/[0.08] px-2 py-0.5 text-[12px] text-emerald-200">
-                  已同步 Wiki
+                  Synced to Wiki
                 </span>
               ) : null}
             </div>
-            <p className="mt-1 text-[13px] text-slate-500">查看解析正文、处理轨迹与知识库关联</p>
+            <p className="mt-1 text-[13px] text-slate-500">Review the extracted text, processing history, and knowledge links</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white" aria-label="关闭">
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white" aria-label="Close">
             <CloseIcon className="h-4 w-4" />
           </button>
         </header>
@@ -664,11 +664,11 @@ function DocumentDetailModal({
                   {editing ? (
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="sm:col-span-2">
-                        <span className="mb-1 block text-[12px] text-slate-500">资料名称</span>
+                        <span className="mb-1 block text-[12px] text-slate-500">Title</span>
                         <input value={title} onChange={event => setTitle(event.target.value)} className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[14px] text-white outline-none focus:border-emerald-300/40" />
                       </label>
                       <label>
-                        <span className="mb-1 block text-[12px] text-slate-500">业务主题</span>
+                        <span className="mb-1 block text-[12px] text-slate-500">Topic</span>
                         <select value={topic} onChange={event => setTopic(event.target.value as DocumentTopic)} className="w-full rounded-lg border border-white/10 bg-[#0b1213] px-3 py-2 text-[14px] text-white outline-none focus:border-emerald-300/40">
                           {TOPIC_FILTERS.filter(item => item.value !== 'all').map(item => (
                             <option key={item.value} value={item.value}>{item.label}</option>
@@ -676,7 +676,7 @@ function DocumentDetailModal({
                         </select>
                       </label>
                       <label>
-                        <span className="mb-1 block text-[12px] text-slate-500">资料来源</span>
+                        <span className="mb-1 block text-[12px] text-slate-500">Source</span>
                         <input value={source} onChange={event => setSource(event.target.value)} className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[14px] text-white outline-none focus:border-emerald-300/40" />
                       </label>
                     </div>
@@ -688,27 +688,27 @@ function DocumentDetailModal({
                         <span className="text-[13px] text-slate-500">{document.source}</span>
                       </div>
                       <h4 className="mt-3 text-xl font-semibold text-white">{document.title}</h4>
-                      <p className="mt-1 text-[13px] text-slate-500">{document.originalName} · {document.size} · 更新于 {formatDate(document.updatedAt)}</p>
+                      <p className="mt-1 text-[13px] text-slate-500">{document.originalName} · {document.size} · updated {formatDate(document.updatedAt)}</p>
                     </>
                   )}
                 </div>
 
                 <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[13px] font-medium text-slate-300">知识库关联</span>
-                    <span className="text-[12px] text-slate-500">{detail?.wikiPages.length ?? 0} 页</span>
+                    <span className="text-[13px] font-medium text-slate-300">Knowledge links</span>
+                    <span className="text-[12px] text-slate-500">{detail?.wikiPages.length ?? 0} pages</span>
                   </div>
                   {detail?.wikiPages.length ? (
                     <div className="mt-3 space-y-2">
                       {detail.wikiPages.map(page => (
                         <a key={page.slug} href={`/wiki?slug=${encodeURIComponent(page.slug)}`} className="flex items-center justify-between rounded-lg border border-emerald-300/15 bg-emerald-300/[0.05] px-3 py-2 text-[13px] text-emerald-100 hover:bg-emerald-300/10">
-                          <span className="truncate">{page.title}</span><span className="text-emerald-300">查看 Wiki →</span>
+                          <span className="truncate">{page.title}</span><span className="text-emerald-300">View Wiki →</span>
                         </a>
                       ))}
                     </div>
                   ) : (
                     <p className="mt-3 text-[13px] leading-relaxed text-slate-500">
-                      {document.status === 'ready' && document.origin === 'demo' ? '内置资料保留原有编译关系；新导入资料解析完成后会自动生成并关联 Wiki。' : '资料处理完成后将自动发布到 Wiki 知识库。'}
+                      {document.status === 'ready' && document.origin === 'demo' ? 'Built-in documents keep their existing compiled pages; imported documents generate and link Wiki pages once processing finishes.' : 'The document publishes to the Wiki once processing finishes.'}
                     </p>
                   )}
                 </div>
@@ -717,8 +717,8 @@ function DocumentDetailModal({
               {processing && (
                 <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="text-[13px] font-medium text-slate-300">处理轨迹</span>
-                    <span className="text-[13px] tabular-nums text-emerald-200">{processing.progress}% · {processing.chunkCount} 个分段</span>
+                    <span className="text-[13px] font-medium text-slate-300">Processing history</span>
+                    <span className="text-[13px] tabular-nums text-emerald-200">{processing.progress}% · {processing.chunkCount} segments</span>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-5">
                     {processing.stages.map((stage, index) => (
@@ -735,26 +735,26 @@ function DocumentDetailModal({
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="text-[13px] font-medium text-slate-300">解析内容预览</span>
-                    <span className="text-[12px] tabular-nums text-slate-500">{detail?.extractedText.length.toLocaleString('zh-CN') ?? 0} 字符</span>
+                    <span className="text-[13px] font-medium text-slate-300">Extracted text preview</span>
+                    <span className="text-[12px] tabular-nums text-slate-500">{detail?.extractedText.length.toLocaleString('en-US') ?? 0} characters</span>
                   </div>
                   <div className="max-h-60 overflow-y-auto whitespace-pre-wrap rounded-lg bg-black/20 p-3 text-[13px] leading-6 text-slate-300">
-                    {detail?.extractedText || '该资料没有独立解析正文，可通过其知识页或来源记录查看已沉淀的信息。'}
+                    {detail?.extractedText || 'This document has no standalone extracted text; review its knowledge pages or source record for the captured information.'}
                   </div>
                 </div>
                 <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="text-[13px] font-medium text-slate-300">知识分段</span>
-                    <span className="text-[12px] text-slate-500">{detail?.chunks.length ?? 0} 条</span>
+                    <span className="text-[13px] font-medium text-slate-300">Knowledge segments</span>
+                    <span className="text-[12px] text-slate-500">{detail?.chunks.length ?? 0} items</span>
                   </div>
                   <div className="max-h-60 space-y-2 overflow-y-auto">
                     {detail?.chunks.slice(0, 8).map(chunk => (
                       <div key={chunk.ordinal} className="rounded-lg border border-white/[0.06] bg-black/15 p-2.5">
-                        <div className="text-[11px] text-emerald-300/70">分段 {String(chunk.ordinal + 1).padStart(2, '0')}</div>
+                        <div className="text-[11px] text-emerald-300/70">Segment {String(chunk.ordinal + 1).padStart(2, '0')}</div>
                         <p className="mt-1 line-clamp-3 text-[12px] leading-5 text-slate-400">{chunk.content}</p>
                       </div>
                     ))}
-                    {!detail?.chunks.length && <p className="text-[13px] text-slate-500">暂无独立分段记录</p>}
+                    {!detail?.chunks.length && <p className="text-[13px] text-slate-500">No standalone segment records yet</p>}
                   </div>
                 </div>
               </div>
@@ -768,22 +768,22 @@ function DocumentDetailModal({
           <div>
             {confirmDelete ? (
               <div className="flex items-center gap-2">
-                <span className="text-[13px] text-rose-200">确认删除资料及关联 Wiki？</span>
-                <button onClick={() => void remove()} disabled={deleting} className="rounded-lg bg-rose-600 px-3 py-1.5 text-[13px] font-medium text-white disabled:opacity-50">{deleting ? '删除中…' : '确认删除'}</button>
-                <button onClick={() => setConfirmDelete(false)} className="rounded-lg px-2 py-1.5 text-[13px] text-slate-400 hover:bg-white/5">取消</button>
+                <span className="text-[13px] text-rose-200">Delete this document and its linked Wiki pages?</span>
+                <button onClick={() => void remove()} disabled={deleting} className="rounded-lg bg-rose-600 px-3 py-1.5 text-[13px] font-medium text-white disabled:opacity-50">{deleting ? 'Deleting…' : 'Delete'}</button>
+                <button onClick={() => setConfirmDelete(false)} className="rounded-lg px-2 py-1.5 text-[13px] text-slate-400 hover:bg-white/5">Cancel</button>
               </div>
             ) : (
-              <button onClick={() => setConfirmDelete(true)} disabled={!document} className="rounded-lg border border-rose-300/15 bg-rose-300/[0.05] px-3 py-1.5 text-[13px] text-rose-200 hover:bg-rose-300/10 disabled:opacity-40">删除资料</button>
+              <button onClick={() => setConfirmDelete(true)} disabled={!document} className="rounded-lg border border-rose-300/15 bg-rose-300/[0.05] px-3 py-1.5 text-[13px] text-rose-200 hover:bg-rose-300/10 disabled:opacity-40">Delete document</button>
             )}
           </div>
           <div className="flex items-center gap-2">
             {editing ? (
               <>
-                <button onClick={() => setEditing(false)} className="rounded-lg border border-white/10 px-3 py-1.5 text-[13px] text-slate-300 hover:bg-white/5">取消</button>
-                <button onClick={() => void save()} disabled={saving} className="rounded-lg bg-emerald-700 px-3 py-1.5 text-[13px] font-medium text-white hover:bg-emerald-600 disabled:opacity-50">{saving ? '保存中…' : '保存并同步 Wiki'}</button>
+                <button onClick={() => setEditing(false)} className="rounded-lg border border-white/10 px-3 py-1.5 text-[13px] text-slate-300 hover:bg-white/5">Cancel</button>
+                <button onClick={() => void save()} disabled={saving} className="rounded-lg bg-emerald-700 px-3 py-1.5 text-[13px] font-medium text-white hover:bg-emerald-600 disabled:opacity-50">{saving ? 'Saving…' : 'Save and sync Wiki'}</button>
               </>
             ) : (
-              <button onClick={() => setEditing(true)} disabled={!document} className="rounded-lg border border-emerald-300/20 bg-emerald-300/[0.07] px-3 py-1.5 text-[13px] font-medium text-emerald-100 hover:bg-emerald-300/10 disabled:opacity-40">更新资料</button>
+              <button onClick={() => setEditing(true)} disabled={!document} className="rounded-lg border border-emerald-300/20 bg-emerald-300/[0.07] px-3 py-1.5 text-[13px] font-medium text-emerald-100 hover:bg-emerald-300/10 disabled:opacity-40">Edit document</button>
             )}
           </div>
         </footer>
@@ -825,7 +825,7 @@ function ImportModal({
         }
       } catch (error) {
         if (cancelled) return
-        setPollError(error instanceof Error ? error.message : '处理进度读取失败')
+        setPollError(error instanceof Error ? error.message : 'Failed to read processing progress')
       }
       timer = setTimeout(() => void poll(), 420)
     }
@@ -840,10 +840,10 @@ function ImportModal({
   const validate = (file: File): string | null => {
     const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
     if (!ALLOWED_UPLOAD_EXT.includes(ext)) {
-      return '不支持的文件类型，请上传 PDF、DOCX、Markdown 或 TXT 文件'
+      return 'Unsupported file type. Upload a PDF, DOCX, Markdown, or TXT file.'
     }
-    if (file.size === 0) return '文件为空，请选择有内容的资料'
-    if (file.size > MAX_UPLOAD_BYTES) return '文件过大，单文件上限为 50 MB'
+    if (file.size === 0) return 'The file is empty. Choose a document with content.'
+    if (file.size > MAX_UPLOAD_BYTES) return 'The file is too large. The limit is 50 MB per file.'
     return null
   }
 
@@ -897,15 +897,15 @@ function ImportModal({
       <div className="relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[#0a0c14] p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-base font-semibold text-white">导入资料</h3>
+            <h3 className="text-base font-semibold text-white">Import a document</h3>
             <p className="mt-1 text-[13px] text-slate-500">
-              支持 PDF、DOCX、Markdown、TXT，单文件不超过 50 MB
+              PDF, DOCX, Markdown, and TXT, up to 50 MB per file
             </p>
           </div>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-200"
-            aria-label="关闭"
+            aria-label="Close"
           >
             <CloseIcon className="h-4 w-4" />
           </button>
@@ -931,8 +931,8 @@ function ImportModal({
             }`}
           >
             <InboxIcon className="h-10 w-10 text-indigo-300" />
-            <p className="mt-3 text-[15px] text-slate-200">拖放文件到这里，或点击选择文件</p>
-            <p className="mt-1 text-[13px] text-slate-500">一次导入一份资料，重复文件会自动识别</p>
+            <p className="mt-3 text-[15px] text-slate-200">Drop a file here, or click to choose one</p>
+            <p className="mt-1 text-[13px] text-slate-500">One document per import; duplicates are detected automatically</p>
           </div>
         )}
 
@@ -957,7 +957,7 @@ function ImportModal({
         {busy && (
           <div className="mt-5 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4">
             <SpinnerIcon className="h-5 w-5 animate-spin text-indigo-300" />
-            <span className="text-[15px] text-slate-300">正在上传…</span>
+            <span className="text-[15px] text-slate-300">Uploading…</span>
           </div>
         )}
 
@@ -996,10 +996,10 @@ function ImportModal({
                     )}
                     <h4 className="truncate text-[15px] font-semibold text-slate-100">
                       {processing.status === 'ready'
-                        ? '资料处理完成'
+                        ? 'Document processing finished'
                         : processing.status === 'failed'
-                          ? '资料处理失败'
-                          : '正在构建知识索引'}
+                          ? 'Document processing failed'
+                          : 'Building the knowledge index'}
                     </h4>
                   </div>
                   <p className="mt-1 truncate text-[13px] text-slate-500">
@@ -1057,7 +1057,7 @@ function ImportModal({
                           {stage.label}
                         </span>
                         <span className="text-[12px] text-slate-600">
-                          {done ? '已完成' : failed ? '异常' : active ? '执行中' : '等待中'}
+                          {done ? 'Done' : failed ? 'Failed' : active ? 'Running' : 'Waiting'}
                         </span>
                       </div>
                       <p className={`mt-0.5 text-[12px] ${failed ? 'text-rose-300/80' : 'text-slate-600'}`}>
@@ -1073,15 +1073,15 @@ function ImportModal({
               <div className="grid grid-cols-2 gap-px border-t border-white/[0.07] bg-white/[0.07]">
                 <div className="bg-[#0a1112] px-4 py-3">
                   <strong className="block text-base tabular-nums text-slate-100">
-                    {processing.extractedChars.toLocaleString('zh-CN')}
+                    {processing.extractedChars.toLocaleString('en-US')}
                   </strong>
-                  <span className="text-[12px] text-slate-500">已解析字符</span>
+                  <span className="text-[12px] text-slate-500">Characters extracted</span>
                 </div>
                 <div className="bg-[#0a1112] px-4 py-3">
                   <strong className="block text-base tabular-nums text-slate-100">
                     {processing.chunkCount}
                   </strong>
-                  <span className="text-[12px] text-slate-500">已入库知识分段</span>
+                  <span className="text-[12px] text-slate-500">Knowledge segments indexed</span>
                 </div>
               </div>
             )}
@@ -1091,7 +1091,7 @@ function ImportModal({
         {pollError && processing?.status !== 'ready' && processing?.status !== 'failed' && (
           <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-300/20 bg-amber-300/[0.06] px-3 py-2 text-[12px] text-amber-200">
             <AlertCircleIcon className="h-4 w-4 shrink-0" />
-            {pollError}，正在自动重试
+            {pollError} — retrying automatically
           </div>
         )}
 
@@ -1101,7 +1101,7 @@ function ImportModal({
               onClick={onClose}
               className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[15px] font-medium text-slate-300 transition-colors hover:bg-white/[0.08]"
             >
-              转入后台
+              Run in background
             </button>
           ) : result ? (
             <>
@@ -1109,13 +1109,13 @@ function ImportModal({
                 onClick={reset}
                 className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[15px] font-medium text-slate-200 transition-colors hover:bg-white/[0.08]"
               >
-                继续导入
+                Import anyway
               </button>
               <button
                 onClick={onClose}
                 className="rounded-lg bg-gradient-to-r from-emerald-700 to-teal-600 px-3 py-2 text-[15px] font-medium text-white transition-colors hover:from-emerald-600 hover:to-teal-500"
               >
-                完成
+                Done
               </button>
             </>
           ) : (
@@ -1123,7 +1123,7 @@ function ImportModal({
               onClick={onClose}
               className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[15px] font-medium text-slate-200 transition-colors hover:bg-white/[0.08]"
             >
-              取消
+              Cancel
             </button>
           )}
         </div>

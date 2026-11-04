@@ -57,10 +57,10 @@ export function KnowledgeAssetOverview({ data }: { data: WikiListResponse | null
   const maxTopicCount = Math.max(...topicCounts.map(item => item.count), 1)
 
   const headlineStats = [
-    { value: stats.pages, label: '知识页', detail: '结构化内容' },
-    { value: stats.sourceCitations, label: '来源引用', detail: '可追溯证据' },
-    { value: stats.interlinks, label: '语义互链', detail: '跨主题连接' },
-    { value: stats.topicsCovered, label: '业务主题', detail: '全域覆盖' },
+    { value: stats.pages, label: 'Pages', detail: 'Structured content' },
+    { value: stats.sourceCitations, label: 'Citations', detail: 'Traceable evidence' },
+    { value: stats.interlinks, label: 'Interlinks', detail: 'Cross-topic links' },
+    { value: stats.topicsCovered, label: 'Topics', detail: 'Full coverage' },
   ]
 
   return (
@@ -68,15 +68,15 @@ export function KnowledgeAssetOverview({ data }: { data: WikiListResponse | null
       <div className="mb-2 flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-[15px] font-semibold text-slate-100">知识资产构成</h2>
+            <h2 className="text-[15px] font-semibold text-slate-100">Knowledge assets</h2>
             <span className="rounded-full border border-emerald-300/15 bg-emerald-300/[0.045] px-2 py-0.5 text-[11px] text-emerald-200/75">
-              编译产物
+              Compiled output
             </span>
           </div>
-          <p className="mt-0.5 text-[13px] text-slate-600">从原始资料沉淀出的可复用知识资产</p>
+          <p className="mt-0.5 text-[13px] text-slate-600">Reusable knowledge distilled from source material</p>
         </div>
         <Link href="/wiki" className="text-[13px] font-medium text-amber-200/85 transition-colors hover:text-amber-100">
-          进入知识库 →
+          Open the Wiki →
         </Link>
       </div>
 
@@ -94,8 +94,8 @@ export function KnowledgeAssetOverview({ data }: { data: WikiListResponse | null
 
           <div className="mt-2 rounded-xl border border-white/[0.065] bg-white/[0.016] px-3 py-2">
             <div className="mb-1.5 flex items-center justify-between text-[12px]">
-              <span className="text-slate-500">知识类型</span>
-              <span className="text-slate-700">结构完整度 100%</span>
+              <span className="text-slate-500">Knowledge types</span>
+              <span className="text-slate-700">Structure 100% complete</span>
             </div>
             <div className="flex h-1.5 overflow-hidden rounded-full bg-white/[0.04]">
               {typeCounts.map((item, index) => (
@@ -120,15 +120,15 @@ export function KnowledgeAssetOverview({ data }: { data: WikiListResponse | null
 
         <div className="rounded-xl border border-white/[0.065] bg-[#091012]/70 px-3 py-2">
           <div className="mb-2 flex items-center justify-between text-[12px]">
-            <span className="font-medium text-slate-400">主题知识密度</span>
-            <span className="text-slate-700">共 {stats.topicsCovered} 个业务域</span>
+            <span className="font-medium text-slate-400">Topic density</span>
+            <span className="text-slate-700">{stats.topicsCovered} business domains</span>
           </div>
           <div className="grid grid-cols-2 gap-x-5 gap-y-1.5">
             {topicCounts.map(item => (
               <div key={item.topic}>
                 <div className="mb-1 flex items-center justify-between text-[12px]">
                   <span className="text-slate-400">{DOCUMENT_TOPIC_LABELS[item.topic]}</span>
-                  <span className="tabular-nums text-slate-600">{item.count} 页</span>
+                  <span className="tabular-nums text-slate-600">{item.count} pages</span>
                 </div>
                 <div className="h-1 overflow-hidden rounded-full bg-white/[0.045]">
                   <div
@@ -141,7 +141,7 @@ export function KnowledgeAssetOverview({ data }: { data: WikiListResponse | null
           </div>
           <div className="mt-2 flex items-center gap-2 border-t border-white/[0.055] pt-2 text-[12px] text-slate-600">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.7)]" />
-            全部页面已建立来源引用与知识互链
+            Every page carries source citations and knowledge interlinks
           </div>
         </div>
       </div>

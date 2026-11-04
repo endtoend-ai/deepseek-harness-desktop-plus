@@ -1,0 +1,8 @@
+{
+  "format": "dsh-preset",
+  "version": 1,
+  "id": "feishu-digital-employee",
+  "name": "Feishu Digital Employee",
+  "description": "Feishu workflow: one Agent Preset, one Skill, the Feishu MCP server, and the datetime MCP server.",
+  "sourceDshVersion": "0.1.0-rc.8"
+}

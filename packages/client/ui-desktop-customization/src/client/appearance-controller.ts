@@ -64,7 +64,7 @@ export class AppearanceController {
     this.previousPosition = body.style.getPropertyValue('--dsh-desktop-background-position')
     this.apply(DEFAULT_APPEARANCE)
     if (this.bridge === undefined) {
-      this.publish({ status: 'error', settings: DEFAULT_APPEARANCE, message: 'Desktop bridge 未加载，当前只显示默认背景。' })
+      this.publish({ status: 'error', settings: DEFAULT_APPEARANCE, message: 'Desktop bridge is not loaded; showing the default background.' })
     } else {
       void this.bridge.appearance.get().then((settings) => {
         if (this.disposed) return
@@ -83,12 +83,12 @@ export class AppearanceController {
    * @param settings Validated appearance values to store through the preload bridge.
    */
   async save(settings: AppearanceSettings): Promise<void> {
-    if (this.bridge === undefined) throw new Error('Desktop bridge 未加载。')
+    if (this.bridge === undefined) throw new Error('Desktop bridge is not loaded.')
     this.publish({ status: 'saving', settings: this.snapshot.settings })
     try {
       const saved = await this.bridge.appearance.save(settings)
       this.apply(saved)
-      this.publish({ status: 'ready', settings: saved, message: '背景已保存。' })
+      this.publish({ status: 'ready', settings: saved, message: 'Background saved.' })
     } catch (error) {
       this.publish({ status: 'error', settings: this.snapshot.settings, message: messageOf(error) })
       throw error
@@ -97,12 +97,12 @@ export class AppearanceController {
 
   /** Remove the custom image and return to the bundled background. */
   async reset(): Promise<void> {
-    if (this.bridge === undefined) throw new Error('Desktop bridge 未加载。')
+    if (this.bridge === undefined) throw new Error('Desktop bridge is not loaded.')
     this.publish({ status: 'saving', settings: this.snapshot.settings })
     try {
       const settings = await this.bridge.appearance.reset()
       this.apply(settings)
-      this.publish({ status: 'ready', settings, message: '已恢复默认背景。' })
+      this.publish({ status: 'ready', settings, message: 'Restored the default background.' })
     } catch (error) {
       this.publish({ status: 'error', settings: this.snapshot.settings, message: messageOf(error) })
       throw error

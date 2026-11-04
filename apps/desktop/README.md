@@ -1,4 +1,4 @@
-# DeepSeek Harness Studio · Desktop App
+# DeepSeek Harness Desktop · Desktop App
 
 English | [中文](README.zh.md)
 
@@ -38,7 +38,7 @@ The same serialized transaction owns install, enable, disable, exact update, and
 
 Desktop owns Preset Square network access and accepts renderer requests containing only a closed sort, search text, slug, and optional local target id. It reads metadata and archives only from `https://www.dshdesktop.com/preset/`, rejects redirects, bounds response sizes, re-resolves detail before installation, and verifies the published archive size and SHA-256 before sending bytes to the loopback Host importer. The renderer never supplies a URL, archive, filesystem path, or Host origin.
 
-Seven compact capability packs ship in `resources/preset-square/presets/` under the catalog source **Fufan Official** (`赋范官方`): AI WebApp, PPT Office, video generation, content factory, AI report, Feishu digital employee, and LLM Wiki Producer. The last installs the `LLM Wiki 全栈工程师` Agent Preset used to develop and verify enterprise knowledge-base projects in stages. This label identifies content maintained by the Fufan Desktop team, not official DeepSeek Harness content. Desktop materializes deterministic integrity-checked archives from these read-only resources, while the Host still installs them into the writable user Preset root so they remain removable and reinstallable.
+Seven compact capability packs ship in `resources/preset-square/presets/`: AI WebApp, PPT Office, Video Generation, Content Factory, AI Report, Feishu Digital Employee, and LLM Wiki Producer. The last one installs the LLM Wiki Producer Agent Preset used to develop and verify enterprise knowledge-base projects in stages. These packs are bundled with the Desktop app and maintained alongside it; they are not official DeepSeek Harness content. Desktop materializes deterministic integrity-checked archives from these read-only resources, while the Host still installs them into the writable user Preset root so they remain removable and reinstallable.
 
 An uncommitted journal owns recovery before the normal Host starts. Mutation side effects durably record their before and after points, so the same recovery path covers interruption before or after Host stop, Profile or package mutation, Host start, and renderer reconnect. Recovery restores the hash-bound snapshot, rematerializes the old packages, and requires the prior Host, client, and Skill evidence before publishing `rolled-back`. Snapshot, Profile, package, lock, or Host-health failures keep the protected recovery page with same-operation retry and redacted diagnostic export. When only the exact runtime inventory differs after the restored Host passes health, Desktop starts the normal renderer on Plugin Center in restricted safe mode: browsing, retry, diagnostics, configuration, disable, and uninstall remain available, while install, update, and enable stay blocked until a verified recovery or safe cleanup commits ([decision](../../.agents/notes/implemented/bug-fix/2026-08-24-plugin-recovery-safe-mode.md)).
 
@@ -46,13 +46,13 @@ Use `pnpm run dev:desktop:web` for deterministic browser acceptance of the same 
 
 ## Packaging
 
-The local packaging command first rebuilds the bundled FF–LLM Wiki application from its source, then performs the complete repository build, stages the Host's closed production dependency tree, and creates an unpacked application for the current platform. Generated application assets stay ignored and are never a source-of-truth input to a clean release checkout. A separate manual build is not required:
+The local packaging command first rebuilds the bundled LLM Wiki application from its source, then performs the complete repository build, stages the Host's closed production dependency tree, and creates an unpacked application for the current platform. Generated application assets stay ignored and are never a source-of-truth input to a clean release checkout. A separate manual build is not required:
 
 ```sh
 pnpm run package:desktop
 ```
 
-Packaged applications run the staged `@deepseek-ai/dsh` CLI in a separate process through Electron's Node mode. The application therefore retains the supervised-Host lifecycle without shipping a second Node executable. An `afterPack` check rejects the package before signing when the staged CLI entry, Web frontend entry, generic HTTPS update provider, or explicit update channel is absent. It also verifies the macOS arm64 or Windows x64 Sharp native module required by the Harness image pipeline. The same hook writes `app-update.yml` for every target, including the unpacked directory used by preview archives. Preview packages therefore request the published `rc-mac.yml` or `rc.yml` manifest instead of Electron's nonexistent default channel and can resolve a same-version feed as up to date. Both macOS and Windows derive their platform icons from the tracked transparent, rounded `apps/desktop/build/icon.png`; the repository does not commit separate platform-specific variants.
+Packaged applications run the staged `@deepseek-ai/dsh` CLI in a separate process through Electron's Node mode. The application therefore retains the supervised-Host lifecycle without shipping a second Node executable. An `afterPack` check rejects the package before signing when the staged CLI entry, Web frontend entry, or pinned package manager is absent, and verifies the macOS arm64 or Windows x64 Sharp native module required by the Harness image pipeline. The hook writes no update configuration: packages carry no release provider. Both macOS and Windows derive their platform icons from the tracked transparent, rounded `apps/desktop/build/icon.png`; the repository does not commit separate platform-specific variants.
 
 ### Signed macOS DMG and ZIP
 
@@ -92,19 +92,9 @@ hdiutil detach "$MOUNT_POINT"
 rmdir "$MOUNT_POINT"
 ```
 
-### Publishing updates
+### Automatic updates
 
-Desktop installations check the Beyondata OSS feed configured in this package; they never replace this customized application with an upstream DeepSeek Harness artifact. Electron Builder's generic provider generates channel metadata but does not upload it. After `ALIYUN_OSS_ACCESS_KEY_ID` and `ALIYUN_OSS_ACCESS_KEY_SECRET` have been injected through a protected environment mechanism, the release maintainer publishes one or more platform output directories whose installers have passed the platform signing and acceptance checks:
-
-```sh
-pnpm run publish:desktop-update -- \
-  --dir /path/to/macos-output \
-  --dir /path/to/windows-output
-```
-
-The command validates one version and channel across all supplied directories, checks every metadata size and SHA-512, requires each blockmap, and rejects a macOS release without a ZIP. It uploads versioned artifacts before replacing `rc-mac.yml` or `rc.yml`, then reads both manifests through the public URL. Existing immutable objects are reused only when their recorded size and SHA-512 match.
-
-`--dry-run` performs every local check without contacting OSS. `--allow-current-baseline` is a one-time exception for publishing an already distributed current version whose macOS test package predates the ZIP requirement; it makes same-version checks return “up to date” but is not a cross-version update release. Future versions must use the signed DMG+ZIP and signed Windows NSIS paths before publication. Credentials stay in protected environment injection and must never enter a command transcript, build output, or tracked file.
+Packages ship no release provider. No `app-update.yml` is written and the package carries no publishing credentials or feed endpoint, so an installed build never contacts a server on its own until `DSH_DESKTOP_UPDATE_URL` names a generic update feed. When that variable is set, the shell points `electron-updater` at that URL, publishes the resulting state to the settings page, and checks once after startup; manual check, download, and restart stay available there. Without the variable, update checks are explicit no-ops and the settings page states that automatic checks are off. The shell never replaces this customized application with an upstream DeepSeek Harness artifact.
 
 ### Windows x64 NSIS installer
 
@@ -114,7 +104,7 @@ Build the guided Windows x64 installer with:
 pnpm run dist:win:desktop
 ```
 
-The assisted flow defaults to the current user, allows an all-users installation, and lets the user choose the installation directory. The command builds the complete workspace, stages a Windows-targeted Host runtime, removes declarations and source maps that Node never loads, verifies the required Koffi, Sharp, and node-pty x64 native modules, then creates the `.exe` installer, blockmap, and update metadata. macOS cross-builds expose Electron Builder's NSIS templates through a short temporary path because NSIS still uses a fixed 260-character POSIX include buffer; the temporary symlink is removed after the build.
+The assisted flow defaults to the current user, allows an all-users installation, and lets the user choose the installation directory. The command builds the complete workspace, stages a Windows-targeted Host runtime, removes declarations and source maps that Node never loads, verifies the required Koffi, Sharp, and node-pty x64 native modules, then creates the `.exe` installer. macOS cross-builds expose Electron Builder's NSIS templates through a short temporary path because NSIS still uses a fixed 260-character POSIX include buffer; the temporary symlink is removed after the build.
 
 Before replacement or removal, NSIS asks the running single instance to enter the ordinary explicit-quit path, waits up to five seconds for the supervised Host to settle, then makes two bounded attempts to terminate any remaining `DeepSeek Harness.exe` process tree. A process that still owns the installation directory fails the operation explicitly instead of leaving a partial uninstall. If a manual deletion or failed uninstall leaves a broken registration and a partial application directory, the replacement removes that residue, bypasses the unusable old uninstaller, installs a clean payload, and recreates the uninstall registration. Every registered `0.1.0-rc.*` preview installation uses this same replacement path when its location equals the selected installation directory or is the dedicated default product directory, so custom-directory upgrades remain supported without authorizing deletion of an unrelated registry path. Profile data remains outside the application directory.
 

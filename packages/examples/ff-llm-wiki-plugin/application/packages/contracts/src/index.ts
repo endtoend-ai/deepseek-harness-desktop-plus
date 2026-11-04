@@ -72,31 +72,31 @@ export function createDemoOverview(): OverviewResponse {
     stats: [
       {
         key: 'documents',
-        label: '文档数',
+        label: 'Documents',
         value: 128,
         delta: 12,
-        deltaLabel: '本周新增',
+        deltaLabel: 'New this week',
       },
       {
         key: 'entries',
-        label: '知识条目',
+        label: 'Knowledge entries',
         value: 1243,
         delta: 86,
-        deltaLabel: '本周新增',
+        deltaLabel: 'New this week',
       },
       {
         key: 'relationships',
-        label: '关系数',
+        label: 'Relations',
         value: 3210,
         delta: 214,
-        deltaLabel: '本周新增',
+        deltaLabel: 'New this week',
       },
       {
         key: 'todayQa',
-        label: '今日问答',
+        label: 'Questions today',
         value: 47,
         delta: 9,
-        deltaLabel: '较昨日',
+        deltaLabel: 'vs yesterday',
       },
     ],
     recentDocuments: [
@@ -152,38 +152,38 @@ export function createDemoOverview(): OverviewResponse {
     processingProgress: [
       {
         id: 'stage-parse',
-        name: '文件解析',
+        name: 'File parsing',
         progress: 100,
         status: 'done',
-        detail: '128 / 128 份文档',
+        detail: '128 / 128 documents',
       },
       {
         id: 'stage-entity',
-        name: '实体与条目抽取',
+        name: 'Entity and entry extraction',
         progress: 100,
         status: 'done',
-        detail: '已生成 1243 条知识条目',
+        detail: '1,243 knowledge entries generated',
       },
       {
         id: 'stage-graph',
-        name: '关系与图谱构建',
+        name: 'Relations and graph construction',
         progress: 82,
         status: 'running',
-        detail: '已构建 3210 条关系',
+        detail: '3,210 relations built',
       },
       {
         id: 'stage-index',
-        name: '向量化与索引',
+        name: 'Embedding and indexing',
         progress: 64,
         status: 'running',
-        detail: '正在为知识条目生成向量',
+        detail: 'Generating embeddings for knowledge entries',
       },
       {
         id: 'stage-qa',
-        name: '问答服务就绪',
+        name: 'Question answering ready',
         progress: 0,
         status: 'pending',
-        detail: '等待上游阶段完成',
+        detail: 'Waiting for the upstream stages',
       },
     ],
     generatedAt: new Date().toISOString(),
@@ -288,12 +288,12 @@ export type DocumentOrigin = 'demo' | 'upload'
 
 /** 资料主题 → 业务语言标签 */
 export const DOCUMENT_TOPIC_LABELS: Record<DocumentTopic, string> = {
-  product: '产品',
-  engineering: '研发',
-  support: '客服',
-  security: '安全',
-  operations: '运维',
-  hr: '人力',
+  product: 'Product',
+  engineering: 'Engineering',
+  support: 'Support',
+  security: 'Security',
+  operations: 'Operations',
+  hr: 'People',
 }
 
 /** 一份资料的完整记录（列表与详情共用） */
@@ -504,10 +504,10 @@ export type WikiPageType = 'concept' | 'system' | 'playbook' | 'policy'
 
 /** 知识页类型 → 业务语言标签 */
 export const WIKI_PAGE_TYPE_LABELS: Record<WikiPageType, string> = {
-  concept: '概念',
-  system: '系统',
-  playbook: '手册',
-  policy: '策略',
+  concept: 'Concept',
+  system: 'System',
+  playbook: 'Playbook',
+  policy: 'Policy',
 }
 
 /** 列表项（目录与搜索结果用，不含正文） */
@@ -765,7 +765,7 @@ export interface QaModelConfigResponse {
   provider: 'deepseek'
   configured: boolean
   endpoint: string
-  credentialLabel: 'sk-****' | '未配置'
+  credentialLabel: 'sk-****' | 'not-configured'
   credentialSource: 'environment' | 'credentials-file' | 'missing'
   defaultModel: QaModelId
   models: Array<{

@@ -127,7 +127,7 @@ export function ApplicationCenterPage({
             <WikiArtwork />
             <div className={css.cardBody}>
               <div className={css.cardTitle}>
-                <h3>FF - LLM Wiki</h3>
+                <h3>{t('applicationWikiTitle')}</h3>
                 <span>{t('applicationOfficial')}</span>
               </div>
               <p className={css.description}>{t('applicationWikiDescription')}</p>

@@ -75,7 +75,7 @@ export function releaseMac(argv: readonly string[] = []): void {
     DSH_DESKTOP_TARGET_ARCH: architecture,
   })
   run('pnpm', [
-    '--filter', '@fufan/dsh-plugin-llm-wiki', 'run', 'build:application',
+    '--filter', 'dsh-plugin-llm-wiki', 'run', 'build:application',
   ], resolve(desktopRoot, '../..'), buildEnvironment)
   run('pnpm', ['--workspace-root', 'run', 'build'], desktopRoot, buildEnvironment)
   run('node', ['--import', 'tsx', 'scripts/stage-runtime.ts'], desktopRoot, buildEnvironment)

@@ -23,30 +23,39 @@ export class DesktopUpdateController {
   private state: DesktopUpdateState
   private readonly listeners = new Set<(state: DesktopUpdateState) => void>()
   private readonly updater: UpdaterDriver
-  private readonly packaged: boolean
+  private readonly enabled: boolean
 
   /**
    * @param updater - electron-updater singleton or a test driver.
    * @param currentVersion - running app version.
    * @param harnessVersion - Harness core version embedded in the Host runtime.
    * @param packaged - false for source development runs, where real update installation is unavailable.
+   * @param feedUrl - explicitly configured release feed; omission leaves automatic update checks off.
    */
   constructor(
     updater: UpdaterDriver,
     currentVersion: string,
     harnessVersion: string,
     packaged: boolean,
+    feedUrl?: string,
   ) {
     this.updater = updater
-    this.packaged = packaged
-    this.state = packaged
-      ? { phase: 'idle', currentVersion, harnessVersion }
-      : {
+    this.enabled = packaged && feedUrl !== undefined && feedUrl.trim() !== ''
+    this.state = !packaged
+      ? {
         phase: 'development',
         currentVersion,
         harnessVersion,
-        message: '当前为开发版；正式安装包生成后即可从发布源检查更新。',
+        message: 'This is a development build; update checks run against the release feed once a packaged build exists.',
       }
+      : this.enabled
+        ? { phase: 'idle', currentVersion, harnessVersion }
+        : {
+          phase: 'idle',
+          currentVersion,
+          harnessVersion,
+          message: 'Automatic update checks are off for this build; set DSH_DESKTOP_UPDATE_URL to a release feed to enable them.',
+        }
     updater.autoDownload = false
     updater.autoInstallOnAppQuit = true
     updater.on('checking-for-update', () => {
@@ -92,9 +101,9 @@ export class DesktopUpdateController {
     return () => { this.listeners.delete(listener) }
   }
 
-  /** Check the configured release provider. Development builds remain explicit no-ops. */
+  /** Check the configured release feed. Development builds and unconfigured feeds remain explicit no-ops. */
   async check(): Promise<DesktopUpdateState> {
-    if (!this.packaged) return this.state
+    if (!this.enabled) return this.state
     try {
       await this.updater.checkForUpdates()
     } catch (error) {
@@ -105,7 +114,7 @@ export class DesktopUpdateController {
 
   /** Download an update that the preceding check reported. */
   async download(): Promise<DesktopUpdateState> {
-    if (!this.packaged) return this.state
+    if (!this.enabled) return this.state
     if (this.state.phase !== 'available' && this.state.phase !== 'error') return this.state
     this.publish({
       phase: 'downloading',
@@ -151,18 +160,20 @@ export class DesktopUpdateController {
   }
 }
 
-/** Convert release-provider failures into stable learner-facing Chinese text. */
+/** Convert release-provider failures into stable user-facing text. */
 export function friendlyUpdateError(error: unknown, action: 'check' | 'download'): string {
   const message = error instanceof Error ? error.message : String(error)
   if (/Cannot find channel .* update info|\b404 Not Found\b/i.test(message)) {
     return action === 'download'
-      ? '更新文件暂时不可用，请稍后再试。'
-      : '更新服务正在准备中，请稍后再试。'
+      ? 'The update file is temporarily unavailable. Please try again later.'
+      : 'The update service is still being prepared. Please try again later.'
   }
   if (/ENOTFOUND|ECONNREFUSED|ETIMEDOUT|ERR_INTERNET_DISCONNECTED|network|网络/i.test(message)) {
     return action === 'download'
-      ? '暂时无法下载更新，请检查网络后重试。'
-      : '暂时无法连接更新服务，请检查网络后重试。'
+      ? 'Cannot download the update. Check your network and try again.'
+      : 'Cannot reach the update service. Check your network and try again.'
   }
-  return action === 'download' ? '下载更新失败，请稍后再试。' : '检查更新失败，请稍后再试。'
+  return action === 'download'
+    ? 'The update download failed. Please try again later.'
+    : 'The update check failed. Please try again later.'
 }

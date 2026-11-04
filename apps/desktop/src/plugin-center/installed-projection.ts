@@ -350,7 +350,7 @@ export function deriveInstalledPluginProjection(input: InstalledProjectionInput)
       compatibilityReason: activationReasons.length > 0
         ? activationReasons.map(reason => `${reason.code}: ${reason.subject}`).join('; ')
         : catalog?.summary.compatibility.reason
-        ?? (system ? '系统组件由当前桌面发行版保护。' : '未匹配已验证目录中的确定版本。'),
+        ?? (system ? 'System components are protected by the current desktop release.' : 'No pinned version in the verified catalog matched.'),
       update,
       pendingAction: pending !== null && catalog !== null && pending.pluginId === catalog.candidate.pluginId
         ? pending.action

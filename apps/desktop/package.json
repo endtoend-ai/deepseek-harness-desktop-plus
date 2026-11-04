@@ -7,7 +7,7 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json && tsdown",
-    "build:applications": "pnpm --filter @fufan/dsh-plugin-llm-wiki run build:application",
+    "build:applications": "pnpm --filter dsh-plugin-llm-wiki run build:application",
     "bundle": "tsc -p tsconfig.json && tsdown",
     "dev": "node --import tsx scripts/dev-desktop.ts",
     "dev:rebuild": "node --import tsx scripts/dev-desktop.ts --rebuild",
@@ -15,7 +15,6 @@
     "dist:mac": "node --import tsx scripts/release-mac.ts",
     "dist:win": "pnpm run build:applications && pnpm --workspace-root run build && DSH_DESKTOP_TARGET_PLATFORM=win32 DSH_DESKTOP_TARGET_ARCH=x64 node --import tsx scripts/stage-runtime.ts && node --import tsx scripts/release-win.ts",
     "package": "pnpm run build:applications && pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && electron-builder --dir",
-    "publish:update": "node --import tsx scripts/publish-update.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json"
   },
   "license": "MIT",
@@ -68,13 +67,6 @@
       {
         "from": "runtime-host/node_modules",
         "to": "host/node_modules"
-      }
-    ],
-    "publish": [
-      {
-        "provider": "generic",
-        "url": "https://ml2022.oss-cn-hangzhou.aliyuncs.com/deepseek-harness-desktop/releases",
-        "channel": "rc"
       }
     ],
     "toolsets": {

@@ -1,4 +1,4 @@
-/** Browser launcher for the standalone FF - LLM Wiki application. */
+/** Browser launcher for the standalone LLM Wiki application. */
 
 import { useSyncExternalStore } from 'react'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
@@ -108,8 +108,8 @@ export const inject = ['slots', 'locale']
 /** Register one launcher in the sidebar foot without claiming a main panel. */
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, {
-    zh: { nav: 'FF - LLM Wiki', openFailed: '无法启动 FF - LLM Wiki', openHint: '在新窗口打开' },
-    en: { nav: 'FF - LLM Wiki', openFailed: 'Unable to launch FF - LLM Wiki', openHint: 'Open in a new window' },
+    zh: { nav: 'LLM Wiki', openFailed: 'Unable to launch LLM Wiki', openHint: 'Open in a new window' },
+    en: { nav: 'LLM Wiki', openFailed: 'Unable to launch LLM Wiki', openHint: 'Open in a new window' },
   }), 'ff-llm-wiki: dictionaries')
   // The foot stacks every occupant above Settings in both sidebar widths, and
   // hands it the column state; the wiki opens an external window, so it must

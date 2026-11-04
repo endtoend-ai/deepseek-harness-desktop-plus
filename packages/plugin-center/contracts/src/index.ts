@@ -897,7 +897,7 @@ export const PRESET_SQUARE_SORTS = ['downloads', 'newest'] as const
 export type PresetSquareSort = typeof PRESET_SQUARE_SORTS[number]
 
 /** Catalog provenance shown independently from local Preset trust. */
-export const PRESET_SQUARE_SOURCES = ['fufan-official', 'community'] as const
+export const PRESET_SQUARE_SOURCES = ['official', 'community'] as const
 /** Catalog provenance shown independently from local Preset trust. */
 export type PresetSquareSource = typeof PRESET_SQUARE_SOURCES[number]
 

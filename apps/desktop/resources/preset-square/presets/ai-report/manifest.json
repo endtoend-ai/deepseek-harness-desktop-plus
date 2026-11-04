@@ -1,0 +1,8 @@
+{
+  "format": "dsh-preset",
+  "version": 1,
+  "id": "ai-report-analyst",
+  "name": "AI Data Narrative Analyst",
+  "description": "AI report workflow: one Agent Preset and one Skill turn a local Excel workbook into a verifiable offline interactive report.",
+  "sourceDshVersion": "0.1.0-rc.8"
+}

@@ -392,11 +392,11 @@ function PresetArtwork({ item, compact = false, local = false }: {
   return (
     <span
       className={`${css.artwork}${compact ? ` ${css.artworkCompact}` : ''}${local ? ` ${css.artworkLocal}` : ''}`}
-      data-variant={String(item.source === 'fufan-official' ? item.visualVariant : item.visualVariant % 6)}
-      data-artwork={item.source === 'fufan-official' ? item.presetId : 'community-fallback'}
+      data-variant={String(item.source === 'official' ? item.visualVariant : item.visualVariant % 6)}
+      data-artwork={item.source === 'official' ? item.presetId : 'community-fallback'}
       aria-hidden="true"
     >
-      {item.source === 'fufan-official'
+      {item.source === 'official'
         ? <OfficialPresetGlyph presetId={item.presetId} />
         : <CommunityPresetGlyph variant={item.visualVariant} />}
     </span>
@@ -502,19 +502,19 @@ export function PresetSquarePanel({
     ? remote.result.items.filter(item => matches(item, query))
     : [], [query, remote])
   const officialVisible = useMemo(() => visible
-    .filter(item => item.source === 'fufan-official')
+    .filter(item => item.source === 'official')
     .sort((left, right) => Number(right.presetId === 'llm-wiki-fullstack')
       - Number(left.presetId === 'llm-wiki-fullstack')), [visible])
   const communityVisible = useMemo(() => visible.filter(item => item.source === 'community'), [visible])
   const officialCount = remote.status === 'ready'
-    ? remote.result.items.filter(item => item.source === 'fufan-official').length
+    ? remote.result.items.filter(item => item.source === 'official').length
     : 0
   const communityCount = remote.status === 'ready'
     ? remote.result.items.filter(item => item.source === 'community').length
     : 0
   const catalogVisible = view === 'official' ? officialVisible : communityVisible
-  const catalogTitle = view === 'official' ? t('presetFufanOfficialTitle') : t('presetCommunityTitle')
-  const catalogHint = view === 'official' ? t('presetFufanOfficialHint') : t('presetCommunityHint')
+  const catalogTitle = view === 'official' ? t('presetOfficialTitle') : t('presetCommunityTitle')
+  const catalogHint = view === 'official' ? t('presetOfficialHint') : t('presetCommunityHint')
   const catalogView = view !== 'installed'
 
   const localById = useMemo(() => new Map(local.status === 'ready'
@@ -769,7 +769,7 @@ export function PresetSquarePanel({
         setFeedback('presetSetupRequired')
         return
       }
-      setView(item.source === 'fufan-official' ? 'official' : 'community')
+      setView(item.source === 'official' ? 'official' : 'community')
       openDetail(item, true)
       if (confirmRuntime) setRuntimeConfirm(true)
     }
@@ -897,12 +897,12 @@ export function PresetSquarePanel({
             <div className={css.cardCopy}>
               <div className={css.cardTitle}>
                 <strong>{item.title}</strong>
-                {item.source === 'fufan-official' ? <span>{t('presetFufanOfficialBadge')}</span> : null}
+                {item.source === 'official' ? <span>{t('presetOfficialBadge')}</span> : null}
               </div>
               <p>{item.description}</p>
               <div className={css.cardMeta}>
-                <span>{item.source === 'fufan-official'
-                  ? t('presetFufanOfficialPackage')
+                <span>{item.source === 'official'
+                  ? t('presetOfficialPackage')
                   : `@${item.publisher.username} · ${item.downloadCount.toLocaleString()} ${t('presetDownloads')}`}</span>
                 {setup === undefined ? null : (
                   <em data-kind={setup.kind}>{t(setup.runtimeId === undefined
@@ -983,7 +983,7 @@ export function PresetSquarePanel({
               data-active={view === 'official' || undefined}
               onClick={() => { setView('official') }}
             >
-              <span>{t('presetFufanOfficialTitle')}</span>
+              <span>{t('presetOfficialTitle')}</span>
               {remote.status === 'ready' ? <em>{officialCount}</em> : null}
             </button>
             <button
@@ -1159,10 +1159,10 @@ export function PresetSquarePanel({
               {detail.status === 'loading' ? <p className={css.status}>{t('detailLoading')}</p> : null}
               {detail.status === 'error' ? <p className={css.failureText}>{t('detailError')}</p> : null}
               <p className={css.description}>{selectedItem.description}</p>
-              {selectedItem.source === 'fufan-official' ? (
+              {selectedItem.source === 'official' ? (
                 <div className={css.officialNotice}>
-                  <strong>{t('presetFufanOfficialBadge')}</strong>
-                  <p>{t('presetFufanOfficialDisclaimer')}</p>
+                  <strong>{t('presetOfficialBadge')}</strong>
+                  <p>{t('presetOfficialDisclaimer')}</p>
                 </div>
               ) : null}
               {selectedCapabilities === undefined ? null : (

@@ -684,7 +684,7 @@ describe('endpoint interrogation', () => {
     openEditor('openai')
 
     // A route the adapter already describes needs no endpoint at all.
-    expect(buttonNamed(en.fetchModels).disabled).toBe(false)
+    expect(screen.getByRole('button', { name: en.fetchModels }).hasAttribute('disabled')).toBe(false)
     fireEvent.click(screen.getByText(en.fetchModels))
 
     await waitFor(() => { expect(discover).toHaveBeenCalled() })
@@ -705,7 +705,7 @@ describe('endpoint interrogation', () => {
     expect(buttonNamed(en.fetchModels).title).toBe(en.fetchNeedsBaseUrl)
 
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
-    expect(buttonNamed(en.fetchModels).disabled).toBe(false)
+    expect(screen.getByRole('button', { name: en.fetchModels }).hasAttribute('disabled')).toBe(false)
     fireEvent.click(screen.getByText(en.fetchModels))
 
     // A provider being declared names no route, so only the endpoint travels.
@@ -868,6 +868,11 @@ describe('guided local providers', () => {
     fireEvent.click(screen.getByRole('tab', { name: en.localAdd }))
   }
 
+  /** The local panel alone: the catalog and custom panels stay mounted while hidden. */
+  function localPanel(): ReturnType<typeof within> {
+    return within(screen.getByRole('tabpanel', { name: en.localAdd }))
+  }
+
   it('exposes local inference as a first-class entry with framework defaults', async () => {
     await mountSection()
 
@@ -875,17 +880,17 @@ describe('guided local providers', () => {
 
     expect(screen.getByRole('radiogroup', { name: en.localFramework })).toBeTruthy()
     expect(screen.getByRole('radio', { name: /Ollama/ }).getAttribute('aria-checked')).toBe('true')
-    expect(screen.getByLabelText<HTMLInputElement>(en.baseUrl).value)
+    expect(screen.getByLabelText<HTMLInputElement>(en.localBaseUrl).value)
       .toBe('http://127.0.0.1:11434/v1')
-    expect(screen.getByLabelText(en.localKeyInput)).toBeTruthy()
-    expect(screen.queryByLabelText(en.customRoute)).toBeNull()
-    expect(screen.queryByLabelText(en.customApi)).toBeNull()
+    expect(localPanel().getByLabelText(en.localKeyInput)).toBeTruthy()
+    expect(screen.queryByRole('textbox', { name: en.customRoute })).toBeNull()
+    expect(screen.queryByRole('combobox', { name: en.customApi })).toBeNull()
 
     fireEvent.click(screen.getByRole('radio', { name: /SGLang/ }))
-    expect(screen.getByLabelText<HTMLInputElement>(en.baseUrl).value)
+    expect(screen.getByLabelText<HTMLInputElement>(en.localBaseUrl).value)
       .toBe('http://127.0.0.1:30000/v1')
     expect(screen.getByText(`${en.localTitle} · SGLang`)).toBeTruthy()
-    expect(buttonNamed(en.fetchModels).disabled).toBe(false)
+    expect(localPanel().getByRole('button', { name: en.fetchModels }).hasAttribute('disabled')).toBe(false)
   })
 
   it('creates a selected local route without requiring an API key', async () => {
@@ -893,8 +898,8 @@ describe('guided local providers', () => {
 
     openLocalMode()
     fireEvent.click(screen.getByRole('radio', { name: /vLLM/ }))
-    fireEvent.click(screen.getByRole('button', { name: en.addModel }))
-    fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'local-model' } })
+    fireEvent.click(localPanel().getByRole('button', { name: en.addModel }))
+    fireEvent.change(localPanel().getByLabelText(`${en.modelId} 1`), { target: { value: 'local-model' } })
     fireEvent.click(screen.getByRole('button', { name: en.localCreate }))
 
     await waitFor(() => { expect(mutate).toHaveBeenCalledOnce() })
@@ -933,7 +938,7 @@ describe('guided local providers', () => {
 
     expect(screen.getByRole<HTMLButtonElement>('radio', { name: /Ollama/ }).disabled).toBe(true)
     expect(screen.getByRole('radio', { name: /vLLM/ }).getAttribute('aria-checked')).toBe('true')
-    expect(screen.getByLabelText<HTMLInputElement>(en.baseUrl).value)
+    expect(screen.getByLabelText<HTMLInputElement>(en.localBaseUrl).value)
       .toBe('http://127.0.0.1:8000/v1')
   })
 })
@@ -1327,7 +1332,7 @@ describe('hand-declared providers', () => {
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: baseURL } })
 
     expect(screen.queryByText(en.customBaseUrlInvalid)).toBeNull()
-    expect(buttonNamed(en.fetchModels).disabled).toBe(false)
+    expect(screen.getByRole('button', { name: en.fetchModels }).hasAttribute('disabled')).toBe(false)
     expect(buttonNamed(en.create).disabled).toBe(false)
     fireEvent.click(screen.getByText(en.fetchModels))
     expect(lastProbe(discover)).toMatchObject({ baseURL })

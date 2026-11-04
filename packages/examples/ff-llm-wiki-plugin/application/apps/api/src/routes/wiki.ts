@@ -38,7 +38,7 @@ export function wikiRoutes(knowledgeRepo: SqliteKnowledgeRepository): FastifyPlu
         const page = getWikiPage(req.params.slug, knowledgeRepo.loadManifest())
         if (!page) {
           return reply.code(404).send({
-            message: `未找到知识页「${req.params.slug}」`,
+            message: `Knowledge page not found: "${req.params.slug}"`,
           })
         }
         return page

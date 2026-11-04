@@ -67,7 +67,7 @@ export class VisionEnhancementController {
     provider: 'bailian',
     providers: [
       {
-        id: 'bailian', name: '阿里云百炼', configured: false, defaultModel: 'qwen3.8-max',
+        id: 'bailian', name: 'Alibaba Cloud Bailian', configured: false, defaultModel: 'qwen3.8-max',
         apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key', modelEditable: false,
       },
       {
@@ -75,22 +75,22 @@ export class VisionEnhancementController {
         apiKeyUrl: 'https://openrouter.ai/settings/keys', modelEditable: true,
       },
       {
-        id: 'ollama', name: 'Ollama（本地）', configured: false, defaultModel: '',
+        id: 'ollama', name: 'Ollama (local)', configured: false, defaultModel: '',
         apiKeyUrl: 'https://docs.ollama.com/api/openai-compatibility', modelEditable: true,
         defaultBaseUrl: 'http://127.0.0.1:11434/v1', baseUrlEditable: true, apiKeyRequired: false,
       },
       {
-        id: 'vllm', name: 'vLLM（本地）', configured: false, defaultModel: '',
+        id: 'vllm', name: 'vLLM (local)', configured: false, defaultModel: '',
         apiKeyUrl: 'https://docs.vllm.ai/en/stable/serving/openai_compatible_server/', modelEditable: true,
         defaultBaseUrl: 'http://127.0.0.1:8000/v1', baseUrlEditable: true, apiKeyRequired: false,
       },
       {
-        id: 'sglang', name: 'SGLang（本地）', configured: false, defaultModel: '',
+        id: 'sglang', name: 'SGLang (local)', configured: false, defaultModel: '',
         apiKeyUrl: 'https://docs.sglang.ai/developer_guide/bench_serving', modelEditable: true,
         defaultBaseUrl: 'http://127.0.0.1:30000/v1', baseUrlEditable: true, apiKeyRequired: false,
       },
       {
-        id: 'custom', name: '自定义 OpenAI-compatible', configured: false, defaultModel: '',
+        id: 'custom', name: 'Custom OpenAI-compatible', configured: false, defaultModel: '',
         apiKeyUrl: 'https://platform.openai.com/docs/api-reference/chat/create', modelEditable: true,
         baseUrlEditable: true, apiKeyRequired: false,
       },

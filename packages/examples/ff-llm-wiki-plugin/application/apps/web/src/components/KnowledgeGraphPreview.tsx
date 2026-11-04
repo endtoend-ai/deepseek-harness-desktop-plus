@@ -1,24 +1,24 @@
 import Link from 'next/link'
 
 const NODES = [
-  { id: 'center', x: 260, y: 164, r: 32, label: '变更管理', tone: 'active', level: 0 },
-  { id: 'auth', x: 142, y: 78, r: 23, label: '接口安全', tone: 'done', level: 1 },
-  { id: 'release', x: 266, y: 55, r: 24, label: '发布流程', tone: 'done', level: 1 },
-  { id: 'monitor', x: 391, y: 88, r: 23, label: '监控告警', tone: 'active', level: 1 },
-  { id: 'backup', x: 421, y: 204, r: 23, label: '备份恢复', tone: 'done', level: 1 },
-  { id: 'capacity', x: 337, y: 276, r: 22, label: '容量规划', tone: 'done', level: 1 },
-  { id: 'review', x: 181, y: 275, r: 22, label: '故障复盘', tone: 'active', level: 1 },
-  { id: 'risk', x: 93, y: 189, r: 22, label: '风险评审', tone: 'active', level: 1 },
-  { id: 'gateway', x: 54, y: 67, r: 15, label: '网关', tone: 'signal', level: 2 },
-  { id: 'permission', x: 116, y: 133, r: 16, label: '权限', tone: 'signal', level: 2 },
-  { id: 'approval', x: 215, y: 103, r: 17, label: '门禁', tone: 'signal', level: 2 },
-  { id: 'gray', x: 330, y: 111, r: 17, label: '灰度', tone: 'signal', level: 2 },
-  { id: 'alert', x: 467, y: 119, r: 16, label: '告警', tone: 'signal', level: 2 },
-  { id: 'audit', x: 474, y: 264, r: 16, label: '审计', tone: 'signal', level: 2 },
-  { id: 'drill', x: 405, y: 307, r: 16, label: '演练', tone: 'signal', level: 2 },
-  { id: 'quota', x: 275, y: 314, r: 16, label: '配额', tone: 'signal', level: 2 },
-  { id: 'oncall', x: 101, y: 285, r: 16, label: '值班', tone: 'signal', level: 2 },
-  { id: 'rollback', x: 50, y: 243, r: 17, label: '回滚', tone: 'signal', level: 2 },
+  { id: 'center', x: 260, y: 164, r: 32, label: 'Change mgmt', tone: 'active', level: 0 },
+  { id: 'auth', x: 142, y: 78, r: 23, label: 'API security', tone: 'done', level: 1 },
+  { id: 'release', x: 266, y: 55, r: 24, label: 'Release flow', tone: 'done', level: 1 },
+  { id: 'monitor', x: 391, y: 88, r: 23, label: 'Monitoring', tone: 'active', level: 1 },
+  { id: 'backup', x: 421, y: 204, r: 23, label: 'Backup', tone: 'done', level: 1 },
+  { id: 'capacity', x: 337, y: 276, r: 22, label: 'Capacity', tone: 'done', level: 1 },
+  { id: 'review', x: 181, y: 275, r: 22, label: 'Incidents', tone: 'active', level: 1 },
+  { id: 'risk', x: 93, y: 189, r: 22, label: 'Risk review', tone: 'active', level: 1 },
+  { id: 'gateway', x: 54, y: 67, r: 15, label: 'Gateway', tone: 'signal', level: 2 },
+  { id: 'permission', x: 116, y: 133, r: 16, label: 'Access', tone: 'signal', level: 2 },
+  { id: 'approval', x: 215, y: 103, r: 17, label: 'Gate', tone: 'signal', level: 2 },
+  { id: 'gray', x: 330, y: 111, r: 17, label: 'Canary', tone: 'signal', level: 2 },
+  { id: 'alert', x: 467, y: 119, r: 16, label: 'Alerts', tone: 'signal', level: 2 },
+  { id: 'audit', x: 474, y: 264, r: 16, label: 'Audit', tone: 'signal', level: 2 },
+  { id: 'drill', x: 405, y: 307, r: 16, label: 'Drills', tone: 'signal', level: 2 },
+  { id: 'quota', x: 275, y: 314, r: 16, label: 'Quota', tone: 'signal', level: 2 },
+  { id: 'oncall', x: 101, y: 285, r: 16, label: 'On-call', tone: 'signal', level: 2 },
+  { id: 'rollback', x: 50, y: 243, r: 17, label: 'Rollback', tone: 'signal', level: 2 },
 ] as const
 
 const EDGES = [
@@ -44,16 +44,16 @@ export function KnowledgeGraphPreview() {
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-300/[0.035] blur-3xl" />
       <div className="relative z-10 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-[15px] font-semibold text-slate-100">知识图谱预览</h2>
-          <p className="mt-0.5 text-[13px] text-slate-600">真实知识页与主题关系</p>
+          <h2 className="text-[15px] font-semibold text-slate-100">Knowledge graph preview</h2>
+          <p className="mt-0.5 text-[13px] text-slate-600">Real page and topic relationships</p>
         </div>
         <span className="rounded-full border border-emerald-300/15 bg-emerald-300/[0.05] px-2 py-1 text-[12px] text-emerald-200/75">
-          75 节点 · 291 边
+          75 nodes · 291 edges
         </span>
       </div>
 
       <div className="relative z-10 flex min-h-[220px] flex-1 items-center justify-center pb-1">
-        <svg viewBox="0 0 520 330" className="h-full max-h-[400px] min-h-[220px] w-full max-w-[560px]" role="img" aria-label="知识图谱关系预览">
+        <svg viewBox="0 0 520 330" className="h-full max-h-[400px] min-h-[220px] w-full max-w-[560px]" role="img" aria-label="Knowledge graph relationship preview">
           <defs>
             <radialGradient id="graph-center" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.24" />
@@ -131,7 +131,7 @@ export function KnowledgeGraphPreview() {
       </div>
 
       <Link href="/knowledge-graph" className="absolute bottom-3 right-3 z-20 text-[13px] font-medium text-amber-200/85 transition-colors hover:text-amber-100">
-        查看图谱 →
+        Open the graph →
       </Link>
     </section>
   )

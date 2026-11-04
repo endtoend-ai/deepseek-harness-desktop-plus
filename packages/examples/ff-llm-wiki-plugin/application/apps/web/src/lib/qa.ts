@@ -37,12 +37,12 @@ export async function streamQa(
       body: JSON.stringify({ question, ...options }),
     });
   } catch {
-    onError("无法连接问答服务，请确认服务已启动后重试");
+    onError("Cannot reach the question-answering service. Confirm it is running, then retry.");
     return;
   }
 
   if (!res.ok || !res.body) {
-    onError(`问答请求失败：${res.status}`);
+    onError(`Question request failed: ${res.status}`);
     return;
   }
 
@@ -80,13 +80,13 @@ export async function streamQa(
     }
     onDone();
   } catch {
-    onError("流式读取中断，请重试");
+    onError("The stream was interrupted. Try again.");
   }
 }
 
 export async function getQaModelConfig(): Promise<QaModelConfigResponse> {
   const response = await fetch(`${API_BASE}/api/qa/config`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`读取模型配置失败：${response.status}`);
+  if (!response.ok) throw new Error(`Failed to read the model configuration: ${response.status}`);
   return response.json() as Promise<QaModelConfigResponse>;
 }
 
@@ -98,6 +98,6 @@ export async function testQaModelConnection(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ model }),
   });
-  if (!response.ok) throw new Error(`连接测试失败：${response.status}`);
+  if (!response.ok) throw new Error(`Connection test failed: ${response.status}`);
   return response.json() as Promise<QaConnectionTestResponse>;
 }

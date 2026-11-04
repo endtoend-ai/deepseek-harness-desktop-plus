@@ -48,10 +48,10 @@ function maxTokensOf(value: number | undefined) {
 function generatedAnswers(text: string, validCitationIds: Set<number>): QaAnswer[] {
   const mentioned = Array.from(text.matchAll(/\[(\d+)\]/g)).map(match => Number(match[1]))
   if (mentioned.some(id => !validCitationIds.has(id))) {
-    throw new Error('模型返回了无法对账的引用编号')
+    throw new Error('The model returned citation numbers that do not reconcile')
   }
   if (!mentioned.some(id => validCitationIds.has(id))) {
-    throw new Error('模型回答缺少可核查引用')
+    throw new Error('The model answer carries no verifiable citations')
   }
 
   return [
@@ -64,7 +64,7 @@ function generatedAnswers(text: string, validCitationIds: Set<number>): QaAnswer
 
 function fallbackReason(error: unknown) {
   if (error instanceof Error) return error.message.slice(0, 180)
-  return 'DeepSeek 生成失败'
+  return 'DeepSeek generation failed'
 }
 
 function normalizedCasualText(question: string): string {
@@ -73,20 +73,20 @@ function normalizedCasualText(question: string): string {
 
 /** 只覆盖明确的短问候，避免把业务问题误判成闲聊。 */
 export function isCasualQuestion(question: string): boolean {
-  return /^(你好|您好|你好呀|您好呀|嗨|哈喽|hello|hi|早上好|下午好|晚上好|谢谢|感谢|多谢|不客气|再见|拜拜)$/.test(
+  return /^(hello|hi|hey|good morning|good afternoon|good evening|thanks|thank you|you are welcome|bye|goodbye)$/i.test(
     normalizedCasualText(question),
   )
 }
 
 function localCasualAnswer(question: string): string {
   const normalized = normalizedCasualText(question)
-  if (/^(谢谢|感谢|多谢|不客气)$/.test(normalized)) {
-    return '不客气！你可以继续问我企业文档、Wiki 知识或业务流程相关的问题。'
+  if (/^(thanks|thank you|you are welcome)$/i.test(normalized)) {
+    return 'You are welcome. Ask me anything about enterprise documents, Wiki knowledge, or business processes.'
   }
-  if (/^(再见|拜拜)$/.test(normalized)) {
-    return '再见！需要查询企业知识时，随时来找我。'
+  if (/^(bye|goodbye)$/i.test(normalized)) {
+    return 'Goodbye. Come back whenever you need enterprise knowledge.'
   }
-  return '你好！我是企业知识库助手，可以帮你查询企业文档、Wiki 知识和相关业务信息。'
+  return 'Hello. I am the enterprise knowledge assistant; I can help you look up documents, Wiki knowledge, and related business information.'
 }
 
 export class QaService {
@@ -109,19 +109,19 @@ export class QaService {
       provider: 'deepseek',
       configured: this.deepseek.configured,
       endpoint: safeEndpoint(this.config.baseUrl),
-      credentialLabel: this.deepseek.configured ? 'sk-****' : '未配置',
+      credentialLabel: this.deepseek.configured ? 'sk-****' : 'not-configured',
       credentialSource: this.config.credentialSource,
       defaultModel: this.config.defaultModel,
       models: [
         {
           id: 'deepseek-v4-flash',
           label: 'DeepSeek V4 Flash',
-          description: '低延迟、高吞吐，适合日常企业知识问答',
+          description: 'Low latency and high throughput for everyday enterprise knowledge Q&A',
         },
         {
           id: 'deepseek-v4-pro',
           label: 'DeepSeek V4 Pro',
-          description: '更强推理与复杂任务能力，适合深度制度分析',
+          description: 'Stronger reasoning for complex tasks and deep policy analysis',
         },
       ],
       knowledgeStore: {
@@ -176,7 +176,7 @@ export class QaService {
             promptTokens: null,
             completionTokens: null,
             totalTokens: null,
-            fallbackReason: !localOnly && !this.deepseek.configured ? 'DeepSeek API Key 未配置' : null,
+            fallbackReason: !localOnly && !this.deepseek.configured ? 'DeepSeek API key is not configured' : null,
           },
         }
       }
@@ -298,7 +298,7 @@ export class QaService {
           promptTokens: null,
           completionTokens: null,
           totalTokens: null,
-          fallbackReason: '知识库没有达到阈值的证据，未调用模型',
+          fallbackReason: 'No evidence crossed the threshold, so the model was not called',
         },
       }
     }
@@ -314,7 +314,7 @@ export class QaService {
           promptTokens: null,
           completionTokens: null,
           totalTokens: null,
-          fallbackReason: 'DeepSeek API Key 未配置',
+          fallbackReason: 'DeepSeek API key is not configured',
         },
       }
     }

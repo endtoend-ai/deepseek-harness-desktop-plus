@@ -93,13 +93,13 @@ function makeTooltip(
   ].join(';')
 
   const type = document.createElement('div')
-  type.innerHTML = `<span style="display:inline-block;width:5px;height:5px;margin-right:6px;border-radius:50%;background:${data.color};box-shadow:0 0 10px ${data.color}"></span>${NODE_TYPE_LABEL[data.type] ?? '知识节点'}`
+  type.innerHTML = `<span style="display:inline-block;width:5px;height:5px;margin-right:6px;border-radius:50%;background:${data.color};box-shadow:0 0 10px ${data.color}"></span>${NODE_TYPE_LABEL[data.type] ?? 'Knowledge node'}`
   type.style.cssText = `display:flex;align-items:center;font-size:9px;letter-spacing:.14em;color:${data.color};text-transform:uppercase`
   const title = document.createElement('div')
   title.textContent = data.label
   title.style.cssText = `margin-top:7px;font-size:14px;line-height:1.45;font-weight:600;color:${isLight ? '#17231f' : '#f4f7f6'}`
   const meta = document.createElement('div')
-  meta.textContent = `${data.clusterLabel} · ${data.degree} 条关系`
+  meta.textContent = `${data.clusterLabel} · ${data.degree} relations`
   meta.style.cssText = `margin-top:6px;padding-top:6px;border-top:1px solid ${isLight ? 'rgba(40,73,64,.1)' : 'rgba(148,163,184,.09)'};font-size:10px;color:${isLight ? '#75857f' : '#708087'}`
   root.append(type, title, meta)
   return root
@@ -152,7 +152,7 @@ export const G6KnowledgeGraph = forwardRef<G6KnowledgeGraphHandle, G6KnowledgeGr
           const topicId = topicColor.has(edge.target) ? edge.target : edge.source
           const pageId = topicId === edge.target ? edge.source : edge.target
           clusterById.set(pageId, topicId)
-          clusterLabelById.set(pageId, nodes.find(node => node.id === topicId)?.label ?? '业务主题')
+          clusterLabelById.set(pageId, nodes.find(node => node.id === topicId)?.label ?? 'Business topic')
         }
       }
 
@@ -165,7 +165,7 @@ export const G6KnowledgeGraph = forwardRef<G6KnowledgeGraphHandle, G6KnowledgeGr
         const cluster = clusterById.get(pageId)
         if (sourceNode && cluster) {
           clusterById.set(sourceNode.id, cluster)
-          clusterLabelById.set(sourceNode.id, clusterLabelById.get(pageId) ?? '业务主题')
+          clusterLabelById.set(sourceNode.id, clusterLabelById.get(pageId) ?? 'Business topic')
         }
       }
 
@@ -178,7 +178,7 @@ export const G6KnowledgeGraph = forwardRef<G6KnowledgeGraphHandle, G6KnowledgeGr
         const cluster = clusterById.get(pageId)
         if (typeNode && cluster) {
           clusterById.set(typeNode.id, cluster)
-          clusterLabelById.set(typeNode.id, clusterLabelById.get(pageId) ?? '业务主题')
+          clusterLabelById.set(typeNode.id, clusterLabelById.get(pageId) ?? 'Business topic')
         }
       }
 
@@ -558,12 +558,12 @@ export const G6KnowledgeGraph = forwardRef<G6KnowledgeGraphHandle, G6KnowledgeGr
         {renderState !== 'ready' && (
           <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
             <div className={`rounded-2xl border border-emerald-300/15 px-5 py-3 text-[13px] tracking-[0.12em] shadow-2xl backdrop-blur-xl ${isLight ? 'bg-white/90 text-emerald-800/70' : 'bg-[#071012]/90 text-emerald-100/70'}`}>
-              {renderState === 'error' ? '图谱画布初始化失败' : '正在组织业务知识域…'}
+              {renderState === 'error' ? 'Failed to initialize the graph canvas' : 'Organizing business domains…'}
             </div>
           </div>
         )}
         <div className={`pointer-events-none absolute bottom-4 left-4 z-20 rounded-full border px-3 py-1.5 text-[12px] backdrop-blur-xl ${isLight ? 'border-emerald-900/10 bg-white/80 text-slate-500' : 'border-emerald-300/10 bg-[#071012]/80 text-slate-500'}`}>
-          拖拽探索 · 滚轮缩放 · 点击聚焦一跳关系
+          Drag to explore · scroll to zoom · click to focus one-hop relations
         </div>
       </div>
     )

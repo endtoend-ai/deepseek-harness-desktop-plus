@@ -55,19 +55,19 @@ export type VisionEnhancementShortcutProps =
   PropsRuntime<'conversation.input.left'> & InjectFace<VisionEnhancementShortcutInjected>
 
 function routeText(route: VisionRouteView | undefined): string | undefined {
-  if (route?.mode === 'native') return '原生视觉'
-  if (route?.mode === 'compatible') return `兼容 · ${route.providerName ?? route.provider ?? '视觉服务'}`
-  if (route?.mode === 'unavailable') return '当前模型不可用'
+  if (route?.mode === 'native') return 'Native vision'
+  if (route?.mode === 'compatible') return `Compatible · ${route.providerName ?? route.provider ?? 'compatible service'}`
+  if (route?.mode === 'unavailable') return 'Current model unavailable'
   return undefined
 }
 
 function statusText(state: VisionEnhancementState, route?: VisionRouteView, modelReady = true): string {
-  if (state.status === 'loading' || state.status === 'idle') return '正在读取状态'
-  if (state.status === 'saving') return state.enabled ? '正在关闭' : '正在开启'
-  if (state.status === 'error') return '状态异常，点击重新配置'
-  if (!modelReady) return '正在读取当前模型'
-  if (state.enabled) return routeText(route) === undefined ? '已开启，正在匹配路径' : `已开启 · ${routeText(route)}`
-  return '已关闭，点击后切换到支持图片的模型'
+  if (state.status === 'loading' || state.status === 'idle') return 'Reading status'
+  if (state.status === 'saving') return state.enabled ? 'Turning off' : 'Turning on'
+  if (state.status === 'error') return 'Status error; click to reconfigure'
+  if (!modelReady) return 'Reading the current model'
+  if (state.enabled) return routeText(route) === undefined ? 'On, resolving the route' : `On · ${routeText(route)}`
+  return 'Off; click to switch to an image-capable model'
 }
 
 function hoverContent(
@@ -78,20 +78,20 @@ function hoverContent(
 ): ReactNode {
   const providerName = state.providers.find(provider => provider.id === state.provider)?.name ?? state.provider
   const routeDescription = !state.enabled
-    ? `点击后，右侧主模型将切换为 ${DEEPSEEK_NATIVE_VISION_MODEL}。`
+    ? `Click to switch the main model to ${DEEPSEEK_NATIVE_VISION_MODEL}.`
     : route?.mode === 'native'
-      ? `当前模型 ${route.model} 原生接收图片；优先通过 DeepSeek Files API 安全上传并复用，必要时在请求上限内回退为内联图片，不会重复调用兼容视觉服务。`
+      ? `The current model ${route.model} accepts images natively: images upload through the DeepSeek Files API and are reused, falling back to inline images within the request limit, without calling the compatible compatible service again.`
       : route?.mode === 'compatible'
-        ? `当前模型不原生接收图片，改由 ${route.providerName ?? route.provider ?? providerName} · ${route.visionModel ?? state.model} 读取。`
+        ? `The current model does not accept images natively; ${route.providerName ?? route.provider ?? providerName} · ${route.visionModel ?? state.model} reads them instead.`
         : route?.mode === 'unavailable'
-          ? '当前模型不原生接收图片，且尚无可用的兼容视觉服务。'
-          : `开启后自动优先使用当前模型的原生视觉；不支持时使用 ${providerName} · ${state.model}。`
+          ? 'The current model does not accept images natively and no compatible compatible service is available.'
+          : `When on, the current model's native vision is preferred; when unsupported, ${providerName} · ${state.model} is used.`
   return (
     <div className={css.shortcutHover}>
       <div className={css.shortcutHoverTitle}>
-        <span>视觉增强</span>
+        <span>Visual enhancement</span>
         <span className={state.enabled ? css.shortcutHoverOn : css.shortcutHoverStatus}>
-          {state.enabled ? '已开启' : '已关闭'}
+          {state.enabled ? 'On' : 'Off'}
         </span>
       </div>
       <p>{routeDescription}</p>
@@ -176,12 +176,12 @@ export function VisionEnhancementShortcut({
             className={state.enabled ? css.shortcutOn : css.shortcut}
             role="switch"
             aria-checked={state.enabled}
-            aria-label={`视觉增强：${statusText(state, route, currentModel !== null)}`}
+            aria-label={`Visual enhancement: ${statusText(state, route, currentModel !== null)}`}
             disabled={busy || currentModel === null}
             onClick={activate}
           >
             <IconSparkleRegular size={14} />
-            <span className={css.shortcutLabel}>视觉增强</span>
+            <span className={css.shortcutLabel}>Visual enhancement</span>
           </button>
         )}
         content={hoverContent(state, route, routeError, currentModel !== null)}

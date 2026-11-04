@@ -19,10 +19,10 @@ import { SearchIcon, RefreshIcon, WikiIcon, GraphIcon } from './Icons'
  * ============================================================ */
 
 const NODE_TYPE_LABEL: Record<GraphNodeType, string> = {
-  PAGE: '知识页',
-  SOURCE: '来源文档',
-  TOPIC: '主题',
-  PAGE_TYPE: '页面类型',
+  PAGE: 'Page',
+  SOURCE: 'Source document',
+  TOPIC: 'Topic',
+  PAGE_TYPE: 'Page type',
 }
 
 /** 四种固定颜色（与统计卡 / 图例一致，深色底上可辨识） */
@@ -322,7 +322,7 @@ export function GraphCanvas({ nodes, edges }: GraphCanvasProps) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={onSearchKeyDown}
-            placeholder="搜索节点名称（如：网关）"
+            placeholder="Search node names (for example: gateway)"
             className="w-56 rounded-xl border border-white/10 bg-white/[0.04] py-2 pl-9 pr-3 text-[15px] text-slate-200 placeholder:text-slate-500 focus:border-indigo-400/40 focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
           />
         </div>
@@ -331,7 +331,7 @@ export function GraphCanvas({ nodes, edges }: GraphCanvasProps) {
           disabled={matchIds.size === 0}
           className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[15px] text-slate-200 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          定位
+          Locate
           {query && (
             <span className="tabular-nums text-[13px] text-slate-500">
               {matchIds.size}
@@ -346,7 +346,7 @@ export function GraphCanvas({ nodes, edges }: GraphCanvasProps) {
               <button
                 key={type}
                 onClick={() => toggleType(type)}
-                title={`${on ? '隐藏' : '显示'} ${NODE_TYPE_LABEL[type]}`}
+                title={`${on ? 'Hide' : 'Show'} ${NODE_TYPE_LABEL[type]}`}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${
                   on
                     ? 'bg-white/5 text-slate-200 ring-1 ring-inset ring-white/10'
@@ -370,14 +370,14 @@ export function GraphCanvas({ nodes, edges }: GraphCanvasProps) {
 
         <div className="ml-auto flex items-center gap-2">
           <span className="hidden text-[13px] text-slate-500 sm:inline">
-            拖动画布 · 滚轮缩放 · 点击节点看详情
+            Drag to pan · scroll to zoom · select a node for details
           </span>
           <button
             onClick={resetView}
             className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[15px] text-slate-200 transition-colors hover:bg-white/10"
           >
             <RefreshIcon className="h-4 w-4" />
-            复位视图
+            Reset view
           </button>
         </div>
       </div>
@@ -497,7 +497,7 @@ export function GraphCanvas({ nodes, edges }: GraphCanvasProps) {
 
           {/* 左下角图例计数 */}
           <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-white/5 bg-[#0a0c14]/80 px-3 py-2 text-[13px] text-slate-400 tabular-nums">
-            显示 {visibleNodes.length} 节点 / {visibleEdges.length} 边
+            {visibleNodes.length} nodes / {visibleEdges.length} edges visible
           </div>
         </div>
 
@@ -515,7 +515,7 @@ export function GraphCanvas({ nodes, edges }: GraphCanvasProps) {
 
 /* ============================================================
  * 右侧详情面板：点击节点后展示来源 / 主题 / 类型 / 连接数，
- * 知识页额外提供「打开 Wiki」跳转 /wiki?slug=...
+ * 知识页额外提供「Open Wiki」跳转 /wiki?slug=...
  * ============================================================ */
 function NodeDetail({
   node,
@@ -579,9 +579,9 @@ function NodeDetail({
         <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-500">
           <GraphIcon />
         </span>
-        <p className="text-[15px] text-slate-400">点击画布中的节点查看详情</p>
+        <p className="text-[15px] text-slate-400">Select a node on the canvas to see its details</p>
         <p className="max-w-[240px] text-[13px] leading-relaxed text-slate-600">
-          知识页节点会展示来源文档、主题、页面类型与连接数，并可跳转 Wiki
+          Page nodes show their source documents, topics, page types, and connection count, and can open the Wiki
         </p>
       </aside>
     )
@@ -617,7 +617,7 @@ function NodeDetail({
             className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-600 px-3 py-2 text-[13px] font-medium text-white shadow-lg shadow-emerald-700/20 transition-colors hover:from-emerald-600 hover:to-teal-500"
           >
             <WikiIcon className="h-3.5 w-3.5" />
-            打开 Wiki
+            Open Wiki
           </Link>
         )}
       </div>
@@ -625,7 +625,7 @@ function NodeDetail({
       {detail && (
         <dl className="mt-5 space-y-4 text-[15px]">
           <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-3">
-            <dt className="text-slate-500">连接数</dt>
+            <dt className="text-slate-500">Connections</dt>
             <dd className="tabular-nums text-slate-100">{detail.degree}</dd>
           </div>
 
@@ -633,7 +633,7 @@ function NodeDetail({
             <>
               <div>
                 <dt className="text-[13px] font-semibold uppercase tracking-wider text-slate-500">
-                  主题
+                  Topics
                 </dt>
                 <dd className="mt-1.5 flex flex-wrap gap-1.5">
                   {detail.topics.length === 0 ? (
@@ -653,7 +653,7 @@ function NodeDetail({
 
               <div>
                 <dt className="text-[13px] font-semibold uppercase tracking-wider text-slate-500">
-                  页面类型
+                  Page types
                 </dt>
                 <dd className="mt-1.5 flex flex-wrap gap-1.5">
                   {detail.pageTypes.length === 0 ? (
@@ -673,7 +673,7 @@ function NodeDetail({
 
               <div>
                 <dt className="text-[13px] font-semibold uppercase tracking-wider text-slate-500">
-                  来源文档（{detail.sources.length}）
+                  Source documents ({detail.sources.length})
                 </dt>
                 <dd className="mt-1.5 space-y-1">
                   {detail.sources.length === 0 ? (
@@ -696,8 +696,8 @@ function NodeDetail({
           <div>
             <dt className="text-[13px] font-semibold uppercase tracking-wider text-slate-500">
               {node.type === 'PAGE'
-                ? `互链知识页（${detail.linkedPages.length}）`
-                : `关联知识页（${detail.connectedPages.length}）`}
+                ? `Linked pages (${detail.linkedPages.length})`
+                : `Related pages (${detail.connectedPages.length})`}
             </dt>
             <dd className="mt-1.5 flex flex-wrap gap-1.5">
               {(
@@ -714,7 +714,7 @@ function NodeDetail({
                     <button
                       key={p.id}
                       onClick={() => onSelectNode(p.id)}
-                      title={`在画布中定位 ${p.name}`}
+                      title={`Locate ${p.name} on the canvas`}
                       className="rounded-full border border-indigo-400/20 bg-indigo-500/10 px-2.5 py-1 text-[13px] text-indigo-200 transition-colors hover:bg-indigo-500/20"
                     >
                       {p.name}

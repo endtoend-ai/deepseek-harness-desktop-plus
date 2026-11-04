@@ -16,7 +16,7 @@ async function fixture(): Promise<{ home: string; bundled: string; target: strin
   const home = join(root, 'home')
   const bundled = join(root, 'bundled')
   const target = join(home, '.agent-presets', 'ai-content-image-studio')
-  const source = join(bundled, 'fufan-content-factory', 'preset')
+  const source = join(bundled, 'content-factory', 'preset')
   await mkdir(target, { recursive: true })
   await mkdir(join(source, 'runtime', 'content-imagegen'), { recursive: true })
   await writeFile(join(source, 'agent.cordis.yml'), '- id: content-imagegen-tools\n  name: ./runtime/content-imagegen/index.js\n')

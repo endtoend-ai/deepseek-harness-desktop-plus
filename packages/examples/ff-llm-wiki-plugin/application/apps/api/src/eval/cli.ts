@@ -12,15 +12,15 @@ import { runEval } from './runner.js'
  */
 const runId = (process.argv[2] ?? 'base') as 'base' | 'after'
 if (runId !== 'base' && runId !== 'after') {
-  console.error('用法: tsx src/eval/cli.ts [base|after]')
+  console.error('Usage: tsx src/eval/cli.ts [base|after]')
   process.exit(2)
 }
 
 const report = runEval(runId)
 console.log(
-  `[eval:${runId}] 完成：${report.caseCount} 题，通过 ${report.passed}，总分 ${report.totalScore}，耗时 ${report.elapsedMs}ms`,
+  `[eval:${runId}] done: ${report.caseCount} cases, ${report.passed} passed, total score ${report.totalScore}, ${report.elapsedMs}ms`,
 )
-console.log('  逐指标均分：')
+console.log('  Per-metric averages:')
 for (const [k, v] of Object.entries(report.metricMeans)) {
   console.log(`    ${k}: ${v.mean} (n=${v.n})`)
 }

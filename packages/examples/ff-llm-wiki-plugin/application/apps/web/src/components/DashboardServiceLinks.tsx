@@ -9,19 +9,19 @@ import {
 } from './Icons'
 
 const SERVICES = [
-  { href: '/documents', label: '文档中心', detail: '管理 128 份资料', icon: DocumentIcon, tone: 'ready' },
-  { href: '/wiki', label: '知识库', detail: '浏览 47 个知识页', icon: WikiIcon, tone: 'ready' },
-  { href: '/knowledge-graph', label: '知识图谱', detail: '探索 75 个节点', icon: GraphIcon, tone: 'active' },
-  { href: '/ask', label: '问答中心', detail: '可溯源智能问答', icon: QaIcon, tone: 'pending' },
-  { href: '/evaluation', label: '评估中心', detail: '质量总分 93.4', icon: EvalIcon, tone: 'ready' },
+  { href: '/documents', label: 'Documents', detail: 'Manage 128 documents', icon: DocumentIcon, tone: 'ready' },
+  { href: '/wiki', label: 'Wiki', detail: 'Browse 47 pages', icon: WikiIcon, tone: 'ready' },
+  { href: '/knowledge-graph', label: 'Knowledge graph', detail: 'Explore 75 nodes', icon: GraphIcon, tone: 'active' },
+  { href: '/ask', label: 'Ask', detail: 'Traceable question answering', icon: QaIcon, tone: 'pending' },
+  { href: '/evaluation', label: 'Evaluation', detail: 'Overall quality 93.4', icon: EvalIcon, tone: 'ready' },
 ] as const
 
 export function DashboardServiceLinks() {
   return (
     <section className="dashboard-panel flex h-full min-h-[290px] flex-col p-3">
       <div className="mb-2">
-        <h2 className="text-[15px] font-semibold text-slate-100">输出与服务</h2>
-        <p className="mt-0.5 text-[13px] text-slate-600">进入已经生成的知识能力</p>
+        <h2 className="text-[15px] font-semibold text-slate-100">Outputs and services</h2>
+        <p className="mt-0.5 text-[13px] text-slate-600">Jump into the generated knowledge capabilities</p>
       </div>
 
       <nav className="grid min-h-0 flex-1 grid-rows-5 gap-1.5">
@@ -53,7 +53,7 @@ export function DashboardServiceLinks() {
                   <span className="text-[13px] font-medium text-slate-200">{service.label}</span>
                   {pending && (
                     <span className="rounded-full border border-white/[0.08] px-1.5 py-0.5 text-[11px] text-slate-600">
-                      待就绪
+                      Pending
                     </span>
                   )}
                 </div>

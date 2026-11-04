@@ -1,0 +1,8 @@
+{
+  "format": "dsh-preset",
+  "version": 1,
+  "id": "llm-wiki-fullstack",
+  "name": "LLM Wiki Producer",
+  "description": "Staged development Agent Preset for enterprise knowledge-base projects.",
+  "sourceDshVersion": "0.1.0-rc.8"
+}

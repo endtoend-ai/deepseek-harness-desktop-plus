@@ -51,7 +51,7 @@ interface GraphBuild {
 function locateSpan(haystack: string, needle: string): { start: number; end: number } {
   const i = haystack.indexOf(needle)
   if (i < 0) {
-    throw new Error(`本地规则抽取失败：无法在文本中定位锚点「${needle}」`)
+    throw new Error(`Rule extraction failed: anchor "${needle}" was not found in the text`)
   }
   return { start: i, end: i + needle.length }
 }
@@ -68,7 +68,7 @@ function parseWikilinks(text: string): string[] {
 
 function readManifest(): WikiManifest {
   if (!existsSync(MANIFEST_PATH)) {
-    throw new Error(`图谱抽取失败：找不到编译产物 ${MANIFEST_PATH}，请先运行 pnpm wiki:compile`)
+    throw new Error(`Graph extraction failed: compiled artifact ${MANIFEST_PATH} is missing; run pnpm wiki:compile first`)
   }
   return JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as WikiManifest
 }
@@ -198,16 +198,16 @@ function buildGraphInner(): GraphBuild {
     for (const src of [...p.sources].sort()) {
       const sourceId = sourceIdByPath.get(src)
       if (!sourceId) {
-        throw new Error(`图谱抽取失败：页面「${p.slug}」引用了不存在的来源「${src}」`)
+        throw new Error(`Graph extraction failed: page "${p.slug}" references a missing source "${src}"`)
       }
-      addEdge(pageId, sourceId, p.slug, 'HAS_SOURCE', '来源')
+      addEdge(pageId, sourceId, p.slug, 'HAS_SOURCE', 'source')
     }
 
     // 5b. 页面 → 主题（HAS_TOPIC）
-    addEdge(pageId, topicIdByCode.get(p.topic)!, p.slug, 'HAS_TOPIC', '主题')
+    addEdge(pageId, topicIdByCode.get(p.topic)!, p.slug, 'HAS_TOPIC', 'topic')
 
     // 5c. 页面 → 页面类型（HAS_TYPE）
-    addEdge(pageId, typeIdByType.get(p.type)!, p.slug, 'HAS_TYPE', '类型')
+    addEdge(pageId, typeIdByType.get(p.type)!, p.slug, 'HAS_TYPE', 'type')
 
     // 5d. 页面 → 页面（LINKS_TO）：来自正文真实渲染的 [[wiki/..]] 内链
     const wikilinkSlugs = parseWikilinks(pageText.get(p.slug)!)
@@ -216,15 +216,15 @@ function buildGraphInner(): GraphBuild {
     const sortedManifest = [...manifestTargets].sort()
     if (JSON.stringify(sortedWikilinks) !== JSON.stringify(sortedManifest)) {
       throw new Error(
-        `图谱抽取失败：页面「${p.slug}」正文内链与 manifest.links 不一致`,
+        `Graph extraction failed: inline links in page "${p.slug}" disagree with manifest.links`,
       )
     }
     for (const target of sortedWikilinks) {
       const targetId = pageIdBySlug.get(target)
       if (!targetId) {
-        throw new Error(`图谱抽取失败：页面「${p.slug}」存在悬空内链 → ${target}`)
+        throw new Error(`Graph extraction failed: page "${p.slug}" has a dangling inline link → ${target}`)
       }
-      addEdge(pageId, targetId, p.slug, 'LINKS_TO', '内链')
+      addEdge(pageId, targetId, p.slug, 'LINKS_TO', 'link')
     }
   }
 
@@ -297,6 +297,6 @@ export function extractGraph(now = new Date()): GraphExtractResult {
     mode: 'local-rule-extraction',
     stats: countGraph(nodes, edges),
     generatedAt: now.toISOString(),
-    message: `图谱抽取完成：${nodes.length} 个节点、${edges.length} 条边已更新`,
+    message: `Graph extraction finished: ${nodes.length} nodes and ${edges.length} edges updated`,
   }
 }

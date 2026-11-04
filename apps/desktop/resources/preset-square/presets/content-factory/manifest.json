@@ -1,0 +1,8 @@
+{
+  "format": "dsh-preset",
+  "version": 1,
+  "id": "ai-content-image-studio",
+  "name": "AI Content Image Studio",
+  "description": "Content factory workflow: one Agent Preset, one Skill, and one image-generation Plugin.",
+  "sourceDshVersion": "0.1.0-rc.8"
+}

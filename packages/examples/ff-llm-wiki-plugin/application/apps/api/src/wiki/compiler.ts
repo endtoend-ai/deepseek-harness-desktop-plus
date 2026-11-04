@@ -147,21 +147,21 @@ export function readRawSources(): RawSource[] {
 function validateModel(rawByPath: Map<string, RawSource>): Map<string, string> {
   const slugs = new Set<string>()
   for (const u of KNOWLEDGE_UNITS) {
-    if (slugs.has(u.slug)) throw new Error(`编译失败：重复 slug「${u.slug}」`)
+    if (slugs.has(u.slug)) throw new Error(`Compilation failed: duplicate slug "${u.slug}"`)
     slugs.add(u.slug)
     for (const s of u.sources) {
       if (!rawByPath.has(s)) {
-        throw new Error(`编译失败：知识单元「${u.slug}」引用了不存在的源「${s}」`)
+        throw new Error(`Compilation failed: unit "${u.slug}" references a missing source "${s}"`)
       }
     }
   }
   for (const u of KNOWLEDGE_UNITS) {
     for (const l of u.links) {
       if (!slugs.has(l)) {
-        throw new Error(`编译失败：知识单元「${u.slug}」指向不存在的页面「${l}」`)
+        throw new Error(`Compilation failed: unit "${u.slug}" links to a missing page "${l}"`)
       }
       if (l === u.slug) {
-        throw new Error(`编译失败：知识单元「${u.slug}」不能自链`)
+        throw new Error(`Compilation failed: unit "${u.slug}" cannot link to itself`)
       }
     }
   }
@@ -184,12 +184,12 @@ export function compileWiki(now = new Date()): WikiManifest {
 export function compileWikiInner(now: Date): WikiManifest {
   // 1. 规则层（编译器动手前必须先读 CLAUDE.md）
   if (!existsSync(CLAUDE_MD_PATH)) {
-    throw new Error(`编译失败：规则层 ${CLAUDE_MD_PATH} 不存在`)
+    throw new Error(`Compilation failed: the rule layer ${CLAUDE_MD_PATH} does not exist`)
   }
   const claude = readFileSync(CLAUDE_MD_PATH, 'utf8')
   for (const t of ['concept', 'system', 'playbook', 'policy'] as const) {
     if (!claude.includes(t)) {
-      throw new Error(`编译失败：规则层 CLAUDE.md 缺少页面类型定义「${t}」`)
+      throw new Error(`Compilation failed: the CLAUDE.md rule layer has no page type definition for "${t}"`)
     }
   }
 
@@ -297,10 +297,10 @@ function writeWikiFiles(
       '',
       `> ${p.summary}`,
       '',
-      '## 结论',
+      '## Conclusions',
       '',
       ...p.conclusion.flatMap(c => [c, '']),
-      '## 来源证据',
+      '## Source evidence',
       '',
     ]
 
@@ -309,7 +309,7 @@ function writeWikiFiles(
       for (const pt of ev.points) lines.push(`  - ${pt}`)
     }
 
-    lines.push('', '## 相关页面', '')
+    lines.push('', '## Related pages', '')
     for (const l of p.links) {
       lines.push(`- [[wiki/${l.slug}|${l.title}]]`)
     }
@@ -329,7 +329,7 @@ function writeWikiFiles(
 
 /** index.md：按 type 分区列出所有页，每页一行摘要 + 链接 */
 function writeIndex(manifest: WikiManifest): void {
-  const lines: string[] = ['# 知识库索引', '']
+  const lines: string[] = ['# Knowledge index', '']
   const order: WikiPageType[] = ['concept', 'system', 'playbook', 'policy']
   for (const t of order) {
     const typePages = manifest.pages.filter(p => p.type === t)
@@ -350,15 +350,15 @@ function writeLog(
   now: Date,
 ): void {
   const lines: string[] = [
-    '# 编译日志',
+    '# Compilation log',
     '',
-    `## ${now.toISOString()} 编译`,
+    `## ${now.toISOString()} compile`,
     '',
-    `- 源层 raw/：${rawSources.length} 个文件，零改动、零新增（源不可变红线满足）`,
+    `- Source layer raw/: ${rawSources.length} files, unchanged and nothing added (source immutability holds)`,
     '',
-    `- 产物层 wiki/：${manifest.stats.pages} 个知识页 + index.md + log.md + manifest.json`,
-    `- 类型分布：${manifest.types.map(t => `${t.type} ${t.count}`).join(' · ')}`,
-    `- 互链：${manifest.stats.interlinks} 条 · 来源引用：${manifest.stats.sourceCitations} 条 · 覆盖主题：${manifest.stats.topicsCovered}`,
+    `- Artifact layer wiki/: ${manifest.stats.pages} pages + index.md + log.md + manifest.json`,
+    `- Types: ${manifest.types.map(t => `${t.type} ${t.count}`).join(' · ')}`,
+    `- Interlinks: ${manifest.stats.interlinks} · source citations: ${manifest.stats.sourceCitations} · topics covered: ${manifest.stats.topicsCovered}`,
     '',
   ]
   writeFileSync(join(WIKI_DIR, 'log.md'), lines.join('\n'), 'utf8')

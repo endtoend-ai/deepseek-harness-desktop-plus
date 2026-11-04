@@ -21,6 +21,7 @@ import electronUpdater from 'electron-updater'
 import {
   initProfile, PROFILE_TEMPLATES,
 } from '@deepseek-ai/dsh-app-boot'
+import { linkShippedBundles } from './profile-links.ts'
 import {
   decodeCatalogDetailQuery,
   decodeCatalogListQuery,
@@ -107,6 +108,8 @@ let lifecycle: DesktopLifecycle | undefined
 let bootQuitPromise: Promise<void> | undefined
 let quitReleased = false
 let updateController: DesktopUpdateController | undefined
+/** Explicit release feed from the environment; omission disables update checks. */
+let updateFeedUrl: string | undefined
 let pluginOperationController: PluginOperationController | undefined
 let pluginRecoveryController: PluginRecoveryController | undefined
 let pluginDiagnosticExporter: PluginRecoveryDiagnosticExporter | undefined
@@ -172,7 +175,7 @@ function hostPaths(): {
     shippedBundleManifests: [
       join(hostModules, '@deepseek-ai/dsh-base/package.json'),
       join(hostModules, '@deepseek-ai/dsh-web-app/package.json'),
-      join(hostModules, '@fufan/dsh-plugin-llm-wiki/package.json'),
+      join(hostModules, 'dsh-plugin-llm-wiki/package.json'),
     ],
     packageManagerEntry: join(hostModules, 'pnpm/bin/pnpm.cjs'),
     packageManagerManifest: join(hostModules, 'pnpm/package.json'),
@@ -181,7 +184,7 @@ function hostPaths(): {
   }
 }
 
-const BUILT_IN_APPLICATION_BUNDLES = ['@fufan/dsh-plugin-llm-wiki'] as const
+const BUILT_IN_APPLICATION_BUNDLES = ['dsh-plugin-llm-wiki'] as const
 
 function assertHostArtifacts(paths: ReturnType<typeof hostPaths>): void {
   if (paths.nodeExecutable.includes('/') && !existsSync(paths.nodeExecutable)) {
@@ -488,11 +491,17 @@ function registerDesktopBridge(): PluginCenterBackend {
     selection => readFingerprint(selection, false),
   )
   const { autoUpdater } = electronUpdater
+  updateFeedUrl = process.env.DSH_DESKTOP_UPDATE_URL?.trim()
+  if (updateFeedUrl === '') updateFeedUrl = undefined
+  if (app.isPackaged && updateFeedUrl !== undefined) {
+    autoUpdater.setFeedURL({ provider: 'generic', url: updateFeedUrl })
+  }
   updateController = new DesktopUpdateController(
     autoUpdater,
     app.getVersion(),
     manifestVersion(paths.cliManifest),
     app.isPackaged,
+    updateFeedUrl,
   )
   updateController.subscribe((state) => {
     for (const window of BrowserWindow.getAllWindows()) {
@@ -678,7 +687,7 @@ function registerDesktopBridge(): PluginCenterBackend {
     if (exporter === undefined) throw new Error('plugin recovery diagnostics are unavailable')
     return await exporter.export(request.operationId, async (defaultFilename) => {
       const options = {
-        title: '导出插件恢复诊断',
+        title: 'Export Plugin Recovery Diagnostics',
         defaultPath: defaultFilename,
         filters: [{ name: 'JSON', extensions: ['json'] }],
       }
@@ -785,6 +794,7 @@ async function initializePluginOperations(backend: PluginCenterBackend): Promise
       if (webTemplate === undefined) throw new Error('web Profile template is unavailable')
       initProfile(profileDirectory, [...webTemplate.bundles, ...BUILT_IN_APPLICATION_BUNDLES])
       reconcileBuiltInApplications(profileDirectory, BUILT_IN_APPLICATION_BUNDLES)
+      linkShippedBundles(profileDirectory, backend.paths.shippedBundleManifests)
       const dshmarketMigration = await migrateLegacyDshmarketRegistration({
         profileDirectory,
         installAnchor: backend.paths.cliManifest,
@@ -837,9 +847,9 @@ function createTray(): void {
   tray = new Tray(trayImage())
   tray.setToolTip(APP_NAME)
   const template: MenuItemConstructorOptions[] = [
-    { label: '打开主窗口', click: () => { void lifecycle?.showWindow() } },
+    { label: 'Open Main Window', click: () => { void lifecycle?.showWindow() } },
     { type: 'separator' },
-    { label: '退出', click: () => { void requestAppQuit() } },
+    { label: 'Quit', click: () => { void requestAppQuit() } },
   ]
   tray.setContextMenu(Menu.buildFromTemplate(template))
   tray.on('click', () => { void lifecycle?.showWindow() })
@@ -904,7 +914,7 @@ async function boot(): Promise<void> {
   pluginRecoverySafeMode = pluginStartup.mode === 'safe'
   createTray()
   await lifecycle.showWindow()
-  if (app.isPackaged && !pluginRecoveryStartupBlocked) {
+  if (app.isPackaged && updateFeedUrl !== undefined && !pluginRecoveryStartupBlocked) {
     setTimeout(() => { void updateController?.check() }, 5_000)
   }
 }

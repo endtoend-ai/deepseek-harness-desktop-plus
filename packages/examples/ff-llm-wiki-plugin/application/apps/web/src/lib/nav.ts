@@ -18,13 +18,13 @@ export interface NavItem {
 }
 
 export const NAV: NavItem[] = [
-  { href: "/", label: "知识工作台", exact: true, icon: DashboardIcon },
-  { href: "/documents", label: "企业文档管理", icon: DocumentIcon },
-  { href: "/wiki", label: "Wiki 知识库", icon: WikiIcon },
-  { href: "/knowledge-graph", label: "知识图谱", icon: GraphIcon },
-  { href: "/ask", label: "Agent 智能问答", icon: QaIcon },
-  { href: "/evaluation", label: "评估与优化", icon: EvalIcon },
-  { href: "/settings", label: "系统设置", icon: SettingsIcon },
+  { href: "/", label: "Knowledge Workbench", exact: true, icon: DashboardIcon },
+  { href: "/documents", label: "Documents", icon: DocumentIcon },
+  { href: "/wiki", label: "Wiki", icon: WikiIcon },
+  { href: "/knowledge-graph", label: "Knowledge Graph", icon: GraphIcon },
+  { href: "/ask", label: "Ask the Agent", icon: QaIcon },
+  { href: "/evaluation", label: "Evaluation", icon: EvalIcon },
+  { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 export function isNavActive(pathname: string, item: NavItem): boolean {

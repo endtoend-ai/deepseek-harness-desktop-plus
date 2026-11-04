@@ -24,7 +24,7 @@ export function qaRoutes(service: QaService): FastifyPluginAsync {
       async (req, reply): Promise<QaResponse> => {
         const question = req.body?.question
         if (!question || !question.trim()) {
-          return reply.code(400).send({ message: 'question 不能为空' })
+          return reply.code(400).send({ message: 'question must not be empty' })
         }
         return service.answer({ ...req.body, question: question.trim() })
       },
@@ -33,7 +33,7 @@ export function qaRoutes(service: QaService): FastifyPluginAsync {
     app.post<{ Body: QaRequest }>('/api/qa/stream', async (req, reply) => {
       const question = req.body?.question
       if (!question || !question.trim()) {
-        return reply.code(400).send({ message: 'question 不能为空' })
+        return reply.code(400).send({ message: 'question must not be empty' })
       }
 
       const request: QaRequest = { ...req.body, question: question.trim() }

@@ -39,8 +39,8 @@ const OFFICIAL_ITEM = {
   presetId: 'ai-product-developer',
   title: 'AI WebApp',
   description: '1 套 Agent Preset + 3 个 Skills。',
-  source: 'fufan-official',
-  publisher: { username: '赋范官方' },
+  source: 'official',
+  publisher: { username: 'Official' },
   artifact: {
     ...ITEM.artifact,
     downloadUrl: 'https://www.dshdesktop.com/preset/api/v1/presets/fufan-ai-webapp/download',
@@ -186,7 +186,7 @@ function props(values: Partial<PresetSquareInjected> = {}): PresetSquareInjected
 }
 
 describe('Preset Square shared surface', () => {
-  it('defaults to 赋范官方, switches sources as tabs, and renders semantic SVG artwork', async () => {
+  it('defaults to the official source, switches sources as tabs, and renders semantic SVG artwork', async () => {
     const { container } = render(<PresetSquarePanel {...props({
       listPresetSquare: async () => ({
         items: [...OFFICIAL_ARTWORK_ITEMS, ITEM], total: 8, sort: 'downloads', fetchedAt: '2026-08-17T08:00:00.000Z',
@@ -198,7 +198,7 @@ describe('Preset Square shared surface', () => {
     })} t={t} />)
 
     expect((await screen.findByRole('tab', {
-      name: new RegExp(zh.presetFufanOfficialTitle),
+      name: new RegExp(zh.presetOfficialTitle),
     })).getAttribute('aria-selected')).toBe('true')
     const llmWikiCard = (await screen.findByText(LLM_WIKI_ITEM.title)).closest('article')
     if (llmWikiCard === null) throw new Error('LLM Wiki Producer 卡片未渲染')
@@ -206,8 +206,8 @@ describe('Preset Square shared surface', () => {
     expect(officialCards.item(0).textContent).toContain(LLM_WIKI_ITEM.title)
 
     const officialCard = screen.getByText(OFFICIAL_ITEM.title).closest('article')
-    if (officialCard === null) throw new Error('赋范官方卡片未渲染')
-    expect(within(officialCard).getByText(zh.presetFufanOfficialBadge)).toBeTruthy()
+    if (officialCard === null) throw new Error('official card did not render')
+    expect(within(officialCard).getByText(zh.presetOfficialBadge)).toBeTruthy()
     for (const item of OFFICIAL_ARTWORK_ITEMS) {
       expect(container.querySelector(`[data-artwork="${item.presetId}"] svg`)).toBeTruthy()
     }
@@ -226,12 +226,12 @@ describe('Preset Square shared surface', () => {
     expect(communityCard.querySelector('[data-artwork="community-fallback"] svg')).toBeTruthy()
     expect(screen.queryByText(OFFICIAL_ITEM.title)).toBeNull()
 
-    fireEvent.click(screen.getByRole('tab', { name: new RegExp(zh.presetFufanOfficialTitle) }))
+    fireEvent.click(screen.getByRole('tab', { name: new RegExp(zh.presetOfficialTitle) }))
     const restoredOfficialCard = (await screen.findByText(OFFICIAL_ITEM.title)).closest('article')
-    if (restoredOfficialCard === null) throw new Error('赋范官方卡片未恢复')
+    if (restoredOfficialCard === null) throw new Error('official card was not restored')
     fireEvent.click(within(restoredOfficialCard).getByRole('button', { name: zh.details }))
     const officialDialog = await screen.findByRole('dialog', { name: OFFICIAL_ITEM.title })
-    expect(within(officialDialog).getByText(zh.presetFufanOfficialDisclaimer)).toBeTruthy()
+    expect(within(officialDialog).getByText(zh.presetOfficialDisclaimer)).toBeTruthy()
     fireEvent.click(within(officialDialog).getByRole('button', { name: zh.close }))
 
     const restoredLlmWikiCard = screen.getByText(LLM_WIKI_ITEM.title).closest('article')

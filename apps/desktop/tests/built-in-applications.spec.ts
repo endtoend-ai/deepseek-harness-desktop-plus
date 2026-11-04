@@ -9,7 +9,7 @@ describe('built-in applications', () => {
   it('replaces a stale profile-installed copy with release ownership', () => {
     const root = mkdtempSync(join(tmpdir(), 'dsh-built-in-application-'))
     const profileDirectory = join(root, 'profiles', 'web')
-    const packageName = '@fufan/dsh-plugin-llm-wiki'
+    const packageName = 'dsh-plugin-llm-wiki'
     initProfile(profileDirectory, ['@deepseek-ai/dsh-base'])
     const manifestPath = join(profileDirectory, 'package.json')
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>
@@ -22,7 +22,7 @@ describe('built-in applications', () => {
         },
       },
     }))
-    const stalePackage = join(profileDirectory, 'node_modules', '@fufan', 'dsh-plugin-llm-wiki')
+    const stalePackage = join(profileDirectory, 'node_modules', 'dsh-plugin-llm-wiki')
     mkdirSync(stalePackage, { recursive: true })
     writeFileSync(join(stalePackage, 'old-client.js'), 'old')
 

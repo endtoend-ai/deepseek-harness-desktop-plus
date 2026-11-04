@@ -6,16 +6,16 @@ import { compileWiki } from './compiler.js'
  */
 const manifest = compileWiki()
 
-console.log('编译完成 ✔')
-console.log(`- 源资料：${manifest.sources.length} 份（raw/ 零改动、零新增）`)
-console.log(`- 知识页：${manifest.stats.pages} 个`)
+console.log('Compilation finished ✔')
+console.log(`- Sources: ${manifest.sources.length} (raw/ unchanged, nothing added)`)
+console.log(`- Pages: ${manifest.stats.pages}`)
 console.log(
-  `- 类型分布：${manifest.types
+  `- Type distribution: ${manifest.types
     .map(t => `${t.type} ${t.count}`)
     .join(' · ')}`,
 )
 console.log(
-  `- 互链：${manifest.stats.interlinks} · 来源引用：${manifest.stats.sourceCitations} · 覆盖主题：${manifest.stats.topicsCovered}`,
+  `- Interlinks: ${manifest.stats.interlinks} · source citations: ${manifest.stats.sourceCitations} · topics covered: ${manifest.stats.topicsCovered}`,
 )
-console.log(`- 编译时间：${manifest.stats.lastCompiledAt}`)
-console.log('- 产物目录：content/wiki/')
+console.log(`- Compiled at: ${manifest.stats.lastCompiledAt}`)
+console.log('- Output directory: content/wiki/')

@@ -19,13 +19,13 @@ import {
 } from './Icons'
 
 const METRIC_LABELS: Record<string, { label: string; short: string; desc: string }> = {
-  answer_completed: { label: '回答完成', short: '完成', desc: '期望状态与任务结果是否达成' },
-  retrieval_hit: { label: '检索命中', short: '检索', desc: '是否命中题目期望的知识页面' },
-  evidence_coverage: { label: '证据覆盖', short: '覆盖', desc: '证据是否覆盖问题的关键语义' },
-  citation_valid: { label: '引用有效', short: '引用', desc: '引用是否真实存在并可返回原文' },
-  answer_faithful: { label: '忠于证据', short: '忠实', desc: '答案陈述与引用证据是否对账' },
-  no_answer_honest: { label: '诚实拒答', short: '拒答', desc: '证据不足时是否避免生成事实' },
-  input_robust: { label: '异常稳健', short: '稳健', desc: '噪声与异常输入下是否保持稳定' },
+  answer_completed: { label: 'Answer completed', short: 'Done', desc: 'Whether the expected state and the task result agree' },
+  retrieval_hit: { label: 'Retrieval hit', short: 'Retrieval', desc: 'Whether the expected knowledge page was retrieved' },
+  evidence_coverage: { label: 'Evidence coverage', short: 'Coverage', desc: 'Whether the evidence covers the question key semantics' },
+  citation_valid: { label: 'Citations valid', short: 'Citations', desc: 'Whether each citation exists and resolves to source text' },
+  answer_faithful: { label: 'Faithful to evidence', short: 'Faithful', desc: 'Whether the answer reconciles with the cited evidence' },
+  no_answer_honest: { label: 'Honest refusal', short: 'Refusal', desc: 'Whether it avoids asserting facts without evidence' },
+  input_robust: { label: 'Input robustness', short: 'Robust', desc: 'Whether it stays stable under noisy or malformed input' },
 }
 
 const METRIC_ORDER = [
@@ -39,12 +39,12 @@ const METRIC_ORDER = [
 ]
 
 const KIND_LABELS: Record<string, string> = {
-  direct_fact: '直接事实',
-  cross_source: '跨来源归纳',
-  concept_link: '概念关联',
-  citation_jump: '引用跳转',
-  no_evidence: '无充分证据',
-  adversarial: '干扰输入',
+  direct_fact: 'Direct fact',
+  cross_source: 'Cross-source summary',
+  concept_link: 'Concept link',
+  citation_jump: 'Citation jump',
+  no_evidence: 'Insufficient evidence',
+  adversarial: 'Adversarial input',
 }
 
 type CaseFilter = 'all' | 'passed' | 'failed'
@@ -75,7 +75,7 @@ function ScoreOrbit({ score }: { score: number }) {
   return (
     <div className="ev-score-orbit">
       <div className="ev-orbit-glow" />
-      <svg viewBox="0 0 180 180" aria-label={`质量总分 ${score}`}>
+      <svg viewBox="0 0 180 180" aria-label={`Overall quality score ${score}`}>
         <defs>
           <linearGradient id="ev-score-gradient" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="var(--ev-accent)" />
@@ -96,7 +96,7 @@ function ScoreOrbit({ score }: { score: number }) {
       </svg>
       <div className="ev-score-value">
         <strong>{score.toFixed(1)}</strong>
-        <span>质量指数</span>
+        <span>Quality index</span>
       </div>
       <i className="ev-orbit-node node-a" />
       <i className="ev-orbit-node node-b" />
@@ -137,7 +137,7 @@ function MetricCard({
     >
       <div className="ev-metric-card-head">
         <span className="ev-metric-index">{String(METRIC_ORDER.indexOf(metricKey) + 1).padStart(2, '0')}</span>
-        <span className="ev-metric-status">{tone === 'perfect' ? '满分' : tone === 'healthy' ? '健康' : tone === 'watch' ? '关注' : '风险'}</span>
+        <span className="ev-metric-status">{tone === 'perfect' ? 'Perfect' : tone === 'healthy' ? 'Healthy' : tone === 'watch' ? 'Watch' : 'At risk'}</span>
       </div>
       <div className="ev-metric-main">
         <div>
@@ -153,9 +153,9 @@ function MetricCard({
         {[25, 50, 75].map(mark => <i key={mark} style={{ left: `${mark}%` }} />)}
       </div>
       <div className="ev-metric-footer">
-        <span>有效样本 n={n}</span>
+        <span>Valid samples n={n}</span>
         <span className={delta !== null && delta > 0 ? 'is-up' : delta !== null && delta < 0 ? 'is-down' : ''}>
-          {delta === null ? '无基线' : delta > 0 ? `较基线 +${delta}` : delta < 0 ? `较基线 ${delta}` : '与基线持平'}
+          {delta === null ? 'No baseline' : delta > 0 ? `${delta} vs baseline` : delta < 0 ? `${delta} vs baseline` : 'Level with baseline'}
         </span>
       </div>
     </button>
@@ -176,25 +176,25 @@ function ComparisonRail({ report, baseline, comparison }: {
     <section className="ev-panel ev-comparison-panel" id="evaluation-comparison">
       <header className="ev-panel-header">
         <div>
-          <span className="ev-kicker">回归控制</span>
-          <h2>优化前后质量轨迹</h2>
-          <p>同一题库、同一固定时间、同一评估器下的可复现对比</p>
+          <span className="ev-kicker">Regression control</span>
+          <h2>Quality trajectory before and after</h2>
+          <p>A reproducible comparison over the same question set, fixed time, and evaluator</p>
         </div>
         <span className={`ev-regression-badge ${comparison?.regressionFree ? 'is-safe' : 'is-risk'}`}>
-          <i />{comparison?.regressionFree ? '无指标回归' : '发现质量回归'}
+          <i />{comparison?.regressionFree ? 'No metric regressed' : 'Quality regression found'}
         </span>
       </header>
 
       <div className="ev-comparison-body">
         <div className="ev-score-journey">
-          <div className="ev-journey-point baseline"><span>优化前</span><strong>{before.toFixed(1)}</strong><small>基准版本</small></div>
-          <div className="ev-journey-line"><i /><span>{delta >= 0 ? '+' : ''}{delta.toFixed(1)} 分</span></div>
-          <div className="ev-journey-point current"><span>优化后</span><strong>{report.totalScore.toFixed(1)}</strong><small>当前版本</small></div>
+          <div className="ev-journey-point baseline"><span>Before</span><strong>{before.toFixed(1)}</strong><small>Baseline version</small></div>
+          <div className="ev-journey-line"><i /><span>{delta >= 0 ? '+' : ''}{delta.toFixed(1)} points</span></div>
+          <div className="ev-journey-point current"><span>After</span><strong>{report.totalScore.toFixed(1)}</strong><small>Current version</small></div>
         </div>
         <div className="ev-comparison-stats">
-          <div><span>提升指标</span><strong>{improved}</strong><small>/ {comparison?.metrics.length ?? METRIC_ORDER.length}</small></div>
-          <div><span>稳定指标</span><strong>{stable}</strong><small>无损保持</small></div>
-          <div><span>回归项</span><strong className={comparison?.regressionFree ? 'is-good' : 'is-bad'}>{comparison?.regressions.length ?? 0}</strong><small>必须为 0</small></div>
+          <div><span>Improved</span><strong>{improved}</strong><small>/ {comparison?.metrics.length ?? METRIC_ORDER.length}</small></div>
+          <div><span>Stable</span><strong>{stable}</strong><small>Held without loss</small></div>
+          <div><span>Regressions</span><strong className={comparison?.regressionFree ? 'is-good' : 'is-bad'}>{comparison?.regressions.length ?? 0}</strong><small>Must be 0</small></div>
         </div>
       </div>
 
@@ -235,9 +235,9 @@ function CaseDiagnostic({ result, expanded, onToggle }: {
           <span><em>{KIND_LABELS[result.kind] ?? result.kind}</em><small>{result.caseId}</small></span>
           <strong>{result.question}</strong>
         </span>
-        <span className="ev-case-evidence"><b>{result.citations.length}</b><small>证据</small></span>
-        <span className="ev-case-grade"><b>{score}</b><small>得分</small></span>
-        <span className="ev-case-result">{passed ? '通过' : `${failures.length} 项失败`}</span>
+        <span className="ev-case-evidence"><b>{result.citations.length}</b><small>Evidence</small></span>
+        <span className="ev-case-grade"><b>{score}</b><small>Score</small></span>
+        <span className="ev-case-result">{passed ? 'Passed' : `${failures.length} failed`}</span>
         <span className="ev-case-chevron">⌄</span>
       </button>
 
@@ -251,9 +251,9 @@ function CaseDiagnostic({ result, expanded, onToggle }: {
           ))}
         </div>
         <div className="ev-case-sources">
-          <span>命中证据</span>
+          <span>Matched evidence</span>
           <div>
-            {result.citations.length === 0 ? <small>本题没有采用证据</small> : result.citations.map((citation, index) => (
+            {result.citations.length === 0 ? <small>No evidence was used for this case</small> : result.citations.map((citation, index) => (
               <span key={`${citation.pageSlug}-${index}`} title={citation.sourcePath ?? citation.pageSlug}>
                 <b>{index + 1}</b>{citation.pageTitle}
               </span>
@@ -329,7 +329,7 @@ export function EvaluationView() {
     anchor.download = `llmwiki-evaluation-${data.report?.runId ?? 'latest'}.json`
     anchor.click()
     URL.revokeObjectURL(url)
-    setNotice('评估报告已导出')
+    setNotice('Evaluation report exported')
   }, [data])
 
   const focusMetric = useCallback((metricKey: string) => {
@@ -342,8 +342,8 @@ export function EvaluationView() {
     return (
       <div className="ev-loading-state">
         <span><SpinnerIcon className="h-5 w-5 animate-spin" /></span>
-        <strong>正在装载质量评估矩阵</strong>
-        <small>读取题库、指标与回归报告…</small>
+        <strong>Loading the quality evaluation matrix</strong>
+        <small>Reading the question set, metrics, and regression report…</small>
       </div>
     )
   }
@@ -352,9 +352,9 @@ export function EvaluationView() {
     return (
       <div className="ev-error-state">
         <AlertCircleIcon className="h-8 w-8" />
-        <strong>评估报告加载失败</strong>
+        <strong>Failed to load the evaluation report</strong>
         <small>{error}</small>
-        <button type="button" onClick={() => void load()}>重新读取报告</button>
+        <button type="button" onClick={() => void load()}>Reload the report</button>
       </div>
     )
   }
@@ -363,9 +363,9 @@ export function EvaluationView() {
     return (
       <div className="ev-empty-state">
         <EvalIcon className="h-9 w-9" />
-        <h1>尚无质量评估报告</h1>
-        <p>运行 <code>pnpm eval:qa</code> 生成题库成绩、逐项指标和回归对比后刷新本页。</p>
-        <button type="button" onClick={() => void load()}><RefreshIcon className="h-4 w-4" />刷新报告</button>
+        <h1>No evaluation report yet</h1>
+        <p>Run <code>pnpm eval:qa</code> to produce the question-set scores, per-metric results, and regression comparison, then refresh this page.</p>
+        <button type="button" onClick={() => void load()}><RefreshIcon className="h-4 w-4" />Refresh report</button>
       </div>
     )
   }
@@ -385,65 +385,65 @@ export function EvaluationView() {
         <div className="ev-title-block">
           <span className="ev-title-icon"><EvalIcon className="h-5 w-5" /></span>
           <div>
-            <div><h1>问答质量控制台</h1><span className="ev-live-badge"><i />报告已校验</span></div>
-            <p>可复现题库 · 七维评估器 · 基线回归控制</p>
+            <div><h1>Question-answering quality console</h1><span className="ev-live-badge"><i />Report verified</span></div>
+            <p>Reproducible question set · seven-dimension evaluator · baseline regression control</p>
           </div>
         </div>
-        <nav className="ev-nav-actions" aria-label="评估页快捷操作">
-          <button type="button" onClick={() => document.getElementById('evaluation-overview')?.scrollIntoView({ behavior: 'smooth' })}>质量总览</button>
-          <button type="button" onClick={() => document.getElementById('evaluation-comparison')?.scrollIntoView({ behavior: 'smooth' })}>版本对比</button>
-          <button type="button" onClick={() => document.getElementById('evaluation-cases')?.scrollIntoView({ behavior: 'smooth' })}>用例诊断</button>
+        <nav className="ev-nav-actions" aria-label="Evaluation page shortcuts">
+          <button type="button" onClick={() => document.getElementById('evaluation-overview')?.scrollIntoView({ behavior: 'smooth' })}>Overview</button>
+          <button type="button" onClick={() => document.getElementById('evaluation-comparison')?.scrollIntoView({ behavior: 'smooth' })}>Version comparison</button>
+          <button type="button" onClick={() => document.getElementById('evaluation-cases')?.scrollIntoView({ behavior: 'smooth' })}>Case diagnostics</button>
         </nav>
         <div className="ev-header-actions">
-          <button type="button" onClick={() => void load()} disabled={loading} className="ev-icon-button" aria-label="刷新评估报告">
+          <button type="button" onClick={() => void load()} disabled={loading} className="ev-icon-button" aria-label="Refresh the evaluation report">
             <RefreshIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button type="button" onClick={exportReport} className="ev-export-button">↓ 导出报告</button>
+          <button type="button" onClick={exportReport} className="ev-export-button">↓ Export report</button>
         </div>
       </header>
 
       <section className="ev-hero-grid" id="evaluation-overview">
         <article className="ev-panel ev-score-panel">
           <div className="ev-score-copy">
-            <span className="ev-kicker">质量总分</span>
-            <h2>当前知识问答质量</h2>
-            <p>所有非空指标的加权平均成绩</p>
+            <span className="ev-kicker">Overall quality</span>
+            <h2>Current question-answering quality</h2>
+            <p>Weighted average over every non-empty metric</p>
           </div>
           <ScoreOrbit score={report.totalScore} />
           <div className="ev-score-verdict">
-            <span className="is-healthy"><i />生产就绪</span>
-            <small>目标线 90 · 当前高出 {(report.totalScore - 90).toFixed(1)} 分</small>
+            <span className="is-healthy"><i />Production ready</span>
+            <small>Target 90 · currently {(report.totalScore - 90).toFixed(1)} points above</small>
           </div>
         </article>
 
         <article className="ev-panel ev-summary-panel">
-          <header><span className="ev-kicker">评估概览</span><strong>本轮评估概览</strong></header>
+          <header><span className="ev-kicker">Evaluation overview</span><strong>This run at a glance</strong></header>
           <div className="ev-summary-grid">
-            <div className="primary"><span>用例通过率</span><strong>{passRate}<em>%</em></strong><small>{report.passed} / {report.caseCount} 题全项通过</small></div>
-            <div><span>满分指标</span><strong>{perfectCount}<em> / {metricEntries.length}</em></strong><small>保持项未发生回归</small></div>
-            <div><span>待诊断用例</span><strong>{failedCount}</strong><small>点击下方查看失败原因</small></div>
-            <div><span>评估耗时</span><strong>{report.elapsedMs}<em>ms</em></strong><small>串行可复现执行</small></div>
+            <div className="primary"><span>Case pass rate</span><strong>{passRate}<em>%</em></strong><small>{report.passed} / {report.caseCount} cases fully passed</small></div>
+            <div><span>Perfect metrics</span><strong>{perfectCount}<em> / {metricEntries.length}</em></strong><small>No regression among held metrics</small></div>
+            <div><span>Cases to diagnose</span><strong>{failedCount}</strong><small>See the failure reasons below</small></div>
+            <div><span>Run time</span><strong>{report.elapsedMs}<em>ms</em></strong><small>Serial, reproducible run</small></div>
           </div>
           <div className="ev-run-foot"><span><ClockIcon className="h-3.5 w-3.5" />{formatDate(report.generatedAt)}</span><code>{report.runId}</code></div>
         </article>
 
         <article className="ev-panel ev-risk-panel">
           <header>
-            <div><span className="ev-kicker">风险聚焦</span><h2>首要改进目标</h2></div>
+            <div><span className="ev-kicker">Risk focus</span><h2>Top improvement target</h2></div>
             <span className="ev-risk-level">P1</span>
           </header>
           <div className="ev-risk-score"><strong>{percentage(weakest.mean)}</strong><span>{METRIC_LABELS[weakest.key]?.label ?? weakest.key}</span></div>
           <p>{METRIC_LABELS[weakest.key]?.desc}</p>
-          <div className="ev-risk-gap"><span>当前</span><i><b style={{ width: `${weakest.mean * 100}%` }} /></i><strong>目标 90%</strong></div>
-          <div className="ev-risk-impact"><span><b>{weakestFailures}</b> 个失败用例</span><span><b>{Math.max(0, Math.round(90 - weakest.mean * 100))}</b> 分差距</span></div>
-          <button type="button" onClick={() => { setActiveMetric(weakest.key); setCaseFilter('failed'); document.getElementById('evaluation-cases')?.scrollIntoView({ behavior: 'smooth' }) }}>定位问题用例 →</button>
+          <div className="ev-risk-gap"><span>Current</span><i><b style={{ width: `${weakest.mean * 100}%` }} /></i><strong>Target 90%</strong></div>
+          <div className="ev-risk-impact"><span><b>{weakestFailures}</b> failed cases</span><span><b>{Math.max(0, Math.round(90 - weakest.mean * 100))}</b> points short</span></div>
+          <button type="button" onClick={() => { setActiveMetric(weakest.key); setCaseFilter('failed'); document.getElementById('evaluation-cases')?.scrollIntoView({ behavior: 'smooth' }) }}>Open the failing cases →</button>
         </article>
       </section>
 
       <section className="ev-panel ev-metrics-panel">
         <header className="ev-panel-header">
-          <div><span className="ev-kicker">指标矩阵</span><h2>七维质量指标矩阵</h2><p>点击任一指标，下钻查看该指标适用的真实题目与失败原因</p></div>
-          <div className="ev-matrix-legend"><span className="perfect"><i />满分</span><span className="healthy"><i />健康</span><span className="risk"><i />需改进</span></div>
+          <div><span className="ev-kicker">Metric matrix</span><h2>Seven-dimension quality matrix</h2><p>Select a metric to drill into the real cases that exercise it and their failure reasons</p></div>
+          <div className="ev-matrix-legend"><span className="perfect"><i />Perfect</span><span className="healthy"><i />Healthy</span><span className="risk"><i />Needs work</span></div>
         </header>
         <div className="ev-metric-grid">
           {metricEntries.map(item => (
@@ -465,26 +465,26 @@ export function EvaluationView() {
       <section className="ev-panel ev-cases-panel" id="evaluation-cases">
         <header className="ev-panel-header">
           <div>
-            <span className="ev-kicker">用例诊断</span>
-            <h2>用例级质量诊断</h2>
-            <p>{activeMetric ? `当前聚焦：${METRIC_LABELS[activeMetric]?.label ?? activeMetric}` : '逐题检查检索、证据、引用与回答质量'}</p>
+            <span className="ev-kicker">Case diagnostics</span>
+            <h2>Case-level quality diagnostics</h2>
+            <p>{activeMetric ? `Focused on: ${METRIC_LABELS[activeMetric]?.label ?? activeMetric}` : 'Check retrieval, evidence, citations, and answer quality case by case'}</p>
           </div>
           <div className="ev-case-toolbar">
             <div className="ev-case-filters">
               {(['all', 'failed', 'passed'] as CaseFilter[]).map(filter => (
                 <button key={filter} type="button" className={caseFilter === filter ? 'is-active' : ''} onClick={() => setCaseFilter(filter)}>
-                  {filter === 'all' ? '全部' : filter === 'failed' ? `待诊断 ${failedCount}` : `已通过 ${report.passed}`}
+                  {filter === 'all' ? 'All' : filter === 'failed' ? `To diagnose ${failedCount}` : `Passed ${report.passed}`}
                 </button>
               ))}
             </div>
-            <label className="ev-case-search"><SearchIcon className="h-3.5 w-3.5" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索问题或用例 ID" /></label>
-            {activeMetric && <button type="button" className="ev-clear-focus" onClick={() => setActiveMetric(null)}>清除指标聚焦 ×</button>}
+            <label className="ev-case-search"><SearchIcon className="h-3.5 w-3.5" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search questions or case IDs" /></label>
+            {activeMetric && <button type="button" className="ev-clear-focus" onClick={() => setActiveMetric(null)}>Clear metric focus ×</button>}
           </div>
         </header>
-        <div className="ev-case-table-head"><span>状态</span><span>题目与类型</span><span>证据</span><span>得分</span><span>结果</span><span /></div>
+        <div className="ev-case-table-head"><span>Status</span><span>Question and type</span><span>Evidence</span><span>Score</span><span>Result</span><span /></div>
         <div className="ev-case-list">
           {filteredCases.length === 0 ? (
-            <div className="ev-no-results"><SearchIcon className="h-5 w-5" /><span>没有符合当前筛选条件的用例</span></div>
+            <div className="ev-no-results"><SearchIcon className="h-5 w-5" /><span>No case matches the current filters</span></div>
           ) : filteredCases.map(result => (
             <CaseDiagnostic
               key={result.caseId}
@@ -497,14 +497,14 @@ export function EvaluationView() {
       </section>
 
       <section className="ev-repro-strip">
-        <div><span className="ev-kicker">可复现约束</span><strong>评估环境完整性</strong></div>
+        <div><span className="ev-kicker">Reproducibility constraints</span><strong>Evaluation environment integrity</strong></div>
         <div className="ev-repro-items">
-          <ReproSignal label="固定时间" detail={report.evalNow.slice(0, 10)} ok={report.reproducibility.fixedTime} />
-          <ReproSignal label="串行执行" detail="并发数 1" ok={report.reproducibility.serial} />
-          <ReproSignal label="状态隔离" detail="逐例重置" ok={report.seedResetPerCase} />
-          <ReproSignal label="生产隔离" detail="独立输出目录" ok={!report.reproducibility.prodDataTouched} />
+          <ReproSignal label="Fixed clock" detail={report.evalNow.slice(0, 10)} ok={report.reproducibility.fixedTime} />
+          <ReproSignal label="Serial execution" detail="concurrency 1" ok={report.reproducibility.serial} />
+          <ReproSignal label="State isolation" detail="reset per case" ok={report.seedResetPerCase} />
+          <ReproSignal label="Production isolation" detail="separate output directory" ok={!report.reproducibility.prodDataTouched} />
         </div>
-        <div className="ev-manifest-time"><span>知识版本</span><strong>{formatDate(report.manifestCompiledAt)}</strong></div>
+        <div className="ev-manifest-time"><span>Knowledge version</span><strong>{formatDate(report.manifestCompiledAt)}</strong></div>
       </section>
     </div>
   )

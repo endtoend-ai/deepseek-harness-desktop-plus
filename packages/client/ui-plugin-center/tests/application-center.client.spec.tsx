@@ -28,7 +28,7 @@ describe('Application Center', () => {
     render(<ApplicationCenterPage {...props({ openLlmWiki })} />)
 
     expect(await screen.findByText(zh.applicationReady)).toBeTruthy()
-    expect(screen.getByText('FF - LLM Wiki')).toBeTruthy()
+    expect(screen.getByText(zh.applicationWikiTitle)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: zh.applicationOpen }))
     expect(openLlmWiki).toHaveBeenCalledOnce()
   })

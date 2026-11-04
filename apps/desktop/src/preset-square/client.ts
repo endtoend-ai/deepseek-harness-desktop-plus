@@ -17,6 +17,7 @@ import {
   type PresetSquareItem,
 } from '@deepseek-ai/dsh-plugin-center-contracts'
 import {
+  BUNDLED_PRESET_SOURCE,
   EMPTY_PRESET_SQUARE_CATALOG,
   type PresetSquareBundledCatalog,
 } from './bundled-catalog.ts'
@@ -180,7 +181,7 @@ export class PresetSquareClient {
   }
 
   private async download(item: PresetSquareItem): Promise<Uint8Array> {
-    if (item.source === 'fufan-official') {
+    if (item.source === BUNDLED_PRESET_SOURCE) {
       const archive = await this.bundled.archive(item.slug)
       if (archive === undefined) throw new Error('Bundled Preset package is unavailable')
       this.assertArtifact(archive, item)

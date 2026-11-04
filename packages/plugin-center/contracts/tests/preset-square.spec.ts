@@ -56,10 +56,10 @@ describe('Preset Square contracts', () => {
 
   it('preserves the first-party catalog provenance without changing local trust', () => {
     expect(decodePresetSquareListResponse({
-      items: [{ ...ITEM, source: 'fufan-official' }],
+      items: [{ ...ITEM, source: 'official' }],
       total: 1,
       sort: 'newest',
-    }).items[0]?.source).toBe('fufan-official')
+    }).items[0]?.source).toBe('official')
     expect(() => decodePresetSquareListResponse({
       items: [{ ...ITEM, source: 'official' }],
       total: 1,

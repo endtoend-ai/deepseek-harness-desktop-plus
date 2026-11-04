@@ -8,7 +8,7 @@ Windows Desktop 会在目录标题栏为原生窗口按钮预留安全区域，�
 
 Preset 广场是与插件中心、插件发现平级的第三个一级页面。“广场”视图负责公开搜索、下载量/最新排序、详情和经校验的 `.dshpreset` 安装；“已安装”视图负责 Host 实时本地名单、系统项保护、用户项删除，以及使用所选 Preset 创建空白会话。两个视图在变更过程中都留在当前页面，远端目录失败也不会隐藏本地 Preset。浏览器开发只提供确定性的只读 fixture，并明确提示安装、删除与会话选择必须在 Desktop 中执行。
 
-目录会在社区条目之前以独立的 **赋范官方** 分组展示随应用交付的七套工作流，其中 LLM Wiki Producer 使用真实的「LLM Wiki 全栈工程师」Agent Preset。卡片与详情明确说明这是赋范团队维护的内容，不代表 DeepSeek Harness 官方。LLM Wiki 详情还会在安装前明确列出 Agent 提示词、内置 `find-plugins` Skill、标准工具，以及运行时对工作区和全局 Skill 的发现。安装后仍为普通用户 Preset，因此可从“已安装”删除，也可在目录里重新安装。
+目录会在社区条目之前以独立的 **官方** 分组展示随应用交付的七套工作流，其中 LLM Wiki Producer 使用真实的「LLM Wiki 全栈工程师」Agent Preset。卡片与详情明确说明这是随桌面应用维护的内容，不代表 DeepSeek Harness 官方。LLM Wiki 详情还会在安装前明确列出 Agent 提示词、内置 `find-plugins` Skill、标准工具，以及运行时对工作区和全局 Skill 的发现。安装后仍为普通用户 Preset，因此可从“已安装”删除，也可在目录里重新安装。
 
 浏览器开发固定使用 `pnpm run dev:desktop:web`（`dev:plugin-center` 保留为兼容别名）。该入口以 `DSH_DESKTOP=1` 组合与 Desktop 相同的客户端 UI 名册和皮肤，同时把 `DSH_HOME` 隔离在项目工件目录；插件中心在页面根节点留下开发模式标记与悬停说明。默认场景把安装和已安装动作回放为一个会话持久操作与累计已安装投影，并覆盖卸载后的自有数据确认；`pluginCenterScenario=compatibility-denied` 还会展示一个因应用升级不兼容而保持停用的 Bundle。`pluginCenterScenario=stale` 拒绝陈旧目录权威，`pluginCenterRecovery=failed` 展示不写文件的运行清单差异安全模式、诊断导出与重试旅程。该入口只用于 UI 与状态旅程验收：其已安装结果、变更、数据删除和诊断导出都是模拟状态，不提供真实 MCP 进程、Electron preload、文件系统、包管理器或 Host 重启权威。
 

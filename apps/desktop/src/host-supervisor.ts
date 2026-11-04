@@ -36,17 +36,20 @@ function parseReadinessLine(line: string): string | undefined {
     throw new Error(`desktop Host readiness URL is invalid: ${token}`)
   }
   const port = Number(url.port)
+  const tokenParameter = [...url.searchParams.keys()]
   if (url.protocol !== 'http:'
     || (url.hostname !== '127.0.0.1' && url.hostname !== 'localhost')
     || url.pathname !== '/'
-    || url.search !== ''
+    || tokenParameter.some(name => name !== 'token')
     || url.hash !== ''
     || !Number.isInteger(port)
     || port < 1
     || port > 65_535) {
     throw new Error(`desktop Host readiness URL must be loopback HTTP with an explicit port: ${token}`)
   }
-  return url.origin
+  // The 0.2.1 host prints the authenticated URL; the window must load it with
+  // the token, otherwise the page opens on the unauthenticated reject path.
+  return `${url.origin}${url.pathname}${url.search}`
 }
 
 /**

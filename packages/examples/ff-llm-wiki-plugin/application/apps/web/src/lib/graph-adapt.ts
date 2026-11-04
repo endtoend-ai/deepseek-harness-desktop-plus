@@ -14,10 +14,10 @@ import type { GraphEdge, GraphNode, GraphNodeType, GraphEdgeSemantic } from "@ll
 
 /** 节点类型 → 业务语言标签 */
 export const NODE_TYPE_LABEL: Record<GraphNodeType, string> = {
-  PAGE: "知识页",
-  SOURCE: "来源文档",
-  TOPIC: "主题",
-  PAGE_TYPE: "页面类型",
+  PAGE: "Page",
+  SOURCE: "Source document",
+  TOPIC: "Topic",
+  PAGE_TYPE: "Page type",
 };
 
 /** 节点类型顺序（图例 / 筛选 / 布局扇区按此稳定排列） */
@@ -37,10 +37,10 @@ export const NODE_TYPE_COLOR: Record<GraphNodeType, string> = {
 
 /** 边语义 → 业务语言标签 */
 export const SEMANTIC_LABEL: Record<GraphEdgeSemantic, string> = {
-  LINKS_TO: "内链",
-  HAS_SOURCE: "来源",
-  HAS_TOPIC: "主题",
-  HAS_TYPE: "类型",
+  LINKS_TO: "Link",
+  HAS_SOURCE: "Source",
+  HAS_TOPIC: "Topic",
+  HAS_TYPE: "Type",
 };
 
 /** 边语义顺序（筛选 / 图例按此稳定排列） */
@@ -204,13 +204,13 @@ export function reconcile(adapted: AdaptedGraph, sourceNodes: number, sourceEdge
   const degreeSum = adapted.nodes.reduce((s, n) => s + n.degree, 0);
   const linkEnds = adapted.links.length * 2;
   if (adapted.nodes.length !== sourceNodes) {
-    throw new Error(`节点对账失败：适配 ${adapted.nodes.length} != 源 ${sourceNodes}`);
+    throw new Error(`Node reconciliation failed: adapted ${adapted.nodes.length} != source ${sourceNodes}`);
   }
   if (adapted.links.length !== sourceEdges) {
-    throw new Error(`边对账失败：适配 ${adapted.links.length} != 源 ${sourceEdges}`);
+    throw new Error(`Edge reconciliation failed: adapted ${adapted.links.length} != source ${sourceEdges}`);
   }
   if (degreeSum !== linkEnds) {
-    throw new Error(`度数对账失败：degree 和 ${degreeSum} != 边端点数 ${linkEnds}`);
+    throw new Error(`Degree reconciliation failed: degree sum ${degreeSum} != edge endpoints ${linkEnds}`);
   }
-  return `${sourceNodes} 节点 / ${sourceEdges} 边 · 度数守恒 ${degreeSum} = ${linkEnds}`;
+  return `${sourceNodes} nodes / ${sourceEdges} edges · degree conserved ${degreeSum} = ${linkEnds}`;
 }

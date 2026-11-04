@@ -11,7 +11,6 @@ import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 import { AppearanceController } from './appearance-controller.ts'
 import { AppearanceSection } from './AppearanceSection.tsx'
-import { BrandBadge } from './BrandBadge.tsx'
 import { desktopBridge } from './bridge.ts'
 import { en, zh, type DesktopCustomizationKey } from './locales.ts'
 import { UpdateSection } from './UpdateSection.tsx'
@@ -116,11 +115,6 @@ export function apply(ctx: ClientContext): void {
       }
     },
   }, VisionEnhancementShortcut))
-  ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
-    name: 'sidebar.footer.action',
-    id: 'beyondata-brand',
-    order: 100,
-  }, BrandBadge))
 }
 
 export type { AppearanceSnapshot } from './appearance-controller.ts'

@@ -183,12 +183,15 @@ export class LocaleRuntime {
    * absent compositions (standalone dictionary registries) stay process-local.
    * @param bootstrap - native initialization; absent in ordinary browsers.
    */
-  constructor(ctx: ClientContext, host?: ConfigForm<LocaleSettings>, private readonly bootstrap?: LocaleBootstrap) {
+  constructor(ctx: ClientContext, host?: ConfigForm<LocaleSettings>, bootstrap?: LocaleBootstrap) {
     this.ctx = ctx
     this.host = host
     for (const locale of BUILT_IN_LOCALES) this.catalog.set(localeKey(locale.id), locale)
     const locales = this.localeList()
-    this.provisional = resolveInitialLocale(locales, bootstrap?.languages)
+    // English is the product default: a reader with no stored preference
+    // opens in English regardless of the browser or OS language, and may
+    // switch to any registered locale from the Language row.
+    this.provisional = FALLBACK_LOCALE
     this.preference = bootstrap?.preference ?? undefined
     this.snapshot = Object.freeze({ active: this.resolveActive(), locales, revision: 0 })
     if (host !== undefined) {
@@ -310,11 +313,10 @@ export class LocaleRuntime {
     this.publish(target, true)
   }
 
-  /** Recompute browser fallback and publish the current catalog. */
+  /** Publish the current catalog; the fallback stays English. */
   private publishCatalog(): void {
     this.fallbackChains.clear()
     const locales = this.localeList()
-    this.provisional = resolveInitialLocale(locales, this.bootstrap?.languages)
     const active = this.resolveActive()
     this.publish(active, active !== this.snapshot.active, locales)
   }
@@ -510,44 +512,6 @@ export class LocaleRuntime {
       }
     }
   }
-}
-
-/**
- * The browser's own language wins over {@link FALLBACK_LOCALE}; an explicit
- * Host preference may replace this provisional value after plugin activation.
- */
-function resolveInitialLocale(locales: readonly LocaleDefinition[], languages?: readonly string[]): LocaleId {
-  return detectBrowserLocale(locales, languages) ?? FALLBACK_LOCALE
-}
-
-/**
- * The first registered locale the browser asks for. Each browser tag first
- * matches a locale id exactly, then its primary subtag, so an exact regional
- * registration wins before a language-wide fallback.
- * `window` is the browser test, not `navigator`: Node exposes a global
- * `navigator` reporting the machine's own language, which must not decide the
- * locale for non-browser runs. `navigator.language` trails the ordered
- * `languages` list and covers hosts exposing only the single tag.
- * @param locales - definitions currently available to the browser.
- * @param languages - native system language order, when supplied by a shell.
- * @returns the first matching locale id, or undefined.
- */
-function detectBrowserLocale(locales: readonly LocaleDefinition[], languages?: readonly string[]): LocaleId | undefined {
-  if (languages === undefined) {
-    if (typeof window === 'undefined') return undefined
-    // Embedders and older WebViews may omit the DOM-typed `languages` property.
-    const browserLanguages = (navigator as { readonly languages?: readonly string[] }).languages
-    languages = [...(browserLanguages ?? []), navigator.language]
-  }
-  for (const tag of languages) {
-    const requested = localeKey(tag)
-    const exact = locales.find(locale => localeKey(locale.id) === requested)
-    if (exact !== undefined) return exact.id
-    const primary = requested.split('-')[0]
-    const match = locales.find(locale => localeKey(locale.id).split('-')[0] === primary)
-    if (match !== undefined) return match.id
-  }
-  return undefined
 }
 
 /** Required services: slot registration plus the settings transport. */

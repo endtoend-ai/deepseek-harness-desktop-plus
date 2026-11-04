@@ -9,13 +9,13 @@ import { extractGraph } from './extractor.js'
 ensureWikiCompiled()
 const result = extractGraph()
 
-console.log('图谱抽取完成 ✔（本地规则抽取演示模式）')
-console.log(`- 节点：${result.stats.nodes} 个 · 边：${result.stats.edges} 条`)
+console.log('Graph extraction finished ✔ (local rule-based demo mode)')
+console.log(`- Nodes: ${result.stats.nodes} · edges: ${result.stats.edges}`)
 console.log(
-  `- 节点类型：知识页 ${result.stats.pageNodes} · 来源文档 ${result.stats.sourceNodes} · 主题 ${result.stats.topicNodes} · 页面类型 ${result.stats.pageTypeNodes}`,
+  `- Node types: pages ${result.stats.pageNodes} · sources ${result.stats.sourceNodes} · topics ${result.stats.topicNodes} · page types ${result.stats.pageTypeNodes}`,
 )
 console.log(
-  `- 边语义：内链 ${result.stats.interlinkEdges} · 来源 ${result.stats.sourceEdges} · 主题 ${result.stats.topicEdges} · 类型 ${result.stats.typeEdges}`,
+  `- Edge semantics: link ${result.stats.interlinkEdges} · source ${result.stats.sourceEdges} · topic ${result.stats.topicEdges} · type ${result.stats.typeEdges}`,
 )
-console.log(`- 抽取时间：${result.generatedAt}`)
-console.log('- 产物目录：output/（kg_nodes.json + kg_edges.json + kg_meta.json）')
+console.log(`- Extracted at: ${result.generatedAt}`)
+console.log('- Output directory: output/ (kg_nodes.json + kg_edges.json + kg_meta.json)')

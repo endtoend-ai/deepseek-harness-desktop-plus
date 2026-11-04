@@ -29,22 +29,22 @@ export const STATUS_META: Record<
   { label: string; className: string; dot: string }
 > = {
   ready: {
-    label: '已完成',
+    label: 'Done',
     className: 'bg-emerald-500/10 text-emerald-300 ring-emerald-400/20',
     dot: 'bg-emerald-400',
   },
   processing: {
-    label: '处理中',
+    label: 'Processing',
     className: 'bg-sky-500/10 text-sky-300 ring-sky-400/20',
     dot: 'bg-sky-400 animate-pulse',
   },
   queued: {
-    label: '待处理',
+    label: 'Pending',
     className: 'bg-slate-500/10 text-slate-300 ring-slate-400/20',
     dot: 'bg-slate-400',
   },
   failed: {
-    label: '异常',
+    label: 'Failed',
     className: 'bg-rose-500/10 text-rose-300 ring-rose-400/20',
     dot: 'bg-rose-400',
   },

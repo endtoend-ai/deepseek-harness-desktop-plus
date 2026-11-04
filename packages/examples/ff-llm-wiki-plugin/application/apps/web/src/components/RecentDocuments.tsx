@@ -12,22 +12,22 @@ export function RecentDocuments({
     <section className={`dashboard-panel flex h-full min-h-[290px] flex-col p-3 ${className ?? ''}`}>
       <div className="mb-2 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-[15px] font-semibold text-slate-100">最近文档</h2>
-          <p className="mt-0.5 text-[13px] text-slate-600">近期进入知识流水线的企业资料</p>
+          <h2 className="text-[15px] font-semibold text-slate-100">Recent documents</h2>
+          <p className="mt-0.5 text-[13px] text-slate-600">Enterprise material that entered the knowledge pipeline recently</p>
         </div>
         <a
           href="/documents"
           className="text-[13px] font-medium text-amber-200/85 transition-colors hover:text-amber-100"
         >
-          查看全部 →
+          View all →
         </a>
       </div>
 
       <div className="hidden grid-cols-[minmax(0,1fr)_72px_76px_52px] gap-3 border-b border-white/[0.06] pb-1.5 text-[12px] uppercase tracking-[0.12em] text-slate-600 sm:grid">
-        <span>文档名称</span>
-        <span>类型</span>
-        <span>状态</span>
-        <span className="text-right">时间</span>
+        <span>Document</span>
+        <span>Type</span>
+        <span>Status</span>
+        <span className="text-right">Time</span>
       </div>
 
       <ul className="grid flex-1 grid-rows-6 divide-y divide-white/[0.055]">

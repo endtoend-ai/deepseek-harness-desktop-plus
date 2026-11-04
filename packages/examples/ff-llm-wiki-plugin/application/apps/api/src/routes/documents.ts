@@ -87,13 +87,13 @@ export function documentsRoutes(
       } catch (err) {
         const code = (err as { code?: string })?.code
         if (code === 'FST_REQ_FILE_TOO_LARGE') {
-          return reply.code(413).send(badUpload('文件过大，单文件上限为 50 MB'))
+          return reply.code(413).send(badUpload('The file is too large. The limit is 50 MB per file.'))
         }
-        return reply.code(400).send(badUpload('上传内容无法解析，请重试'))
+        return reply.code(400).send(badUpload('The uploaded content could not be read. Try again.'))
       }
 
       if (!file) {
-        return reply.code(400).send(badUpload('未收到文件，请选择要导入的资料'))
+        return reply.code(400).send(badUpload('No file was received. Choose a document to import.'))
       }
 
       const ext = extname(file.filename).toLowerCase()
@@ -101,15 +101,15 @@ export function documentsRoutes(
       if (!kind) {
         return reply
           .code(400)
-          .send(badUpload('不支持的文件类型，请上传 PDF、DOCX、Markdown 或 TXT 文件'))
+          .send(badUpload('Unsupported file type. Upload a PDF, DOCX, Markdown, or TXT file.'))
       }
 
       const buffer = await file.toBuffer()
       if (buffer.length === 0) {
-        return reply.code(400).send(badUpload('文件为空，请选择有内容的资料'))
+        return reply.code(400).send(badUpload('The file is empty. Choose a document with content.'))
       }
       if (buffer.length > MAX_UPLOAD_BYTES) {
-        return reply.code(413).send(badUpload('文件过大，单文件上限为 50 MB'))
+        return reply.code(413).send(badUpload('The file is too large. The limit is 50 MB per file.'))
       }
 
       const sha256 = createHash('sha256').update(buffer).digest('hex')
@@ -132,8 +132,8 @@ export function documentsRoutes(
           document: existing,
           existingId: existing.id,
           message: processing
-            ? `文件已存在，已恢复资料「${existing.title}」的处理任务`
-            : `文件已存在，对应资料「${existing.title}」`,
+            ? `File already exists; resumed processing for "${existing.title}"`
+            : `File already exists as "${existing.title}"`,
           ...(processing ? { processing } : {}),
         })
       }
@@ -152,7 +152,7 @@ export function documentsRoutes(
         size: formatBytes(buffer.length),
         sizeBytes: buffer.length,
         sha256,
-        source: '手动上传',
+        source: 'Manual upload',
         error: null,
         createdAt: now,
         updatedAt: now,
@@ -164,7 +164,7 @@ export function documentsRoutes(
         processing = await processor.enqueue(doc, buffer)
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : '原文件保存失败，请稍后重试'
+          error instanceof Error ? error.message : 'Failed to save the original file. Try again later.'
         const failed = await repo.updateProcessingState(
           doc.id,
           'failed',
@@ -184,7 +184,7 @@ export function documentsRoutes(
         duplicate: false,
         document: doc,
         processing,
-        message: '文件已接收，开始执行解析与入库',
+        message: 'File received; parsing and indexing started',
       })
     })
 
@@ -200,7 +200,7 @@ export function documentsRoutes(
             extractedText: '',
             chunks: [],
             wikiPages: [],
-            message: '未找到该资料',
+            message: 'Document not found',
           })
         }
         const [{ extractedText, chunks }, processing] = await Promise.all([
@@ -214,7 +214,7 @@ export function documentsRoutes(
           extractedText,
           chunks,
           wikiPages: processor.getWikiLinks(document.id),
-          message: '资料详情已更新',
+          message: 'Document details updated',
         }
       },
     )
@@ -230,7 +230,7 @@ export function documentsRoutes(
             ok: false,
             document: null,
             wikiPages: [],
-            message: '资料名称不能为空',
+            message: 'Document title is required',
           })
         }
         if (body.topic !== undefined && !DOCUMENT_TOPICS.has(body.topic)) {
@@ -238,7 +238,7 @@ export function documentsRoutes(
             ok: false,
             document: null,
             wikiPages: [],
-            message: '资料主题不合法',
+            message: 'Invalid document topic',
           })
         }
         const document = await repo.updateMetadata(req.params.id, {
@@ -251,7 +251,7 @@ export function documentsRoutes(
             ok: false,
             document: null,
             wikiPages: [],
-            message: '未找到该资料',
+            message: 'Document not found',
           })
         }
         await processor.publishCurrent(document)
@@ -259,7 +259,7 @@ export function documentsRoutes(
           ok: true,
           document,
           wikiPages: processor.getWikiLinks(document.id),
-          message: '资料与关联 Wiki 已同步更新',
+          message: 'Document and linked Wiki pages updated',
         }
       },
     )
@@ -273,7 +273,7 @@ export function documentsRoutes(
             ok: false,
             id: req.params.id,
             removedWikiSlugs: [],
-            message: '未找到该资料',
+            message: 'Document not found',
           })
         }
         const removedWikiSlugs = await processor.remove(document)
@@ -282,7 +282,7 @@ export function documentsRoutes(
           ok: true,
           id: document.id,
           removedWikiSlugs,
-          message: '资料、处理产物与关联 Wiki 已删除',
+          message: 'Document, processing artifacts, and linked Wiki pages deleted',
         }
       },
     )
@@ -296,7 +296,7 @@ export function documentsRoutes(
             ok: false,
             document: null,
             job: null,
-            message: '未找到该资料',
+            message: 'Document not found',
           })
         }
         const job = await processor.get(document.id)
@@ -305,10 +305,10 @@ export function documentsRoutes(
             ok: false,
             document,
             job: null,
-            message: '该资料暂无处理任务',
+            message: 'This document has no processing job',
           })
         }
-        return { ok: true, document, job, message: '处理状态已更新' }
+        return { ok: true, document, job, message: 'Processing status updated' }
       },
     )
 
@@ -318,12 +318,12 @@ export function documentsRoutes(
         const { id } = req.params
         const document = await repo.reprocess(id)
         if (!document) {
-          return reply.code(404).send({ ok: false, document: null, message: '未找到该资料' })
+          return reply.code(404).send({ ok: false, document: null, message: 'Document not found' })
         }
         if (document.origin === 'upload') {
           await processor.reprocess(document)
         }
-        return { ok: true, document, message: '已重新提交处理' }
+        return { ok: true, document, message: 'Resubmitted for processing' }
       },
     )
   }

@@ -5,6 +5,8 @@ import { dirname, relative, resolve } from 'node:path'
 
 const PACKAGE_NAME = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/u
 const MODULE_SPECIFIER = /^(?:@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*|[a-z0-9][a-z0-9._-]*)(?:\/[a-zA-Z0-9._/-]+)?$/u
+/** Cordis builtin specifier (`cordis:group`, `cordis:editor`): composes rows without an npm package. */
+const BUILTIN_SPECIFIER = /^cordis:[a-z][a-z0-9-]*$/u
 const ENTRY_ID = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/u
 
 /** One immutable protected-identity projection derived from release composition. */
@@ -56,7 +58,16 @@ function collectPatchIdentities(
     const packageRow = line.match(/^\s+name:\s+(.+?)\s*$/u)
     if (packageRow?.[1] === undefined) continue
     const rowLabel = `${label}:${String(index + 1)} name`
-    packageNames.add(packageFromSpecifier(scalar(packageRow[1], rowLabel), rowLabel))
+    const specifier = scalar(packageRow[1], rowLabel)
+    // A builtin specifier names a Cordis builtin rather than a package in the
+    // packaged Host dependency map, so it contributes no protected package.
+    if (specifier.includes(':')) {
+      if (!BUILTIN_SPECIFIER.test(specifier)) {
+        throw new Error(`${rowLabel} has an unsupported Loader builtin specifier`)
+      }
+      continue
+    }
+    packageNames.add(packageFromSpecifier(specifier, rowLabel))
   }
   if (!observedEntry) throw new Error(`${label} contains no protected Loader rows`)
 }

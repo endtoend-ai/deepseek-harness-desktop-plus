@@ -15,8 +15,8 @@ type RGB = [number, number, number]
  * @returns A learner-facing validation error, or undefined when accepted.
  */
 export function validateImageFile(file: File): string | undefined {
-  if (!/^image\/(png|jpeg|webp)$/u.test(file.type)) return '请选择 PNG、JPG 或 WebP 图片。'
-  if (file.size > MAX_SOURCE_IMAGE_BYTES) return '原图请控制在 16 MB 以内。'
+  if (!/^image\/(png|jpeg|webp)$/u.test(file.type)) return 'Choose a PNG, JPG or WebP image.'
+  if (file.size > MAX_SOURCE_IMAGE_BYTES) return 'Keep the source image within 16 MB.'
   return undefined
 }
 
@@ -44,7 +44,7 @@ export function renderBackground(image: HTMLImageElement, focusY: number): HTMLC
   canvas.width = 1920
   canvas.height = 1080
   const context = canvas.getContext('2d', { alpha: false })
-  if (context === null) throw new Error('当前设备无法创建图片画布。')
+  if (context === null) throw new Error('This device cannot create an image canvas.')
   const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight)
   const width = image.naturalWidth * scale
   const height = image.naturalHeight * scale

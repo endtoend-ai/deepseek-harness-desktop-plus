@@ -19,7 +19,7 @@ export function findRepoRoot(startDir: string): string {
     if (existsSync(join(dir, 'pnpm-workspace.yaml'))) return dir
     const parent = dirname(dir)
     if (parent === dir) {
-      throw new Error('未找到仓库根目录（缺少 pnpm-workspace.yaml）')
+      throw new Error('Repository root not found (pnpm-workspace.yaml is missing)')
     }
     dir = parent
   }

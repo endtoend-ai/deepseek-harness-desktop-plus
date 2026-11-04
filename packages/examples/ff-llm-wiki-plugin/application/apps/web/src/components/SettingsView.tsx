@@ -22,19 +22,19 @@ const FALLBACK_MODELS: QaModelConfigResponse['models'] = [
   {
     id: 'deepseek-v4-flash',
     label: 'V4 Flash',
-    description: '低延迟、高吞吐，适合日常知识问答与内容归纳',
+    description: 'Low latency and high throughput for everyday knowledge Q&A and summarization',
   },
   {
     id: 'deepseek-v4-pro',
     label: 'V4 Pro',
-    description: '更强推理能力，适合复杂制度分析与多步骤判断',
+    description: 'Stronger reasoning for complex policy analysis and multi-step judgement',
   },
 ]
 
 function sourceLabel(source: QaModelConfigResponse['credentialSource'] | undefined) {
-  if (source === 'credentials-file') return '凭证文件'
-  if (source === 'environment') return '环境变量'
-  return '尚未配置'
+  if (source === 'credentials-file') return 'Credential file'
+  if (source === 'environment') return 'Environment variable'
+  return 'Not configured'
 }
 
 export function SettingsView() {
@@ -59,7 +59,7 @@ export function SettingsView() {
         }
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : '无法读取模型服务配置')
+        setError(cause instanceof Error ? cause.message : 'Failed to read the model configuration')
       })
       .finally(() => setLoading(false))
   }, [])
@@ -85,7 +85,7 @@ export function SettingsView() {
       setSaved(true)
       window.setTimeout(() => setSaved(false), 2200)
     } catch {
-      setError('浏览器无法保存设置，请检查本地存储权限')
+      setError('The browser could not save settings. Check local storage permissions.')
     }
   }
 
@@ -103,7 +103,7 @@ export function SettingsView() {
         provider: 'deepseek',
         model: preferences.model,
         latencyMs: 0,
-        message: cause instanceof Error ? cause.message : '模型验证失败',
+        message: cause instanceof Error ? cause.message : 'Model verification failed',
       })
     } finally {
       setTesting(false)
@@ -116,12 +116,12 @@ export function SettingsView() {
         <div className="settings-title-row">
           <span className="settings-title-icon"><SettingsIcon /></span>
           <div>
-            <h1>系统设置</h1>
-            <p>统一管理 Agent 智能问答使用的模型服务与生成参数</p>
+            <h1>Settings</h1>
+            <p>Manage the model service and generation parameters used by agent question answering</p>
           </div>
         </div>
         <Link href="/ask" className="settings-ask-link">
-          <QaIcon />进入智能问答<span>→</span>
+          <QaIcon />Open question answering<span>→</span>
         </Link>
       </header>
 
@@ -130,26 +130,26 @@ export function SettingsView() {
           <span className="settings-provider-mark">DS</span>
           <div>
             <div className="settings-provider-title">
-              <h2>DeepSeek 模型服务</h2>
+              <h2>DeepSeek model service</h2>
               <span className={config?.configured ? 'is-online' : ''}>
-                <i />{loading ? '正在检测' : config?.configured ? '服务已就绪' : '等待凭证'}
+                <i />{loading ? 'Checking' : config?.configured ? 'Ready' : 'Awaiting credentials'}
               </span>
             </div>
-            <p>{config?.endpoint ?? '正在读取服务地址…'}</p>
+            <p>{config?.endpoint ?? 'Reading the service endpoint…'}</p>
           </div>
         </div>
         <div className="settings-provider-facts">
-          <div><small>凭证状态</small><strong>{config?.credentialLabel ?? '检测中'}</strong><em>{sourceLabel(config?.credentialSource)}</em></div>
-          <div><small>当前模型</small><strong>{selectedModel?.label ?? '通用对话'}</strong><em>{preferences.model}</em></div>
-          <div><small>知识数据</small><strong>{config?.knowledgeStore.engine ?? 'SQLite'}</strong><em>{config ? `${config.knowledgeStore.pages} 页 · ${config.knowledgeStore.chunks} 个片段` : '正在同步'}</em></div>
+          <div><small>Credential</small><strong>{config?.credentialLabel ?? 'Checking'}</strong><em>{sourceLabel(config?.credentialSource)}</em></div>
+          <div><small>Current model</small><strong>{selectedModel?.label ?? 'General chat'}</strong><em>{preferences.model}</em></div>
+          <div><small>Knowledge data</small><strong>{config?.knowledgeStore.engine ?? 'SQLite'}</strong><em>{config ? `${config.knowledgeStore.pages} pages · ${config.knowledgeStore.chunks} segments` : 'Syncing'}</em></div>
         </div>
       </section>
 
       <main className="settings-grid">
         <section className="settings-panel settings-model-panel">
           <div className="settings-section-head">
-            <div><span>01</span><h2>选择模型</h2></div>
-            <small>选择后将应用到 Agent 智能问答</small>
+            <div><span>01</span><h2>Choose a model</h2></div>
+            <small>Applies to agent question answering after selection</small>
           </div>
 
           <div className="settings-model-list">
@@ -175,30 +175,30 @@ export function SettingsView() {
           </div>
 
           <div className="settings-mode-row">
-            <div><strong>回答模式</strong><small>模型不可用时仍可退回本地检索</small></div>
+            <div><strong>Answer mode</strong><small>Local retrieval stays available when the model is down</small></div>
             <div className="settings-switcher">
               <button
                 type="button"
                 className={preferences.generationMode === 'deepseek' ? 'is-active' : ''}
                 onClick={() => update('generationMode', 'deepseek')}
-              >模型增强</button>
+              >Model-assisted</button>
               <button
                 type="button"
                 className={preferences.generationMode === 'local' ? 'is-active' : ''}
                 onClick={() => update('generationMode', 'local')}
-              >仅本地检索</button>
+              >Local retrieval only</button>
             </div>
           </div>
         </section>
 
         <section className="settings-panel settings-parameters-panel">
           <div className="settings-section-head">
-            <div><span>02</span><h2>生成参数</h2></div>
-            <small>参数会随每次问答请求发送</small>
+            <div><span>02</span><h2>Generation parameters</h2></div>
+            <small>Sent with every question request</small>
           </div>
 
           <label>
-            <div><strong>生成温度</strong><small>数值越低，回答越稳定</small></div>
+            <div><strong>Temperature</strong><small>Lower values make answers more stable</small></div>
             <div className="settings-range-row">
               <input
                 type="range"
@@ -213,7 +213,7 @@ export function SettingsView() {
           </label>
 
           <label>
-            <div><strong>最大输出长度</strong><small>控制单次回答最多生成的内容</small></div>
+            <div><strong>Maximum output length</strong><small>Caps how much a single answer may generate</small></div>
             <div className="settings-range-row">
               <input
                 type="range"
@@ -229,7 +229,7 @@ export function SettingsView() {
 
           <div className="settings-security-note">
             <span>⌾</span>
-            <div><strong>密钥由服务端安全托管</strong><small>浏览器只读取脱敏状态，任何请求和页面都不会返回明文密钥。</small></div>
+            <div><strong>The key is held server-side</strong><small>The browser reads redacted status only; no request or page ever returns the plaintext key.</small></div>
           </div>
         </section>
       </main>
@@ -238,19 +238,19 @@ export function SettingsView() {
         <div className="settings-verification-copy">
           <span className="settings-verify-icon"><LayersIcon /></span>
           <div>
-            <h2>模型可用性验证</h2>
-            <p>测试会使用当前所选模型发起一次最小真实推理，而不是只检查地址或密钥格式。</p>
+            <h2>Model availability check</h2>
+            <p>The check runs one minimal real inference with the selected model instead of only validating the endpoint or key format.</p>
           </div>
         </div>
 
-        <div className="settings-checks" aria-label="模型验证链路">
-          <span className={config ? 'is-done' : ''}><i>1</i>读取配置</span>
+        <div className="settings-checks" aria-label="Model verification steps">
+          <span className={config ? 'is-done' : ''}><i>1</i>Read config</span>
           <b />
-          <span className={config?.configured ? 'is-done' : ''}><i>2</i>加载凭证</span>
+          <span className={config?.configured ? 'is-done' : ''}><i>2</i>Load credentials</span>
           <b />
-          <span className={testResult?.ok ? 'is-done' : testing ? 'is-running' : ''}><i>3</i>调用模型</span>
+          <span className={testResult?.ok ? 'is-done' : testing ? 'is-running' : ''}><i>3</i>Call model</span>
           <b />
-          <span className={testResult?.ok ? 'is-done' : ''}><i>4</i>返回结果</span>
+          <span className={testResult?.ok ? 'is-done' : ''}><i>4</i>Return result</span>
         </div>
 
         {(error || testResult) && (
@@ -258,17 +258,17 @@ export function SettingsView() {
             {testResult?.ok ? <CheckCircleIcon /> : <span>!</span>}
             <div>
               <strong>{testResult?.message ?? error}</strong>
-              <small>{testResult ? `${testResult.model} · ${testResult.latencyMs} ms · 真实推理验证` : '请检查 API 服务是否启动'}</small>
+              <small>{testResult ? `${testResult.model} · ${testResult.latencyMs} ms · real inference` : 'Check whether the API service is running'}</small>
             </div>
           </div>
         )}
 
         <div className="settings-actions">
-          <span>{saved ? '✓ 配置已保存并同步到智能问答' : '所有参数仅保存于当前浏览器，密钥仍由服务端托管'}</span>
+          <span>{saved ? '✓ Saved and synced to question answering' : 'Parameters stay in this browser; the key remains server-side'}</span>
           <div>
-            <button type="button" className="settings-save-button" onClick={save}>保存配置</button>
+            <button type="button" className="settings-save-button" onClick={save}>Save</button>
             <button type="button" className="settings-test-button" onClick={testConnection} disabled={testing || !config?.configured}>
-              {testing ? <><SpinnerIcon />正在调用模型</> : '验证当前模型'}
+              {testing ? <><SpinnerIcon />Calling the model</> : 'Verify current model'}
             </button>
           </div>
         </div>

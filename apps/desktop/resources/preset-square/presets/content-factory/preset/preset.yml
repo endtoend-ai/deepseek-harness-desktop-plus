@@ -1,0 +1,3 @@
+name: AI Content Image Studio
+description: Load the image-card Skill, confirm style and structure, then generate and verify a PNG series with the image Plugin.
+order: 40

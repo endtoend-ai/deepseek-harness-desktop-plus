@@ -4,8 +4,8 @@ import './globals.css'
 import { AppShell } from '../components/AppShell'
 
 export const metadata: Metadata = {
-  title: 'FF - LLM Wiki 企业知识库',
-  description: '面向企业资料的智能知识库系统',
+  title: 'LLM Wiki Enterprise Knowledge Base',
+  description: 'An intelligent knowledge base for enterprise material',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

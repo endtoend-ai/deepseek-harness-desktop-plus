@@ -38,7 +38,7 @@ export const MAX_CONCURRENCY = 1
 function readManifest(): WikiManifest {
   const p = join(WIKI_DIR, 'manifest.json')
   if (!existsSync(p)) {
-    throw new Error('缺少编译产物 manifest.json，请先运行 pnpm wiki:compile')
+    throw new Error('The compiled artifact manifest.json is missing; run pnpm wiki:compile first')
   }
   return JSON.parse(readFileSync(p, 'utf8')) as WikiManifest
 }

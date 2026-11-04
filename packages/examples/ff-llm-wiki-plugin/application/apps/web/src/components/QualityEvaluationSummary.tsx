@@ -18,10 +18,10 @@ export function QualityEvaluationSummary({ data }: { data: EvalLatestResponse | 
   const circumference = 2 * Math.PI * 48
   const scoreOffset = circumference * (1 - score / 100)
   const metricRows = [
-    { key: 'retrieval_hit', label: '检索命中', tone: 'bg-amber-300' },
-    { key: 'evidence_coverage', label: '证据覆盖', tone: 'bg-emerald-300' },
-    { key: 'citation_valid', label: '引用有效', tone: 'bg-cyan-300' },
-    { key: 'answer_faithful', label: '答案忠实', tone: 'bg-teal-300' },
+    { key: 'retrieval_hit', label: 'Retrieval hit', tone: 'bg-amber-300' },
+    { key: 'evidence_coverage', label: 'Evidence coverage', tone: 'bg-emerald-300' },
+    { key: 'citation_valid', label: 'Citations valid', tone: 'bg-cyan-300' },
+    { key: 'answer_faithful', label: 'Answer faithful', tone: 'bg-teal-300' },
   ] as const
 
   return (
@@ -29,16 +29,16 @@ export function QualityEvaluationSummary({ data }: { data: EvalLatestResponse | 
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-[15px] font-semibold text-slate-100">问答质量评估</h2>
+            <h2 className="text-[15px] font-semibold text-slate-100">Question-answering quality</h2>
             <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] ${regressionFree ? 'border-emerald-300/15 bg-emerald-300/[0.045] text-emerald-200/75' : 'border-rose-300/15 bg-rose-300/[0.045] text-rose-200'}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${regressionFree ? 'bg-emerald-300' : 'bg-rose-300'}`} />
-              {regressionFree ? '无回归' : '发现回归'}
+              {regressionFree ? 'No regression' : 'Regression found'}
             </span>
           </div>
-          <p className="mt-0.5 text-[13px] text-slate-600">真实题库驱动的可追溯质量成绩单</p>
+          <p className="mt-0.5 text-[13px] text-slate-600">A traceable scorecard driven by the real question set</p>
         </div>
         <Link href="/evaluation" className="text-[13px] font-medium text-amber-200/85 transition-colors hover:text-amber-100">
-          查看报告 →
+          Open the report →
         </Link>
       </div>
 
@@ -62,7 +62,7 @@ export function QualityEvaluationSummary({ data }: { data: EvalLatestResponse | 
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-xl font-semibold tabular-nums tracking-[-0.04em] text-amber-100">{score.toFixed(1)}</span>
-            <span className="mt-0.5 text-[11px] tracking-[0.13em] text-slate-600">质量</span>
+            <span className="mt-0.5 text-[11px] tracking-[0.13em] text-slate-600">Quality</span>
           </div>
         </div>
 
@@ -87,15 +87,15 @@ export function QualityEvaluationSummary({ data }: { data: EvalLatestResponse | 
       <div className="mt-1.5 grid grid-cols-3 divide-x divide-white/[0.06] rounded-xl border border-white/[0.065] bg-white/[0.015] py-1.5 text-center">
         <div>
           <div className="text-[15px] font-medium tabular-nums text-slate-200">{caseCount}</div>
-          <div className="mt-0.5 text-[11px] text-slate-600">评测题</div>
+          <div className="mt-0.5 text-[11px] text-slate-600">Questions</div>
         </div>
         <div>
           <div className="text-[15px] font-medium tabular-nums text-emerald-200">{passed}</div>
-          <div className="mt-0.5 text-[11px] text-slate-600">全项通过</div>
+          <div className="mt-0.5 text-[11px] text-slate-600">All passed</div>
         </div>
         <div>
           <div className="text-[15px] font-medium text-slate-200">30ms</div>
-          <div className="mt-0.5 text-[11px] text-slate-600">本轮耗时</div>
+          <div className="mt-0.5 text-[11px] text-slate-600">Run time</div>
         </div>
       </div>
     </section>

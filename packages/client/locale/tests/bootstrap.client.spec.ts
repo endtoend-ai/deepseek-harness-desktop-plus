@@ -21,14 +21,14 @@ describe('native locale initialization', () => {
     }
   })
 
-  it('uses native language order without persisting a provisional choice', async () => {
+  it('opens in English without persisting a choice, whatever the native language order', async () => {
     vi.stubGlobal('window', {})
     vi.stubGlobal('navigator', { languages: ['en-US'], language: 'en-US' })
     const ctx = new Context()
     const host = stubConfigForm<LocaleSettings>()
     try {
       const locale = new LocaleRuntime(ctx, host.scope, { languages: ['ja-JP', 'zh-Hant', 'en-US'], preference: null })
-      expect(locale.getSnapshot().active).toBe('zh')
+      expect(locale.getSnapshot().active).toBe('en')
       expect(host.set).not.toHaveBeenCalled()
       locale.setLocale('en')
       expect(host.set).toHaveBeenCalledExactlyOnceWith('preference', 'en')
@@ -55,11 +55,11 @@ describe('native locale initialization', () => {
     const ctx = new Context()
     try {
       const locale = new LocaleRuntime(ctx, undefined, { languages: ['zh-CN'], preference: 'ja' })
-      expect(locale.getSnapshot().active).toBe('zh')
+      expect(locale.getSnapshot().active).toBe('en')
       const remove = locale.addLanguage({ id: 'ja', label: '日本語', fallback: 'en' })
       expect(locale.getSnapshot().active).toBe('ja')
       remove()
-      expect(locale.getSnapshot().active).toBe('zh')
+      expect(locale.getSnapshot().active).toBe('en')
     } finally {
       await ctx.fiber.dispose()
     }

@@ -22,7 +22,7 @@ const ready = (enabled = false, configured = false) => ({
   provider: 'bailian' as const,
   providers: [
     {
-      id: 'bailian' as const, name: '阿里云百炼', configured, defaultModel: 'qwen3.8-max',
+      id: 'bailian' as const, name: 'Alibaba Cloud Bailian', configured, defaultModel: 'qwen3.8-max',
       apiKeyUrl: 'https://help.aliyun.com/zh/model-studio/get-api-key', modelEditable: false,
     },
     {
@@ -54,26 +54,25 @@ function shortcutProps(
   } as never
 }
 
-describe('Vision enhancement controller', () => {
+describe('Visual enhancement controller', () => {
   it('shares authoritative status and publishes both disable and verified-enable results', async () => {
     const status = vi.fn(() => Promise.resolve({
-      result: { ok: true as const, value: {
+      ok: true as const, value: {
         enabled: true, configured: true, provider: 'bailian' as const, model: 'qwen3.8-max',
         apiKeyUrl: 'https://example.test', providers: ready(true, true).providers,
-      } },
+      },
     }))
-    const update = vi.fn(() => Promise.resolve({ result: { ok: true as const, value: {} } }))
+    const update = vi.fn(() => Promise.resolve({ ok: true as const, value: {} }))
     const enable = vi.fn(() => Promise.resolve({
-      result: { ok: true as const, value: { provider: 'bailian' as const, model: 'qwen3.8-max', description: '一张界面截图。' } },
+      ok: true as const, value: { provider: 'bailian' as const, model: 'qwen3.8-max', description: '一张界面截图。' },
     }))
     const controller = new VisionEnhancementController({
-      vision: {
+      remote: { vision: {
         status,
-        route: ({ modelProvider, model }: { modelProvider: string; model: string }) => Promise.resolve({ result: { ok: true as const, value: { mode: 'native' as const, modelProvider, model } } }),
-        activate: ({ modelProvider, model }: { modelProvider: string; model: string }) => Promise.resolve({ result: { ok: true as const, value: { mode: 'native' as const, modelProvider, model } } }),
+        route: (modelProvider: string, model: string) => Promise.resolve({ ok: true as const, value: { mode: 'native' as const, modelProvider, model } }),
+        activate: (modelProvider: string, model: string) => Promise.resolve({ ok: true as const, value: { mode: 'native' as const, modelProvider, model } }),
         enable,
-      },
-      settings: { update },
+      }, settings: { update } },
     } as never)
 
     await controller.ensureLoaded()
@@ -82,7 +81,7 @@ describe('Vision enhancement controller', () => {
     expect(status).toHaveBeenCalledOnce()
 
     await controller.disable()
-    expect(update).toHaveBeenCalledWith({ ns: 'vision-enhancement', patch: { enabled: false } })
+    expect(update).toHaveBeenCalledWith('vision-enhancement', { enabled: false }, undefined)
     expect(controller.store.getSnapshot().enabled).toBe(false)
 
     await expect(controller.enable({ mediaType: 'image/png', data: 'aW1hZ2U=' })).resolves.toBe('一张界面截图。')
@@ -95,7 +94,7 @@ describe('Vision enhancement controller', () => {
 
   it('keeps the last known state and exposes a failed refresh', async () => {
     const controller = new VisionEnhancementController({
-      vision: { status: () => Promise.resolve({ result: { ok: false as const, error: { code: 'offline', message: '连接失败', details: {} } } }) },
+      remote: { vision: { status: () => Promise.resolve({ ok: false as const, error: { code: 'offline', message: '连接失败', details: {} } }) } },
     } as never)
     await controller.load()
     expect(controller.store.getSnapshot()).toMatchObject({ status: 'error', enabled: false, error: '连接失败' })
@@ -104,15 +103,14 @@ describe('Vision enhancement controller', () => {
   it('defers pushed refreshes until an enable mutation has settled', async () => {
     let finishEnable: ((value: unknown) => void) | undefined
     const status = vi.fn(() => Promise.resolve({
-      result: { ok: true as const, value: {
+      ok: true as const, value: {
         enabled: true, configured: true, provider: 'bailian' as const, model: 'qwen3.8-max',
         apiKeyUrl: 'https://example.test', providers: ready(true, true).providers,
-      } },
+      },
     }))
     const enable = vi.fn(() => new Promise((resolve) => { finishEnable = resolve }))
     const controller = new VisionEnhancementController({
-      vision: { status, enable },
-      settings: { update: vi.fn() },
+      remote: { vision: { status, enable }, settings: { update: vi.fn() } },
     } as never)
 
     const pending = controller.enable({ mediaType: 'image/png', data: 'aW1hZ2U=' })
@@ -121,7 +119,7 @@ describe('Vision enhancement controller', () => {
     expect(status).not.toHaveBeenCalled()
 
     finishEnable?.({
-      result: { ok: true as const, value: { provider: 'bailian' as const, model: 'qwen3.8-max', description: '识别完成' } },
+      ok: true as const, value: { provider: 'bailian' as const, model: 'qwen3.8-max', description: '识别完成' },
     })
     await pending
     await waitFor(() => { expect(status).toHaveBeenCalledOnce() })
@@ -131,7 +129,7 @@ describe('Vision enhancement controller', () => {
   })
 })
 
-describe('Vision enhancement composer shortcut', () => {
+describe('Visual enhancement composer shortcut', () => {
   it('explains automatic routing on hover and opens verification only when compatible setup is required', async () => {
     vi.useFakeTimers()
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
@@ -139,15 +137,15 @@ describe('Vision enhancement composer shortcut', () => {
       blob: () => Promise.resolve(new Blob(['image'], { type: 'image/webp' })),
     })))
     render(<VisionEnhancementShortcut {...shortcutProps()} />)
-    const control = screen.getByRole('switch', { name: /视觉增强：已关闭/ })
+    const control = screen.getByRole('switch', { name: /Visual enhancement: Off/ })
     fireEvent.pointerEnter(control)
     await act(async () => { vi.advanceTimersByTime(350) })
     expect(screen.getByText(/deepseek-v4-flash-vision-exp/)).toBeTruthy()
-    expect(control.textContent).toBe('视觉增强')
+    expect(control.textContent).toBe('Visual enhancement')
 
     vi.useRealTimers()
     fireEvent.click(control)
-    expect(await screen.findByText('阿里云百炼 · qwen3.8-max')).toBeTruthy()
+    expect(await screen.findByText('Alibaba Cloud Bailian · qwen3.8-max')).toBeTruthy()
   })
 
   it('enables a native visual route directly without opening credential setup', async () => {
@@ -160,20 +158,20 @@ describe('Vision enhancement composer shortcut', () => {
     const { rerender } = render(
       <VisionEnhancementShortcut {...shortcutProps(ready(), { activateRoute, resolveRoute })} />,
     )
-    const control = screen.getByRole('switch', { name: /已关闭/ })
+    const control = screen.getByRole('switch', { name: /Off/ })
     fireEvent.click(control)
     await waitFor(() => {
       expect(activateRoute).toHaveBeenCalledWith('deepseek-official', 'deepseek-v4-flash-vision-exp')
     })
-    expect(screen.queryByText('阿里云百炼 · qwen3.8-max')).toBeNull()
+    expect(screen.queryByText('Alibaba Cloud Bailian · qwen3.8-max')).toBeNull()
 
     rerender(<VisionEnhancementShortcut {...shortcutProps(ready(true, true), { activateRoute, resolveRoute })} />)
     await waitFor(() => { expect(resolveRoute).toHaveBeenCalled() })
     vi.useFakeTimers()
-    fireEvent.pointerEnter(screen.getByRole('switch', { name: /已开启/ }))
+    fireEvent.pointerEnter(screen.getByRole('switch', { name: /On/ }))
     await act(async () => { vi.advanceTimersByTime(350) })
-    expect(screen.getByText(/优先通过 DeepSeek Files API 安全上传并复用/)).toBeTruthy()
-    expect(screen.getByText(/不会重复调用兼容视觉服务/)).toBeTruthy()
+    expect(screen.getByText(/upload through the DeepSeek Files API and are reused/)).toBeTruthy()
+    expect(screen.getByText(/without calling the compatible compatible service again/)).toBeTruthy()
   })
 
   it('switches a text-only session to the default native visual model before activation', async () => {
@@ -198,7 +196,7 @@ describe('Vision enhancement composer shortcut', () => {
     })
     render(<VisionEnhancementShortcut {...props} />)
 
-    fireEvent.click(screen.getByRole('switch', { name: /已关闭/ }))
+    fireEvent.click(screen.getByRole('switch', { name: /Off/ }))
     await waitFor(() => { expect(selectNativeVision).toHaveBeenCalledOnce() })
     await waitFor(() => {
       expect(activateRoute).toHaveBeenCalledWith('deepseek-official', 'deepseek-v4-flash-vision-exp')
@@ -208,13 +206,13 @@ describe('Vision enhancement composer shortcut', () => {
   it('disables directly when the shared capability is on', async () => {
     const disable = vi.fn(() => Promise.resolve())
     render(<VisionEnhancementShortcut {...shortcutProps(ready(true, true), { disable })} />)
-    fireEvent.click(screen.getByRole('switch', { name: /已开启/ }))
+    fireEvent.click(screen.getByRole('switch', { name: /On/ }))
     await waitFor(() => { expect(disable).toHaveBeenCalledOnce() })
-    expect(screen.queryByText('阿里云百炼 · qwen3.8-max')).toBeNull()
+    expect(screen.queryByText('Alibaba Cloud Bailian · qwen3.8-max')).toBeNull()
   })
 })
 
-describe('Vision enhancement settings', () => {
+describe('Visual enhancement settings', () => {
   it('uses the atomic Bailian enable operation with an app-owned key and a real-shaped image probe', async () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
       ok: true,
@@ -229,15 +227,15 @@ describe('Vision enhancement settings', () => {
     } as unknown as VisionEnhancementRowProps
 
     render(<VisionEnhancementRow {...props} />)
-    fireEvent.click(screen.getByRole('switch', { name: '视觉能力增强' }))
-    expect(await screen.findAllByText('阿里云百炼 · qwen3.8-max')).toHaveLength(1)
-    fireEvent.change(screen.getByLabelText('阿里云百炼 API Key'), { target: { value: 'bailian-test-key' } })
+    fireEvent.click(screen.getByRole('switch', { name: 'Visual enhancement' }))
+    expect(await screen.findAllByText('Alibaba Cloud Bailian · qwen3.8-max')).toHaveLength(1)
+    fireEvent.change(screen.getByLabelText('Alibaba Cloud Bailian API key'), { target: { value: 'bailian-test-key' } })
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: '验证并开启' }).hasAttribute('disabled')).toBe(false)
+      expect(screen.getByRole('button', { name: 'Verify and enable' }).hasAttribute('disabled')).toBe(false)
     })
-    fireEvent.click(screen.getByRole('button', { name: '验证并开启' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Verify and enable' }))
 
-    await screen.findByText('识别成功，视觉能力已开启')
+    await screen.findByText('Recognition succeeded; visual enhancement is on')
     expect(enable).toHaveBeenCalledWith(expect.objectContaining({
       apiKey: 'bailian-test-key', provider: 'bailian', model: 'qwen3.8-max', mediaType: 'image/webp',
     }), expect.any(AbortSignal))
@@ -257,16 +255,16 @@ describe('Vision enhancement settings', () => {
     } as unknown as VisionEnhancementRowProps
 
     render(<VisionEnhancementRow {...props} />)
-    fireEvent.click(screen.getByRole('switch', { name: '视觉能力增强' }))
-    fireEvent.change(await screen.findByLabelText('视觉提供方'), { target: { value: 'openrouter' } })
-    expect(screen.getByLabelText('视觉模型')).toHaveProperty('value', 'openai/gpt-4.1-mini')
-    fireEvent.change(screen.getByLabelText('OpenRouter API Key'), { target: { value: 'openrouter-test-key' } })
+    fireEvent.click(screen.getByRole('switch', { name: 'Visual enhancement' }))
+    fireEvent.change(await screen.findByLabelText('Compatible provider'), { target: { value: 'openrouter' } })
+    expect(screen.getByLabelText('Compatible model')).toHaveProperty('value', 'openai/gpt-4.1-mini')
+    fireEvent.change(screen.getByLabelText('OpenRouter API key'), { target: { value: 'openrouter-test-key' } })
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: '验证并开启' }).hasAttribute('disabled')).toBe(false)
+      expect(screen.getByRole('button', { name: 'Verify and enable' }).hasAttribute('disabled')).toBe(false)
     })
-    fireEvent.click(screen.getByRole('button', { name: '验证并开启' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Verify and enable' }))
 
-    await screen.findByText('识别成功，视觉能力已开启')
+    await screen.findByText('Recognition succeeded; visual enhancement is on')
     expect(enable).toHaveBeenCalledWith(expect.objectContaining({
       apiKey: 'openrouter-test-key', provider: 'openrouter', model: 'openai/gpt-4.1-mini',
       mediaType: 'image/webp',

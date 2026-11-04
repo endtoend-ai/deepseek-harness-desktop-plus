@@ -90,15 +90,15 @@ function answerCompleted({ c, qa }: EvalContext): EvalScore {
       key,
       score: ok ? 1 : 0,
       comment: ok
-        ? `回答完成：${qa.answers.length} 段 + ${qa.citations.length} 条引用`
-        : `期望 answered 但状态=${qa.status}（answers=${qa.answers.length}, citations=${qa.citations.length}）`,
+        ? `Answer completed: ${qa.answers.length} parts + ${qa.citations.length} citations`
+        : `Expected answered but status=${qa.status} (answers=${qa.answers.length}, citations=${qa.citations.length})`,
     }
   }
   const ok = qa.status === 'no_evidence' && qa.answers.length === 0 && qa.citations.length === 0
   return {
     key,
     score: ok ? 1 : 0,
-    comment: ok ? '无证据诚实：answers/citations 均为空' : '期望 no_evidence 却返回了答案（编造）',
+    comment: ok ? 'Honest without evidence: answers and citations are both empty' : 'Expected no_evidence but an answer was returned (fabricated)',
   }
 }
 
@@ -106,35 +106,35 @@ function answerCompleted({ c, qa }: EvalContext): EvalScore {
 function retrievalHit({ c, qa }: EvalContext): EvalScore {
   const key = 'retrieval_hit'
   if (c.expectStatus !== 'answered' || !c.expectPageSlugs?.length) {
-    return { key, score: null, comment: '不适用：非期望 answered 或无期望页' }
+    return { key, score: null, comment: 'Not applicable: not expecting answered, or no expected page' }
   }
   const hitSlugs = new Set(qa.citations.map(x => x.pageSlug))
   if (qa.status !== 'answered') {
-    return { key, score: 0, comment: `检索未命中：status=${qa.status}` }
+    return { key, score: 0, comment: `Retrieval missed: status=${qa.status}` }
   }
   const missed = c.expectPageSlugs.filter(s => !hitSlugs.has(s))
   if (missed.length === 0) {
-    return { key, score: 1, comment: `命中全部期望页（${c.expectPageSlugs.join(', ')}）` }
+    return { key, score: 1, comment: `Hit every expected page (${c.expectPageSlugs.join(', ')})` }
   }
-  return { key, score: 0, comment: `未命中期望页：${missed.join(', ')}（实际命中 ${[...hitSlugs].join(', ') || '无'}）` }
+  return { key, score: 0, comment: `Missed expected pages: ${missed.join(', ')} (actually hit ${[...hitSlugs].join(', ') || 'none'})` }
 }
 
 /** 依据一致性：回答是否覆盖期望语义关键词（只对期望 answered 适用） */
 function evidenceCoverage({ c, qa }: EvalContext): EvalScore {
   const key = 'evidence_coverage'
   if (c.expectStatus !== 'answered' || !c.expectAnswerCovers?.length) {
-    return { key, score: null, comment: '不适用：非期望 answered 或无语义关键词' }
+    return { key, score: null, comment: 'Not applicable: not expecting answered, or no semantic keywords' }
   }
   if (qa.status !== 'answered') {
-    return { key, score: 0, comment: '证据不足，无法覆盖语义' }
+    return { key, score: 0, comment: 'Evidence was insufficient to cover the semantics' }
   }
   const ok = coversAnswer(qa, c.expectAnswerCovers)
   return {
     key,
     score: ok ? 1 : 0,
     comment: ok
-      ? `覆盖期望语义：${c.expectAnswerCovers.join('、')}`
-      : `未覆盖关键词：${c.expectAnswerCovers.filter(k => !qa.answers.map(a => a.text).join('\n').toLowerCase().includes(k.toLowerCase())).join('、')}`,
+      ? `Covered the expected semantics: ${c.expectAnswerCovers.join(', ')}`
+      : `Keywords not covered: ${c.expectAnswerCovers.filter(k => !qa.answers.map(a => a.text).join('\n').toLowerCase().includes(k.toLowerCase())).join(', ')}`,
   }
 }
 
@@ -142,28 +142,28 @@ function evidenceCoverage({ c, qa }: EvalContext): EvalScore {
 function citationValid({ c, qa, manifest }: EvalContext): EvalScore {
   const key = 'citation_valid'
   if (c.expectStatus !== 'answered' || qa.status !== 'answered') {
-    return { key, score: null, comment: '不适用：无引用可校验' }
+    return { key, score: null, comment: 'Not applicable: no citations to check' }
   }
   if (!citationReal(qa, manifest)) {
-    return { key, score: 0, comment: '存在引用片段非真实原文或指向不存在的页' }
+    return { key, score: 0, comment: 'A cited snippet is not real source text or points at a missing page' }
   }
   if (!citationOpenable(qa)) {
-    return { key, score: 0, comment: 'evidence 引用 sourcePath 缺失或指向不存在的源文件' }
+    return { key, score: 0, comment: 'An evidence citation is missing sourcePath or points at a missing source file' }
   }
-  return { key, score: 1, comment: `引用 ${qa.citations.length} 条全部真实且可打开` }
+  return { key, score: 1, comment: `All ${qa.citations.length} citations are real and resolvable` }
 }
 
 /** 依据一致性：回答是否忠于证据（角标对账，不编造不脱节） */
 function answerFaithful({ c, qa }: EvalContext): EvalScore {
   const key = 'answer_faithful'
   if (c.expectStatus !== 'answered' || qa.status !== 'answered') {
-    return { key, score: null, comment: '不适用：无回答可核' }
+    return { key, score: null, comment: 'Not applicable: no answer to check' }
   }
   const ok = citationReconciled(qa)
   return {
     key,
     score: ok ? 1 : 0,
-    comment: ok ? '回答 [n] 角标与引用一一对账' : '回答角标与引用编号不对账（脱节/多标/缺标）',
+    comment: ok ? 'Answer markers [n] reconcile with the citations one to one' : 'Answer markers do not reconcile with citation numbers (detached, extra, or missing)',
   }
 }
 
@@ -171,15 +171,15 @@ function answerFaithful({ c, qa }: EvalContext): EvalScore {
 function noAnswerHonest({ c, qa }: EvalContext): EvalScore {
   const key = 'no_answer_honest'
   if (c.expectStatus !== 'no_evidence') {
-    return { key, score: null, comment: '不适用：本用例期望有答案' }
+    return { key, score: null, comment: 'Not applicable: this case expects an answer' }
   }
   const ok = qa.status === 'no_evidence' && qa.answers.length === 0
   return {
     key,
     score: ok ? 1 : 0,
     comment: ok
-      ? `诚实标注 no_evidence，附 ${qa.fallback.length} 条可核查资料`
-      : `未诚实：status=${qa.status}（应 no_evidence）`,
+      ? `Honestly reported no_evidence with ${qa.fallback.length} verifiable references`
+      : `Not honest: status=${qa.status} (expected no_evidence)`,
   }
 }
 
@@ -192,7 +192,7 @@ function inputRobust({ c, qa }: EvalContext): EvalScore {
     return {
       key,
       score: ok ? 1 : 0,
-      comment: ok ? '纯标点输入稳健落入 no_evidence' : `噪声输入未稳健处理：status=${qa.status}`,
+      comment: ok ? 'Pure-punctuation input fell back to no_evidence' : `Noisy input was not handled robustly: status=${qa.status}`,
     }
   }
   if (c.kind === 'adversarial') {
@@ -200,12 +200,12 @@ function inputRobust({ c, qa }: EvalContext): EvalScore {
     return {
       key,
       score: ok ? 1 : 0,
-      comment: ok ? '含噪口语仍稳健命中' : `含噪输入未命中：status=${qa.status}`,
+      comment: ok ? 'Colloquial noise still hit robustly' : `Noisy input missed: status=${qa.status}`,
     }
   }
   // 对普通用例，稳健 = 状态落在合法枚举（answered 或 no_evidence）
   const ok = qa.status === 'answered' || qa.status === 'no_evidence'
-  return { key, score: ok ? 1 : 0, comment: ok ? `状态合法：${qa.status}` : '状态非法' }
+  return { key, score: ok ? 1 : 0, comment: ok ? `Status is valid: ${qa.status}` : 'Status is invalid' }
 }
 
 /** 全部评估器（顺序稳定，供 coverage 自检与逐例打分） */

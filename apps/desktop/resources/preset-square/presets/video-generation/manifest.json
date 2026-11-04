@@ -1,0 +1,8 @@
+{
+  "format": "dsh-preset",
+  "version": 1,
+  "id": "product-video-director",
+  "name": "AI Product Video Director",
+  "description": "Video generation workflow: one Agent Preset and one Skill turn a single sentence into a verified MP4.",
+  "sourceDshVersion": "0.1.0-rc.8"
+}

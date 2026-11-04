@@ -378,65 +378,11 @@
   border-style: dashed;
 }
 
-.brandBadge {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: calc(100% + 4px);
-  height: 38px;
-  margin: 0 -2px 2px;
-  padding: 0 10px 0 8px;
-  box-sizing: border-box;
-  border-radius: 12px;
-  color: var(--dsw-alias-label-secondary);
-  background: transparent;
-  font-size: 13px;
-  line-height: 20px;
-  text-decoration: none;
-  opacity: 0.68;
-  overflow: hidden;
-  transition: opacity 160ms ease, background 160ms ease;
-}
-
-.brandBadge:hover,
-.brandBadge:focus-visible {
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-interactive-bg-hover);
-  opacity: 1;
-}
-
-.brandBadge img {
-  flex: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.brandBadge span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.brandBadgeRail {
-  width: 36px;
-  height: 36px;
-  margin: 0;
-  justify-content: center;
-  gap: 0;
-  padding: 0;
-  border-radius: 50%;
-}
-
 @media (max-width: 720px) {
   .themeGrid { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .brandBadge,
   .themeCard,
   .progress span { transition: none; }
 }

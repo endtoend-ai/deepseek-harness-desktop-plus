@@ -37,7 +37,7 @@ export async function fetchOverview(): Promise<OverviewResponse> {
   });
 
   if (!res.ok) {
-    throw new Error(`API 请求失败：${res.status}`);
+    throw new Error(`API request failed: ${res.status}`);
   }
 
   return (await res.json()) as OverviewResponse;
@@ -64,7 +64,7 @@ export async function fetchDocuments(query: DocumentsQuery): Promise<DocumentsLi
   });
 
   if (!res.ok) {
-    throw new Error(`资料列表请求失败：${res.status}`);
+    throw new Error(`Document list request failed: ${res.status}`);
   }
 
   return (await res.json()) as DocumentsListResponse;
@@ -89,7 +89,7 @@ export async function uploadDocument(file: File): Promise<UploadDocumentResult> 
       ok: false,
       duplicate: false,
       document: null,
-      message: "无法连接导入服务，请确认服务已启动后重试",
+      message: "Cannot reach the import service. Confirm it is running, then retry.",
     };
   }
 
@@ -100,7 +100,7 @@ export async function uploadDocument(file: File): Promise<UploadDocumentResult> 
       ok: false,
       duplicate: false,
       document: null,
-      message: "导入失败，服务返回异常，请稍后重试",
+      message: "Import failed: the service returned an error. Try again later.",
     };
   }
 }
@@ -118,7 +118,7 @@ export async function fetchDocumentProcessing(
     },
   );
   if (!res.ok) {
-    throw new Error(`处理进度请求失败：${res.status}`);
+    throw new Error(`Processing progress request failed: ${res.status}`);
   }
   return (await res.json()) as DocumentProcessingResponse;
 }
@@ -130,7 +130,7 @@ export async function fetchDocumentDetail(id: string): Promise<DocumentDetailRes
     cache: "no-store",
     signal: AbortSignal.timeout(8000),
   });
-  if (!res.ok) throw new Error(`资料详情请求失败：${res.status}`);
+  if (!res.ok) throw new Error(`Document detail request failed: ${res.status}`);
   return (await res.json()) as DocumentDetailResponse;
 }
 
@@ -145,7 +145,7 @@ export async function updateDocument(
     signal: AbortSignal.timeout(8000),
   });
   const body = (await res.json()) as UpdateDocumentResult;
-  if (!res.ok) throw new Error(body.message || `资料更新失败：${res.status}`);
+  if (!res.ok) throw new Error(body.message || `Document update failed: ${res.status}`);
   return body;
 }
 
@@ -156,7 +156,7 @@ export async function deleteDocument(id: string): Promise<DeleteDocumentResult> 
     signal: AbortSignal.timeout(8000),
   });
   const body = (await res.json()) as DeleteDocumentResult;
-  if (!res.ok) throw new Error(body.message || `资料删除失败：${res.status}`);
+  if (!res.ok) throw new Error(body.message || `Document delete failed: ${res.status}`);
   return body;
 }
 
@@ -168,7 +168,7 @@ export async function seedDemoDocuments(): Promise<DemoSeedResult> {
     signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
-    throw new Error(`载入演示资料失败：${res.status}`);
+    throw new Error(`Loading demo documents failed: ${res.status}`);
   }
   return (await res.json()) as DemoSeedResult;
 }
@@ -181,7 +181,7 @@ export async function reprocessDocument(id: string): Promise<ReprocessResult> {
     signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
-    throw new Error(`重新处理失败：${res.status}`);
+    throw new Error(`Reprocessing failed: ${res.status}`);
   }
   return (await res.json()) as ReprocessResult;
 }
@@ -198,7 +198,7 @@ export async function fetchWikiList(query: WikiQuery = {}): Promise<WikiListResp
     signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
-    throw new Error(`Wiki 列表请求失败：${res.status}`);
+    throw new Error(`Wiki list request failed: ${res.status}`);
   }
   return (await res.json()) as WikiListResponse;
 }
@@ -211,7 +211,7 @@ export async function fetchWikiPage(slug: string): Promise<WikiPageDetail> {
     signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
-    throw new Error(`Wiki 页面请求失败：${res.status}`);
+    throw new Error(`Wiki page request failed: ${res.status}`);
   }
   return (await res.json()) as WikiPageDetail;
 }
@@ -224,7 +224,7 @@ export async function recompileWiki(): Promise<WikiRecompileResult> {
     signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) {
-    throw new Error(`重新编译失败：${res.status}`);
+    throw new Error(`Recompile failed: ${res.status}`);
   }
   return (await res.json()) as WikiRecompileResult;
 }
@@ -237,7 +237,7 @@ export async function fetchGraphOverview(): Promise<GraphOverviewResponse> {
     signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
-    throw new Error(`图谱概览请求失败：${res.status}`);
+    throw new Error(`Graph overview request failed: ${res.status}`);
   }
   return (await res.json()) as GraphOverviewResponse;
 }
@@ -253,7 +253,7 @@ export async function fetchGraphNodes(type?: GraphNodeType): Promise<GraphNodesR
     signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
-    throw new Error(`图谱节点请求失败：${res.status}`);
+    throw new Error(`Graph node request failed: ${res.status}`);
   }
   return (await res.json()) as GraphNodesResponse;
 }
@@ -269,7 +269,7 @@ export async function fetchGraphEdges(semantic?: GraphEdgeSemantic): Promise<Gra
     signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
-    throw new Error(`图谱边请求失败：${res.status}`);
+    throw new Error(`Graph edge request failed: ${res.status}`);
   }
   return (await res.json()) as GraphEdgesResponse;
 }
@@ -282,7 +282,7 @@ export async function reextractGraph(): Promise<GraphExtractResult> {
     signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) {
-    throw new Error(`图谱重新抽取失败：${res.status}`);
+    throw new Error(`Graph re-extraction failed: ${res.status}`);
   }
   return (await res.json()) as GraphExtractResult;
 }
@@ -295,7 +295,7 @@ export async function fetchEvaluation(): Promise<EvalLatestResponse> {
     signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
-    throw new Error(`评估报告请求失败：${res.status}`);
+    throw new Error(`Evaluation report request failed: ${res.status}`);
   }
   return (await res.json()) as EvalLatestResponse;
 }

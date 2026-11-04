@@ -72,10 +72,10 @@ describe('vision Remote', () => {
   })
 
   it('classifies a runtime refusal and keeps the endpoint it came from', async () => {
-    const controller = controllerOf(runtimeOf({ status: async () => { throw new Error('尚未配置 阿里云百炼 API Key。') } }))
+    const controller = controllerOf(runtimeOf({ status: async () => { throw new Error('Alibaba Cloud Bailian API key is not configured.') } }))
     const failure = await controller.status().catch((error: unknown) => error)
     expect(remoteErrorOf(failure)).toMatchObject({ code: 'vision/rejected', details: { operation: 'vision.status' } })
-    expect(remoteErrorOf(failure)?.message).toContain('API Key')
+    expect(remoteErrorOf(failure)?.message).toContain('API key')
   })
 
   it('reports cancellation as its own outcome and validates the probe first', async () => {
@@ -118,16 +118,16 @@ describe('stored selection', () => {
 
   it('refuses a model a fixed-model provider does not accept', () => {
     expect(() => resolveRequestedSelection('bailian', 'qwen-vl-max', undefined))
-      .toThrow('视觉模型固定为')
-    expect(() => resolveRequestedSelection('custom', '  ', undefined)).toThrow('请输入 自定义 OpenAI-compatible 视觉模型 ID。')
+      .toThrow('vision model is fixed to')
+    expect(() => resolveRequestedSelection('custom', '  ', undefined)).toThrow('Enter the Custom OpenAI-compatible vision model ID.')
   })
 
   it('normalizes an editable base URL and rejects credentials, query parameters, and fragments', () => {
     expect(resolveRequestedSelection('vllm', 'qwen2-vl', 'http://127.0.0.1:9000/v1///'))
       .toMatchObject({ baseUrl: 'http://127.0.0.1:9000/v1' })
     expect(() => resolveRequestedSelection('vllm', 'qwen2-vl', 'http://user:pass@127.0.0.1:9000/v1'))
-      .toThrow('必须是无账号')
-    expect(() => resolveRequestedSelection('vllm', 'qwen2-vl', 'not-a-url')).toThrow('不是有效 URL')
+      .toThrow('must be an HTTP(S) URL without credentials')
+    expect(() => resolveRequestedSelection('vllm', 'qwen2-vl', 'not-a-url')).toThrow('is not a valid URL')
   })
 })
 

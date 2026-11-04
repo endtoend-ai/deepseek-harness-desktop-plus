@@ -60,12 +60,12 @@ export function ProcessingProgress({
     <section className="dashboard-panel overflow-hidden px-3 py-2 sm:px-5">
       <div className="mb-1 flex items-center justify-between px-2">
         <div>
-          <h2 className="text-[15px] font-semibold text-slate-100">知识构建流水线</h2>
-          <p className="mt-0.5 text-[13px] text-slate-600">资料 → 条目 → 图谱 / 索引 → 问答能力</p>
+          <h2 className="text-[15px] font-semibold text-slate-100">Knowledge build pipeline</h2>
+          <p className="mt-0.5 text-[13px] text-slate-600">Sources → Entries → Graph / Index → Question answering</p>
         </div>
         <span className="hidden items-center gap-2 text-[13px] text-slate-500 sm:flex">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.7)]" />
-          2 个阶段运行中
+          2 stages running
         </span>
       </div>
 
@@ -97,12 +97,12 @@ export function ProcessingProgress({
                   </div>
                   <div className="text-[12px] text-slate-500">
                     {stage.status === 'done'
-                      ? '已完成'
+                      ? 'Done'
                       : stage.status === 'running'
-                        ? '进行中'
+                        ? 'Running'
                         : stage.status === 'error'
-                          ? '异常'
-                          : '等待中'}
+                          ? 'Failed'
+                          : 'Waiting'}
                   </div>
                   <div className="mx-auto mt-1.5 max-w-[170px] border-t border-white/[0.06] pt-1 text-[11px] text-slate-600">
                     {stage.detail}

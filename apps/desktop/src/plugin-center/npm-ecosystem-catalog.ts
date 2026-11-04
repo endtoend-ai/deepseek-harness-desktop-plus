@@ -1124,8 +1124,8 @@ export class NpmEcosystemCatalogRepository implements PluginCatalogRepository {
           icon: catalogIcon(pluginCenter, metadata, publisher),
           brandColor: catalogBrandColor(pluginCenter, decodedName),
           compatibilityReason: declaredNodeRange === undefined
-            ? '发布者未声明 Node.js 兼容范围；安装前会校验 Studio 运行时与制品，安装后仍须运行验证。'
-            : '安装前会按发布者声明的 Node.js 范围完成兼容性与产物校验。',
+            ? 'The publisher declared no Node.js compatibility range; the runtime and artifact are still checked before install, and verification must run afterwards.'
+            : 'Compatibility and artifact checks run against the publisher-declared Node.js range before install.',
         }),
         catalogKind: catalogKind(keywords, dsh),
       },
@@ -1597,11 +1597,11 @@ export class NpmEcosystemCatalogRepository implements PluginCatalogRepository {
       compatibility: {
         ...reference.summary.compatibility,
         reason: reference.nodeRangeDeclared
-          ? '确定版本的 npm 完整性、包身份、Bundle 激活声明与发布者 Node.js 范围已校验；安装前仍会核对本机环境。'
-          : '确定版本的 npm 完整性、包身份与 Bundle 激活声明已校验；发布者未声明 Node.js 范围，安装后仍须运行验证。',
+          ? 'The pinned npm integrity, package identity, Bundle activation declarations and publisher Node.js range are verified; the local environment is still checked before install.'
+          : 'The pinned npm integrity, package identity and Bundle activation declarations are verified; no Node.js range was declared, so verification must run after install.',
       },
     }
-    const riskSummary = '这是社区发布的 DSH Bundle，产物身份已经校验，但代码未经过 DeepSeek 官方安全审计，运行时拥有应用进程权限。'
+    const riskSummary = 'Community-published DSH Bundle: the artifact identity is verified, the code has not gone through an official DeepSeek security audit, and it runs with the application process permissions.'
     const candidate = decodeCatalogVersionPreflight({
       pluginId: reference.pluginId,
       version: reference.version,
@@ -1641,12 +1641,12 @@ export class NpmEcosystemCatalogRepository implements PluginCatalogRepository {
       description: reference.summary.summary,
       screenshots: [],
       permissions: [
-        '安装后向当前 DeepSeek Harness Profile 注册 Bundle 条目。',
-        '插件代码会随 Harness Host 运行，并可获得应用进程权限。',
+        'Register a Bundle entry with the current DeepSeek Harness profile after install.',
+        'Plugin code runs inside the Harness Host and receives the application process permissions.',
       ],
       riskLevel: 'high',
       riskSummary,
-      changelog: `npm 确定版本 ${reference.version}。`,
+      changelog: `Pinned npm version ${reference.version}.`,
       publishedAt: reference.summary.updatedAt,
       expectedEntries: entryIds,
       expectedClientModules,

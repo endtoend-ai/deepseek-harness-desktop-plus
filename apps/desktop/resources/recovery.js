@@ -8,20 +8,20 @@ const retry = document.querySelector('#retry')
 const exportButton = document.querySelector('#export')
 
 const reasons = {
-  'unsupported-journal-version': '恢复日志版本不受支持',
-  'journal-invalid': '恢复日志无效',
-  'snapshot-missing': '旧环境快照缺失',
-  'snapshot-invalid': '旧环境快照无效',
-  'snapshot-root-mismatch': '快照不属于当前 Profile',
-  'snapshot-path-invalid': '快照包含不安全路径',
-  'snapshot-hash-mismatch': '快照完整性校验失败',
-  'profile-lock-busy': '另一个进程仍占用插件环境',
-  'host-stop-failed': '旧 Host 无法安全停止',
-  'profile-restore-failed': 'Profile 文件恢复失败',
-  'package-restore-failed': '旧依赖恢复失败',
-  'host-start-failed': '旧 Host 无法重新启动',
-  'runtime-verification-failed': '旧运行能力验证失败',
-  'diagnostic-export-failed': '诊断导出失败',
+  'unsupported-journal-version': 'The recovery journal version is not supported',
+  'journal-invalid': 'The recovery journal is invalid',
+  'snapshot-missing': 'The previous-environment snapshot is missing',
+  'snapshot-invalid': 'The previous-environment snapshot is invalid',
+  'snapshot-root-mismatch': 'The snapshot does not belong to the current profile',
+  'snapshot-path-invalid': 'The snapshot contains an unsafe path',
+  'snapshot-hash-mismatch': 'The snapshot failed its integrity check',
+  'profile-lock-busy': 'Another process still holds the plugin environment',
+  'host-stop-failed': 'The previous Host could not stop safely',
+  'profile-restore-failed': 'Profile files could not be restored',
+  'package-restore-failed': 'The previous dependencies could not be restored',
+  'host-start-failed': 'The previous Host could not start again',
+  'runtime-verification-failed': 'The previous runtime capability check failed',
+  'diagnostic-export-failed': 'The diagnostic export failed',
 }
 
 let current = null
@@ -29,10 +29,10 @@ let current = null
 function render(snapshot) {
   current = snapshot
   if (snapshot === null) {
-    summary.textContent = '没有可读取的恢复记录。请重新启动应用或联系支持。'
+    summary.textContent = 'No recovery record is readable. Restart the application or contact support.'
     operation.textContent = '—'
     attempt.textContent = '—'
-    reason.textContent = '恢复记录不可用'
+    reason.textContent = 'The recovery record is unavailable'
     retry.disabled = true
     exportButton.disabled = true
     return
@@ -45,13 +45,13 @@ function render(snapshot) {
   exportButton.disabled = !snapshot.canExportDiagnostics
   retry.disabled = !snapshot.canRetry
   if (snapshot.phase === 'recovering') {
-    summary.textContent = '正在恢复上一次操作前的插件环境；旧锁文件不兼容时会自动尝试兼容恢复，请不要退出应用。'
+    summary.textContent = 'Restoring the plugin environment from before the last operation; an incompatible lock file triggers an automatic compatibility retry, so keep the application open.'
   } else if (snapshot.phase === 'recovery-failed') {
     summary.textContent = snapshot.recoveryReasonCode === 'package-restore-failed'
-      ? '旧依赖在冻结锁与兼容模式下均未恢复。请先导出诊断，再确认插件归档或网络是否仍可用。'
-      : '旧环境尚未通过完整验证。你可以重试，或先导出不含本地路径和文件内容的诊断。'
+      ? 'The previous dependencies were not restored under either the frozen lock or compatibility mode. Export diagnostics first, then check whether the plugin archive or the network is still reachable.'
+      : 'The previous environment did not pass full verification. Retry, or export diagnostics that omit local paths and file contents.'
   } else {
-    summary.textContent = '旧插件环境已经恢复，正在进入普通桌面。'
+    summary.textContent = 'The previous plugin environment is restored; opening the ordinary desktop.'
   }
 }
 
@@ -59,12 +59,12 @@ retry.addEventListener('click', async () => {
   if (bridge === undefined || current === null) return
   retry.disabled = true
   exportButton.disabled = true
-  notice.textContent = '正在重新恢复并验证旧环境；必要时会自动兼容旧锁文件…'
+  notice.textContent = 'Restoring and verifying the previous environment again; an old lock file is converted automatically when needed…'
   try {
     render(await bridge.retry({ operationId: current.operationId }))
-    notice.textContent = current?.phase === 'rolled-back' ? '恢复完成。' : '恢复仍未通过，请查看新的失败原因。'
+    notice.textContent = current?.phase === 'rolled-back' ? 'Recovery complete.' : 'Recovery still failed; check the new failure reason.'
   } catch {
-    notice.textContent = '恢复请求未完成，请再次尝试或导出诊断。'
+    notice.textContent = 'The recovery request did not finish. Try again or export diagnostics.'
     retry.disabled = false
     exportButton.disabled = false
   }
@@ -73,26 +73,26 @@ retry.addEventListener('click', async () => {
 exportButton.addEventListener('click', async () => {
   if (bridge === undefined || current === null) return
   exportButton.disabled = true
-  notice.textContent = '请选择诊断文件保存位置…'
+  notice.textContent = 'Choose where to save the diagnostics file…'
   try {
     const result = await bridge.exportDiagnostics({ operationId: current.operationId })
     notice.textContent = result.status === 'saved'
-      ? `诊断已保存：${result.filename}`
-      : '已取消导出。'
+      ? `Diagnostics saved: ${result.filename}`
+      : 'Export cancelled.'
   } catch {
-    notice.textContent = '诊断导出失败。'
+    notice.textContent = 'The diagnostic export failed.'
   } finally {
     exportButton.disabled = false
   }
 })
 
 if (bridge === undefined) {
-  notice.textContent = '桌面恢复桥接不可用。'
+  notice.textContent = 'The desktop recovery bridge is unavailable.'
   render(null)
 } else {
   bridge.onState(render)
   bridge.getState().then(render, () => {
-    notice.textContent = '无法读取恢复状态。'
+    notice.textContent = 'The recovery state could not be read.'
     render(null)
   })
 }

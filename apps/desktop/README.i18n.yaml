@@ -1,6 +1,34 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/desktop/README.md
-README.md: 20e2568efb15d8936c39acccaeff9552078bc209
-README.zh.md: 16a80fdecec14fb6e858c092e5b1fec3bb74e2d3
+/deepseek-harness-studio-desktop-app:
+  en: 87eb6769a2b95728
+  zh: 6e52ea3404c97fc4
+/deepseek-harness-studio-desktop-app/development:
+  en: 58c885667c80994c
+  zh: b5f76fde655e3e66
+/deepseek-harness-studio-desktop-app/development/plugin-center-trusted-lifecycle:
+  en: 19472f9398f6b0ab
+  zh: 57f6ba24353faf3d
+/deepseek-harness-studio-desktop-app/development/preset-square-installation:
+  en: 6074a9c8ba4593e2
+  zh: 3e9fa365140a97c1
+/deepseek-harness-studio-desktop-app/packaging:
+  en: 4cb4d43a49eb4a73
+  zh: ce61eb2c8812a782
+/deepseek-harness-studio-desktop-app/packaging/signed-macos-dmg-and-zip:
+  en: 375e9a7c5d8f683c
+  zh: c897d164c7132116
+/deepseek-harness-studio-desktop-app/packaging/automatic-updates:
+  en: a59556c46da6c826
+  zh: a361090f818e7f59
+/deepseek-harness-studio-desktop-app/packaging/windows-x64-nsis-installer:
+  en: 70eeabe8487b11fc
+  zh: 96ece2694a655b6e
+/deepseek-harness-studio-desktop-app/known-limitations:
+  en: 757c5b482947375d
+  zh: d87be1939a46171e
+/deepseek-harness-studio-desktop-app/model-experience:
+  en: 8e46fff858c23823
+  zh: bbdaa243411f3487

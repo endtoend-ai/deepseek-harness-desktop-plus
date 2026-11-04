@@ -1,6 +1,6 @@
 {
-  "name": "@fufan/dsh-plugin-llm-wiki",
-  "description": "Launch the complete FF - LLM Wiki application from DeepSeek Harness",
+  "name": "dsh-plugin-llm-wiki",
+  "description": "Launch the LLM Wiki application from DeepSeek Harness",
   "version": "1.1.2",
   "engines": {
     "node": ">=24"
@@ -37,7 +37,8 @@
     "deepseek-harness",
     "knowledge-base",
     "rag",
-    "wiki"
+    "wiki",
+    "llm-wiki"
   ],
   "dsh": {
     "bundle": {
@@ -45,16 +46,16 @@
     },
     "pluginCenter": {
       "expectedEntries": [
-        "fufan.llm-wiki"
+        "llm-wiki"
       ],
       "expectedClientModules": [
-        "@fufan/dsh-plugin-llm-wiki"
+        "dsh-plugin-llm-wiki"
       ],
       "expectedSkillIds": [],
       "ownedData": [
         {
           "path": "ff-llm-wiki",
-          "label": "LLM Wiki 知识库数据"
+          "label": "LLM Wiki knowledge base data"
         }
       ]
     },

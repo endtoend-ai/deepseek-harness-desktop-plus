@@ -1,0 +1,8 @@
+{
+  "format": "dsh-preset",
+  "version": 1,
+  "id": "ai-product-developer",
+  "name": "AI Product Developer",
+  "description": "AI WebApp workflow: one Agent Preset and three Skills covering requirement clarification, spec synthesis, and test-driven web product development.",
+  "sourceDshVersion": "0.1.0-rc.8"
+}

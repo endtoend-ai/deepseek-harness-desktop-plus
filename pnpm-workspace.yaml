@@ -7,6 +7,8 @@ packages:
   - native/system/packages/*
   # Product assemblies over the package tier; apps/cli owns the `dsh` bin.
   - apps/*
+  # Dependency-only deploy root for the packaged Electron Host.
+  - apps/desktop/runtime
   # Private package owning repository-level benchmark dependencies.
   - benchmarks
   - website
