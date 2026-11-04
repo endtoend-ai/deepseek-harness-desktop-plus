@@ -72,6 +72,20 @@ Local model providers: Ollama, vLLM, SGLang, and custom OpenAI-compatible servic
 
 Skins, backgrounds, and theme adaptation.
 
+### More screens
+
+![Chat session with tool calls](docs/screenshots/chat-session.png)
+
+A session running tools against the workspace, with the step timeline and usage counters.
+
+![Settings: general](docs/screenshots/settings-general.png)
+
+General settings: permission mode, language, appearance, work-detail level, and shortcuts.
+
+![Settings: models](docs/screenshots/settings-models.png)
+
+Model providers and the built-in DeepSeek provider, including the visual-enhancement model.
+
 ## Getting started
 
 ### Requirements
