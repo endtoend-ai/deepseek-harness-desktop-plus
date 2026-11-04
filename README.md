@@ -1,7 +1,6 @@
 <h1 align="center">DeepSeek Harness Desktop Plus</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/license-MIT-22C55E" alt="MIT License">
   <img src="https://img.shields.io/badge/desktop-Electron-47848F" alt="Electron desktop">
   <img src="https://img.shields.io/badge/upstream-dsh%200.2.1--rc.5-2563EB" alt="Upstream dsh 0.2.1-rc.5">
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-3B82F6" alt="macOS and Windows">
@@ -242,8 +241,8 @@ deepseek-harness-desktop-plus/
 2. **Upstream-only applications are not packaged.** `apps/desktop-host` and `apps/plugin-market-generator` remain in the workspace for the upstream composition, and the desktop build does not package them.
 3. **No online auto-update.** Desktop delivery uses repository release artifacts; in-application update delivery is not part of this build.
 
-## Upstream and license
+## Upstream and license status
 
 This project is based on [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) and continues its runtime, plugin system, and web interface inside a desktop product. The upgrade history and upstream ownership boundary are recorded in [UPSTREAM_0.2.1_INTEGRATION.md](UPSTREAM_0.2.1_INTEGRATION.md).
 
-DeepSeek Harness itself is MIT-licensed; this repository keeps the original copyright notice in [LICENSE](LICENSE). Third-party components and their licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), brand usage guidance is in [BRAND_GUIDELINES.md](BRAND_GUIDELINES.md), and contribution rules are in [CONTRIBUTING.md](CONTRIBUTING.md).
+This repository is a private product build and is not open source. It contains components of DeepSeek Harness, whose original copyright notices and licenses are preserved in [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Brand usage guidance is in [BRAND_GUIDELINES.md](BRAND_GUIDELINES.md).

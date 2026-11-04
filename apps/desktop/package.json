@@ -17,7 +17,7 @@
     "package": "pnpm run build:applications && pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && electron-builder --dir",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json"
   },
-  "license": "MIT",
+  "license": "UNLICENSED",
   "dependencies": {
     "@deepseek-ai/cordis": "workspace:^",
     "@deepseek-ai/cordis-plugin-group": "workspace:^",

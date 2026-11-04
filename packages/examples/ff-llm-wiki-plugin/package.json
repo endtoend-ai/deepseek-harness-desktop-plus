@@ -75,7 +75,7 @@
     "typecheck:client": "tsc -b tsconfig.client.json",
     "pack:plugin": "pnpm pack --pack-destination dist"
   },
-  "license": "MIT",
+  "license": "UNLICENSED",
   "publishConfig": {
     "access": "public"
   },
