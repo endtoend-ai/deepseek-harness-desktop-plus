@@ -48,7 +48,7 @@
   },
   "build": {
     "appId": "ai.deepseek.harness.desktop",
-    "productName": "DeepSeek Harness",
+    "productName": "DeepSeek Harness Desktop Plus",
     "afterPack": "./scripts/verify-packaged-runtime.ts",
     "asar": true,
     "files": [
@@ -83,7 +83,7 @@
     },
     "win": {
       "icon": "build/icon.png",
-      "artifactName": "DeepSeek-Harness-Desktop-Windows-x64-${version}-Setup.${ext}",
+      "artifactName": "DeepSeek-Harness-Desktop-Plus-Windows-x64-${version}-Setup.${ext}",
       "target": [
         "nsis"
       ]
@@ -95,7 +95,7 @@
       "include": "build/installer.nsh",
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "shortcutName": "DeepSeek Harness"
+      "shortcutName": "DeepSeek Harness Desktop Plus"
     },
     "linux": {
       "category": "Development",

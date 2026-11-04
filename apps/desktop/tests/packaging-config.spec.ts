@@ -155,7 +155,7 @@ describe('desktop packaging configuration', () => {
       include: 'build/installer.nsh',
       createDesktopShortcut: 'always',
       createStartMenuShortcut: true,
-      shortcutName: 'DeepSeek Harness',
+      shortcutName: 'DeepSeek Harness Desktop Plus',
     })
     expect(windowsInstallerInclude).toContain('--dsh-installer-quit')
     expect(windowsInstallerInclude).not.toContain('!macro customInit')
