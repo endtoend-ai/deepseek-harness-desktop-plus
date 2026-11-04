@@ -245,4 +245,4 @@ deepseek-harness-desktop-plus/
 
 This project is based on [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) and continues its runtime, plugin system, and web interface inside a desktop product. The upgrade history and upstream ownership boundary are recorded in [UPSTREAM_0.2.1_INTEGRATION.md](UPSTREAM_0.2.1_INTEGRATION.md).
 
-This repository is a private product build and is not open source. It contains components of DeepSeek Harness, whose original copyright notices and licenses are preserved in [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Brand usage guidance is in [BRAND_GUIDELINES.md](BRAND_GUIDELINES.md).
+This repository is a private product build and is not open source. It contains components of DeepSeek Harness, whose original copyright notices and licenses are preserved in [LICENSE-DEEPSEEK-HARNESS](LICENSE-DEEPSEEK-HARNESS) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Brand usage guidance is in [BRAND_GUIDELINES.md](BRAND_GUIDELINES.md).
