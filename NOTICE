@@ -1,0 +1,41 @@
+# NOTICE
+
+DeepSeek Harness Desktop Plus
+Copyright (c) 2026 AI Engineering Store
+
+## Our license
+
+The original code in this repository is licensed under the MIT License (see [LICENSE](LICENSE)),
+except the first-party native addon in `native/system`, which is licensed under BSD 3-Clause (see
+[native/system/LICENSE](native/system/LICENSE)).
+
+## Third-party code contained in this repository
+
+1. **DeepSeek Harness** (upstream runtime) — MIT — Copyright (c) 2026 DeepSeek.
+   Source: <https://github.com/deepseek-ai/deepseek-harness>. This repository tracks upstream
+   `0.2.1-rc.5`. The upstream license text is reproduced in
+   [THIRD_PARTY/DeepSeek-Harness-LICENSE.txt](THIRD_PARTY/DeepSeek-Harness-LICENSE.txt).
+
+2. **Cordis framework and foundation libraries**, source-vendored under `vendor/` — MIT.
+   Packages: `cosmokit`, `schemastery`, `cordis`, `@cordisjs/plugin-loader`,
+   `@cordisjs/plugin-include`, `@cordisjs/plugin-group`, `@cordisjs/plugin-timer`,
+   `@cordisjs/plugin-hmr`, `@cordisjs/plugin-logger-console`. Each directory keeps the upstream
+   `LICENSE` file; upstream versions, commits and local modifications are recorded in
+   [vendor/README.md](vendor/README.md).
+
+3. **Official Claude Code platform payloads** (`@anthropic-ai/claude-agent-sdk` and the platform
+   packages it declares through `optionalDependencies`) — distributed under Anthropic's own terms.
+   See the "Official Claude Code platform payloads" section of
+   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Third-party dependencies
+
+The complete list of direct npm dependencies, Python SDK dependencies, bundled Python
+distributions and first-party native packages — with their declared licenses — is generated into
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) by `scripts/gen-third-party-notices.ts`. Notable
+non-MIT terms: `@deepseek-ai/libreoffice-kit` (MPL-2.0), `lightnc`/`lightningcss` (MPL-2.0),
+`@anthropic-ai/claude-agent-sdk` (see its README license), `eslint-plugin-sonarjs`
+(LGPL-3.0-only, development tooling only).
+
+Full license texts ship with each installed package or wheel; the vendored copies keep theirs in
+place. Nothing in this NOTICE changes those terms.
