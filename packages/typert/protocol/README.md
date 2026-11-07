@@ -142,7 +142,7 @@ Read these pages when the package-level contract is not enough; they move from t
 - [Typert subsystem reference](../../../docs/subsystems/typert.md) — the literal public contracts recorded from protocol and Gateway types.
 - [Typert registry](../registry/README.md) — where descriptors and providers are stored at runtime.
 - [Typert generator](../generator/README.md) — what generates the consumer-side declarations and descriptors.
-- [Remote-call Agent Note](../../../.agents/notes/implemented/architecture/2026-08-02-typert-remote-method-calls.md) — the architecture and transport decisions behind Remote calls.
+- Remote-call Agent Note — the architecture and transport decisions behind Remote calls.
 
 -----
 

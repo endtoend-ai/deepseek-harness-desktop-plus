@@ -64,7 +64,7 @@ The pure `./types` entry declares `PresentedFile` and the Session event without 
 
 - [Filesystem subsystem](../../../docs/subsystems/filesystem.md) — provider paths and errors.
 - [Web deliverables](../../client/ui-deliverables/README.md) — source-file opening and cards.
-- [Delivery decision](../../../.agents/notes/implemented/feature/2026-09-08-present-workspace-source-files.md) — Session ownership and required-on-read events.
+- Delivery decision — Session ownership and required-on-read events.
 
 <a id="model-experience"></a>
 ## Model Experience

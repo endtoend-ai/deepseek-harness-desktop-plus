@@ -41,8 +41,8 @@ The llm group provides the harness's model-call capability: one provider-neutral
 
 - [LLM streaming subsystem](../../docs/subsystems/llm-streaming.md) — the message and block types, the assembled model request, the `StreamChunk` protocol, and the adapter contract.
 - [Token meter subsystem](../../docs/subsystems/token-meter.md) — the measurement semantics behind `ctx.tokenMeter`.
-- [Twin LLM adapters](../../.agents/notes/implemented/architecture/2026-06-13-twin-llm-adapters.md) — why the DeepSeek route ships two structurally different adapters.
-- [Routed model context](../../.agents/notes/implemented/architecture/2026-07-20-routed-model-context-and-compaction-policy.md) — how the loop routes model requests and compacts context.
+- Twin LLM adapters — why the DeepSeek route ships two structurally different adapters.
+- Routed model context — how the loop routes model requests and compacts context.
 
 <a id="dev-note"></a>
 ## Dev Note

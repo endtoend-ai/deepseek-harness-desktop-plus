@@ -191,13 +191,13 @@ The wrong form buries behavior changes inside a move, so review cannot separate 
 
 ## Dispose must reach quiescence, not just request it
 
-Await child exit after killing or aborting. Optional notifications may stop early; resources and listeners needed for completion or final persistence must survive until consumers settle. See the [Cordis ownership checks](../../.agents/skills/cordis-styling-nitpicking/SKILL.md#p0-cleanup-dependency-released-before-consumer-completion).
+Await child exit after killing or aborting. Optional notifications may stop early; resources and listeners needed for completion or final persistence must survive until consumers settle. See the Cordis ownership checks.
 
 The judged condition is whether teardown awaits actual quiescence or only requests it. The boundary is work with no owner to await — a detached, unobserved task — which the teardown is not obliged to track; anything the component started and can still observe must be awaited before it reports completion.
 
 ## Contain callback exceptions in the dispatcher
 
-Catch and report each listener's exception without rejecting the dispatch promise or starving later listeners. The listener's owner must handle state it mutates under the [error-handling rules](../../.agents/skills/dsh-error-handling/SKILL.md#catch-recover-or-stop); catching alone does not restore state.
+Catch and report each listener's exception without rejecting the dispatch promise or starving later listeners. The listener's owner must handle state it mutates under the error-handling rules; catching alone does not restore state.
 
 The judged condition is whether a throwing listener can reject the dispatch promise or prevent later listeners from running. The boundary is the caller's own await: an error the dispatcher deliberately propagates to the operation that requested it is not a containment failure.
 

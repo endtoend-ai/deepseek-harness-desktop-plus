@@ -28,7 +28,7 @@ The microphone occupies `conversation.input.activity`, between the model selecto
 
 ## Design rationale
 
-The [voice input decision](../../.agents/notes/implemented/architecture/2026-09-16-experimental-voice-input.md) explains transient audio, explicit provider selection and lazy local preparation.
+The voice input decision explains transient audio, explicit provider selection and lazy local preparation.
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers -->
 

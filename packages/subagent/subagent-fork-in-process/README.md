@@ -98,7 +98,7 @@ Read these pages when the package-level contract is not enough; they move from t
 - [dsh-subagent-spawn-in-process](../subagent-spawn-in-process/README.md) — the fresh-child sibling backend.
 - [dsh-tool-subagent](../tool-subagent/README.md) — the model-facing delegation tool that reaches this provider.
 - [Generated configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-subagent-fork-in-process) — every accepted config field and its source declaration.
-- [Forked children preserve the parent request prefix](../../../.agents/notes/implemented/architecture/2026-08-10-fork-children-stay-one-shot.md) — why continuable fork preserves the inherited request prefix.
+- Forked children preserve the parent request prefix — why continuable fork preserves the inherited request prefix.
 
 -----
 
@@ -117,7 +117,7 @@ Forking duplicates retained completed history into the child's request, which th
 
 #### KV Cache effect
 
-The child may reuse the inherited byte-identical prefix under the same provider and model. Structured output, generated-SDK, route changes, or historical descriptor overrides on cold resume can invalidate reuse before inherited history; later child history is append-only. Continuable messaging adds no child-only system-prompt section or tool schema; the parent id and return guidance follow inherited history in the initial user task ([cache-preserving fork Agent Note](../../../.agents/notes/implemented/architecture/2026-08-10-fork-children-stay-one-shot.md)).
+The child may reuse the inherited byte-identical prefix under the same provider and model. Structured output, generated-SDK, route changes, or historical descriptor overrides on cold resume can invalidate reuse before inherited history; later child history is append-only. Continuable messaging adds no child-only system-prompt section or tool schema; the parent id and return guidance follow inherited history in the initial user task (cache-preserving fork Agent Note).
 
 ### Parent tool result, indirectly
 
@@ -141,7 +141,7 @@ Append-only; newly visible content follows the reusable request prefix and does 
 These limits define when the backend is the wrong choice; they are current package constraints.
 
 - **The seed is a one-time snapshot** — the child sees the parent's completed turns as of the fork and nothing the parent logs afterwards; there is no live context sharing.
-- **Prefix reuse depends on matching request inputs** — parent and child messaging definitions match byte for byte; structured output, generated-SDK, route changes, or restored historical overrides can still break equality. Rationale: the [cache-preserving fork Agent Note](../../../.agents/notes/implemented/architecture/2026-08-10-fork-children-stay-one-shot.md).
+- **Prefix reuse depends on matching request inputs** — parent and child messaging definitions match byte for byte; structured output, generated-SDK, route changes, or restored historical overrides can still break equality. Rationale: the cache-preserving fork Agent Note.
 - **Shipped fork tools do not expose child LLM route selection** — they inherit the parent's provider and model so the copied history remains eligible for KV Cache reuse. Route selection stays disabled until a change can preserve reuse or expose a bounded recomputation cost.
 
 <a id="dev-note"></a>

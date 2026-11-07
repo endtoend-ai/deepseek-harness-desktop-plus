@@ -97,7 +97,7 @@ The tools are the model-facing half of the goal surface; read these pages for th
 - [Goal service](../goal/README.md) — the goal state and lifecycle the tools mutate.
 - [Goal group map](../README.md) — the goal packages and how they compose.
 - [Generated tool catalog](../../../docs/tool-catalog.md#deepseek-aidsh-tool-goal) — the exact schemas the model receives.
-- [Goal-tool Agent Note](../../../.agents/notes/implemented/feature/2026-07-19-model-facing-goal-tools.md) — the authority split and UX decisions.
+- Goal-tool Agent Note — the authority split and UX decisions.
 
 -----
 

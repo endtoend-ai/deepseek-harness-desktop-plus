@@ -77,7 +77,7 @@ Keys are resolved in one fixed order — the first place that has a value wins:
 | Your project's `.env` (`<invocation cwd>/.env`) | not here | your home `.env` |
 | Your home `.env` (`$DSH_HOME/.env`) | not here | nothing |
 
-The stored file wins because a credential explicitly saved through the product must take effect consistently for every provider ([decision](../../../.agents/notes/implemented/architecture/2026-10-09-stored-credential-precedence.md)). The launching environment — `DEEPSEEK_API_KEY=… dsh`, a CI secret, or a container `-e` — is the fallback when no stored value exists; a project `.env` then outranks the harness-home `.env`. A save always writes the winning layer, so `describe` reports `writable: true` for every reference, and its `source` names the place that currently supplies the value. The environment layer is the launcher's snapshot taken at launch ([environment snapshot](../../util/launch-environment/README.md)), so a variable exported after startup is not seen.
+The stored file wins because a credential explicitly saved through the product must take effect consistently for every provider (decision). The launching environment — `DEEPSEEK_API_KEY=… dsh`, a CI secret, or a container `-e` — is the fallback when no stored value exists; a project `.env` then outranks the harness-home `.env`. A save always writes the winning layer, so `describe` reports `writable: true` for every reference, and its `source` names the place that currently supplies the value. The environment layer is the launcher's snapshot taken at launch ([environment snapshot](../../util/launch-environment/README.md)), so a variable exported after startup is not seen.
 
 ### The credential file
 

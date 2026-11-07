@@ -110,7 +110,7 @@ Read these pages when the package-level contract is not enough. They move from t
 - [terminal service](../../terminal/terminal/README.md) — session operations, owner fencing, and cleanup semantics.
 - [terminal-bash backend](../../terminal/terminal-bash/README.md) — the shipped shell backend that provides sessions.
 - [jobs package map](../../jobs/README.md) — the background-job surface that collects and kills background sends.
-- [Persistent PTY Agent Note](../../../.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md) — the capability design and deferred boundaries.
+- Persistent PTY Agent Note — the capability design and deferred boundaries.
 
 -----
 

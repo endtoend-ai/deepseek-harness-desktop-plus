@@ -4,7 +4,7 @@
 #   pnpm run verify-translation-pairing --write packages/client/ui-desktop-customization/README.md
 /desktop-customization:
   en: 8362cf2942fab3e7
-  zh: c0ab4005dfbbeb62
+  zh: 57116d8a44d43ea0
 /desktop-customization/model-experience:
   en: 6bc2950c45310244
   zh: 74b94072227bbd3e

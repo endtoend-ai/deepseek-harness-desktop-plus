@@ -4692,7 +4692,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 
 ## Seam packages (not directly loadable)
 
-Abstract service classes — a deployment loads a concrete implementation package instead ([capability seams](../.agents/notes/implemented/architecture/2026-06-13-capability-seams.md)).
+Abstract service classes — a deployment loads a concrete implementation package instead (capability seams).
 
 <!-- BEGIN GENERATED config-catalog:seam -->
 | `package` | `class` | `inject` | `source` |

@@ -60,7 +60,7 @@ Registrations and listeners dispose with the plugin, and disposal aborts an in-f
 <a id="further-exploration"></a>
 ## Further Exploration
 
-[LLM streaming](../../../docs/subsystems/llm-streaming.md) · [Messages](../llm-deepseek/README.md) · [Official listing decision](../../../.agents/notes/implemented/architecture/2026-10-22-deepseek-official-model-listing.md)
+[LLM streaming](../../../docs/subsystems/llm-streaming.md) · [Messages](../llm-deepseek/README.md) · Official listing decision
 
 <a id="model-experience"></a>
 ## Model Experience

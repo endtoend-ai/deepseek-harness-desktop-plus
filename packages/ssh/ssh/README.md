@@ -75,7 +75,7 @@ The connection disables the helper’s SIGUSR1 debugger activation: the script i
 ## Further Exploration
 
 - [SSH subsystem](../../../docs/subsystems/ssh.md) — execution coordinates, transport semantics and lifecycle ownership.
-- [POSIX SSH decision](../../../.agents/notes/implemented/architecture/2026-09-11-posix-ssh-runtime.md) — rationale, alternatives and required verification.
+- POSIX SSH decision — rationale, alternatives and required verification.
 
 -----
 

@@ -60,7 +60,7 @@ kind: "package-reference"
 <a id="further-exploration"></a>
 ## 进一步探索
 
-[LLM streaming](../../../docs/subsystems/llm-streaming.zh.md) · [Messages](../llm-deepseek/README.zh.md) · [官方列表决策](../../../.agents/notes/implemented/architecture/2026-10-22-deepseek-official-model-listing.zh.md)
+[LLM streaming](../../../docs/subsystems/llm-streaming.zh.md) · [Messages](../llm-deepseek/README.zh.md) · 官方列表决策
 
 <a id="model-experience"></a>
 ## 模型体验

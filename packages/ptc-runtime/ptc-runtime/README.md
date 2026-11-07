@@ -66,7 +66,7 @@ This section explains the design behind the seam; observable behavior is fully c
 
 ### Design concept
 
-The package is the Service Definition role of the PTC execution capability seam ([capability seams](../../../.agents/notes/implemented/architecture/2026-06-13-capability-seams.md)): an abstract `PtcRuntime extends Service` registered as `ctx.ptcRuntime`, plus the vocabulary providers and consumers share. Providers subclass `PtcRuntime`, implement `resolve` and `run`, and register the service. PTC mode in `dsh-tools` owns tool bindings, while `dsh-workflow-ptc` owns workflow hooks and child agents. The runtime stays ignorant of tools and sessions by contract: it receives a program, named async bindings and resolved execution options, then returns captured output, the outcome and applicable sandbox facts.
+The package is the Service Definition role of the PTC execution capability seam (capability seams): an abstract `PtcRuntime extends Service` registered as `ctx.ptcRuntime`, plus the vocabulary providers and consumers share. Providers subclass `PtcRuntime`, implement `resolve` and `run`, and register the service. PTC mode in `dsh-tools` owns tool bindings, while `dsh-workflow-ptc` owns workflow hooks and child agents. The runtime stays ignorant of tools and sessions by contract: it receives a program, named async bindings and resolved execution options, then returns captured output, the outcome and applicable sandbox facts.
 
 ### Service API
 
@@ -102,11 +102,11 @@ Binding-global and error-class names are language-portable: they must match the 
 
 Read these when the package-level contract is not enough. They move from the PTC mode consumer to the backends and the capability-seam model.
 
-- [PTC mode Agent Note](../../../.agents/notes/implemented/feature/2026-06-15-ptc.md) — how the tool registry consumes `ctx.ptcRuntime` and presents `run_code` to the model.
+- PTC mode Agent Note — how the tool registry consumes `ctx.ptcRuntime` and presents `run_code` to the model.
 - [Node process backend](../ptc-runtime-node/README.md) — the shipped TypeScript execution backend.
 - [Experimental Python backend](../../experimental/ptc-runtime-python/README.md) — the private CPython subprocess provider and its fd-3 protocol.
 - [PTC runtime subsystem reference](../../../docs/subsystems/ptc-runtime.md) — request/result vocabulary, bindings, and the `ctx.ptcRuntime` cordis surface.
-- [Capability seams](../../../.agents/notes/implemented/architecture/2026-06-13-capability-seams.md) — the Service Definition / Service Provider / Consumer split.
+- Capability seams — the Service Definition / Service Provider / Consumer split.
 
 -----
 

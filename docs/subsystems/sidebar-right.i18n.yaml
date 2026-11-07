@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/sidebar-right.md
 /right-sidebar:
-  en: e84f3719f0a99a63
-  zh: 387656d860d3c2c4
+  en: 19300ad9d07d1860
+  zh: fc5f01b25d6b41e7
 /right-sidebar/position-and-ownership:
   en: 35e347438a6ea22f
   zh: a33a57edd698a6ec
@@ -21,8 +21,8 @@
   en: f58dc6ff6b0027a7
   zh: 707722fcbd096efc
 /right-sidebar/document-renderers:
-  en: 2bf47a890fce175e
-  zh: 45f81c579b8939a8
+  en: b0855a846b4ebe5a
+  zh: 7a47d867180061ee
 /right-sidebar/resource-model:
   en: 2916306e6cb9282c
   zh: cdec047989860202
@@ -33,5 +33,5 @@
   en: 81cc0928abeff74b
   zh: 370fcfd5bb350ed9
 /right-sidebar/not-built:
-  en: 65e86c293eb99242
-  zh: 852dfe7713848453
+  en: 31754f7724ab8a79
+  zh: a0f4e96a805c338c

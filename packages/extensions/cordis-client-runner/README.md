@@ -87,7 +87,7 @@ Read these pages when the package-level contract is not enough. They move from t
 - [Tool package](../tool-cordis/README.md) — read-only runtime API discovery.
 - [UI package](../ui-cordis/README.md) — the panel and cards that operate this face.
 - [Extensions subsystem](../../../docs/subsystems/extensions.md) — the generated `ctx.dynamicCordisRunner` API and `cordis/*` events.
-- [Client shells and dynamic packages Agent Note](../../../.agents/notes/implemented/architecture/2026-08-15-client-shells-and-dynamic-packages.md) — package placement and build faces for the client halves.
+- Client shells and dynamic packages Agent Note — package placement and build faces for the client halves.
 
 -----
 

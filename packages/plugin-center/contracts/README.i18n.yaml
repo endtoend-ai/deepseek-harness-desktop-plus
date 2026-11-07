@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/plugin-center/contracts/README.md
 /plugin-center-contracts:
-  en: 4810f1692faf1694
-  zh: c08f81dd087ed8d4
+  en: 2fadfe6b612a2ea2
+  zh: 662dcccbef2f5b62
 /plugin-center-contracts/model-experience:
   en: 7608b625ebd987c7
   zh: 534c7fb4b77d37f9

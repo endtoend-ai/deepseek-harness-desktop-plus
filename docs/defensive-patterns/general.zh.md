@@ -215,7 +215,7 @@ throw new EndpointError('not found')   // was: return { ok: false, code: 'not_fo
 
 ## dispose 必须达到完全停稳，而不仅仅是请求停止
 
-发出终止或中止信号后，应等待子进程退出。可选通知可以提前停止；完成清理或最终持久化所需的资源和监听器必须保留到消费方结束。参见 [Cordis 所有权检查](../../.agents/skills/cordis-styling-nitpicking/SKILL.md#p0-cleanup-dependency-released-before-consumer-completion)。
+发出终止或中止信号后，应等待子进程退出。可选通知可以提前停止；完成清理或最终持久化所需的资源和监听器必须保留到消费方结束。参见 Cordis 所有权检查。
 
 判定条件是清理是否等待到真正停稳，而不只是发出请求。边界是没有可等待归属的工作——无人观察的游离任务——清理逻辑没有义务追踪它；但组件自己启动、且仍能观察到的工作，必须在它报告完成之前等待完毕。
 
@@ -223,7 +223,7 @@ throw new EndpointError('not found')   // was: return { ok: false, code: 'not_fo
 
 ## 在分发器中隔离回调异常
 
-逐个捕获并报告监听器的异常，不让分发 promise 被 reject，也不让后续监听器失去执行机会。监听器的所有者必须按[错误处理规范](../../.agents/skills/dsh-error-handling/SKILL.md#catch-recover-or-stop)处置其修改的状态；仅捕获异常不会恢复状态。
+逐个捕获并报告监听器的异常，不让分发 promise 被 reject，也不让后续监听器失去执行机会。监听器的所有者必须按错误处理规范处置其修改的状态；仅捕获异常不会恢复状态。
 
 判定条件是：抛异常的监听器是否能让分发 promise 被 reject，或让其后的监听器不再运行。边界是调用方自己的 await——分发器有意抛给发起该操作的那条路径的错误，不属于隔离失败。
 

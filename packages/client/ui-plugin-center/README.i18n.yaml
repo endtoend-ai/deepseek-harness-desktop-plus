@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-plugin-center/README.md
 /desktop-plugin-center-ui:
-  en: fa24b69a853581a3
-  zh: 06081625baef3187
+  en: 272d7b63265d67c6
+  zh: 546f9b280bb8307f
 /desktop-plugin-center-ui/model-experience:
   en: c3f5e61735a02c51
   zh: e203fd434b836498

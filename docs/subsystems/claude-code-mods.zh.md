@@ -25,7 +25,7 @@
 | `session.end` | 每会话触发一次 | 由根智能体的 `agent/disposed` 触发；钩子结束前 `$.state` 可读 |
 | `prompt.submit` | `e.text` 是输入的提示词；`context` 条目各成一块跟在输入的提示词之后；插件提交的提示词带 `origin: { kind: 'plugin', name }` | 相同；`e.text` 拼接已认领批次中人类自己（`user` 来源）消息的文本块，仅含注入上下文的批次不触发，`$.prompt.submit` 排入的提示词以提交的模组为来源 |
 | `turn.start`、`turn.complete` | 每轮触发；子智能体的轮带 `agentId` | 相同；`turn.complete` 的 `{ text }` 到达宿主日志，而非答案下方的一行；`durationMs` 从 `turn/start` 起算 |
-| `tool.call` | 在 Claude Code 的权限检查之前运行；`next({ ...e, command })` 改写工具实际运行的参数，`next({ ...e, tool })` 把调用改派给另一工具 | 包裹 `tools/execute` 运行，在 harness 权限决定之后；改写参数或改名工具的钩子（或 `.catch` 处理器）会被跳过并报告——参数情形指向[工具前输入改写提案](../../.agents/notes/proposed/feature/2026-06-30-pre-tool-input-rewrite.zh.md)——因为已写入日志的调用按原样运行。`{ deny }`、`{ result }`、观察以及在 `next` 之后改写结果或 `isError` 均按描述工作 |
+| `tool.call` | 在 Claude Code 的权限检查之前运行；`next({ ...e, command })` 改写工具实际运行的参数，`next({ ...e, tool })` 把调用改派给另一工具 | 包裹 `tools/execute` 运行，在 harness 权限决定之后；改写参数或改名工具的钩子（或 `.catch` 处理器）会被跳过并报告——参数情形指向工具前输入改写提案——因为已写入日志的调用按原样运行。`{ deny }`、`{ result }`、观察以及在 `next` 之后改写结果或 `isError` 均按描述工作 |
 | `command.run` | 为模组注册的命令运行 | 相同 |
 | `ui.render` | 为每个渲染位点触发（`AbovePrompt`、`Pane`、`ToolUse`、`AssistantMessage`、`Spinner`……） | 只为 `AbovePrompt` 触发，每次会话横幅重绘一次；`Pane` 钩子只经测试工具包的 `$.ui.mount({ component: 'Pane' })` 运行 |
 | `tool.check`、`tool.describe`、`tool.list`、`tool.register` | 塑造工具列表与权限 | 不触发；`$.tool.register` 与 `$.tool.list` 作为 `$` 调用服务 |

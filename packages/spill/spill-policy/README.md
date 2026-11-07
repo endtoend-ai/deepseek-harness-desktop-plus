@@ -115,7 +115,7 @@ Read these pages when the package-level contract is not enough.
 - [Spill storage service](../spill/README.md) — the `saveText` contract behind the policy's replacement.
 - [dsh-spill-local](../spill-local/README.md) — the local backend that stores the spilled text.
 - [Token meter](../../llm/token-meter/README.md) — shared text estimates and route image accounting.
-- [Tool output spill decision](../../../.agents/notes/implemented/architecture/2026-07-08-tool-output-spill-files.md) — the capability boundary and design rationale.
+- Tool output spill decision — the capability boundary and design rationale.
 
 -----
 

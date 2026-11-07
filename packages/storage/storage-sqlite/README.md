@@ -97,7 +97,7 @@ Read these pages when this backend's view is not enough: the subsystem reference
 - [Storage subsystem](../../../docs/subsystems/storage.md) — the backend contract, domain semantics, and generated API.
 - [Storage package map](../README.md) — the family's packages and their repository position.
 - [JSON storage backend](../storage-json/README.md) — the human-readable medium for small, inspectable data.
-- [domain KV storage Agent Note](../../../.agents/notes/proposed/architecture/2026-07-24-domain-kv-storage-and-workspace.md) — the design behind the backend family and the deferred session-backend migration.
+- domain KV storage Agent Note — the design behind the backend family and the deferred session-backend migration.
 
 -----
 

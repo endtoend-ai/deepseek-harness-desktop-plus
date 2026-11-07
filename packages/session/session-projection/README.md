@@ -106,7 +106,7 @@ Read these pages when the package-level contract is not enough. They move from t
 - [Session persistence subsystem](../../../docs/subsystems/persistence.md) — the event log projections fold over.
 - [Session projection cache](../session-projection-cache/README.md) — the persisted checkpoints that make cold reads skip full log loads.
 - [Session package map](../README.md) — adjacent persistence, title, and telemetry packages.
-- [Session-projection RFC](../../../.agents/notes/proposed/architecture/2026-07-27-session-projection-and-command-log.md) — the design rationale for projections and the command log.
+- Session-projection RFC — the design rationale for projections and the command log.
 
 -----
 

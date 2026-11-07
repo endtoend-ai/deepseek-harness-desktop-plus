@@ -99,7 +99,7 @@ Read these pages when the plugin contract is not enough. They move from the wire
 - [TypeScript SDK client](../client/README.md) — the client that drives this plugin.
 - [SDK application bundle](../../bundle/sdk-app/README.md) — the `dsh --profile sdk` application that boots this plugin.
 - [Python SDK](../../../python/README.md) — the Python client that drives the same server.
-- [SDK runtime distribution decision](../../../.agents/notes/implemented/architecture/2026-07-10-single-file-executable-sdk-runtime-distribution.md) — why the packaged runtime serves a closed plugin tree.
+- SDK runtime distribution decision — why the packaged runtime serves a closed plugin tree.
 
 -----
 

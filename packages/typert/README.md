@@ -36,7 +36,7 @@ With the Typert group, Client environments can call Host capabilities as typed m
 
 - [Typert subsystem reference](../../docs/subsystems/typert.md) — the literal public contracts recorded from protocol and registry types.
 - [API Gateway reference](../../docs/api-gateway.md) — how the generated Remote descriptors become running Host-to-Client calls.
-- [Remote-call Agent Note](../../.agents/notes/implemented/architecture/2026-08-02-typert-remote-method-calls.md) — the architecture and transport decisions behind Remote calls.
+- Remote-call Agent Note — the architecture and transport decisions behind Remote calls.
 - [Package workspace map](../README.md) — every group in the workspace and what each owns.
 
 -----

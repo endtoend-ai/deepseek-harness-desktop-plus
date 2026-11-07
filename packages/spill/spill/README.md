@@ -112,7 +112,7 @@ Read these pages when the package-level contract is not enough. They move from t
 - [dsh-spill-local](../spill-local/README.md) — the shipped local filesystem backend.
 - [dsh-spill-policy](../spill-policy/README.md) — the policy that decides when a final result is too large.
 - [dsh-output-retention](../../util/output-retention/README.md) — the preview mechanics behind the policy.
-- [Tool output spill decision](../../../.agents/notes/implemented/architecture/2026-07-08-tool-output-spill-files.md) — the capability boundary and design rationale.
+- Tool output spill decision — the capability boundary and design rationale.
 
 -----
 
@@ -145,7 +145,7 @@ This Dev Note is working context for maintainers: undecided directions and open 
 
 #### Future: executor spill-file integration
 
-The seam has only `saveText`; a save-file or link/copy path for existing executor spill files (for example normalizing bash temp files) and tool-owned spill for subagent rollouts remain deferred, per the [tool output spill decision](../../../.agents/notes/implemented/architecture/2026-07-08-tool-output-spill-files.md).
+The seam has only `saveText`; a save-file or link/copy path for existing executor spill files (for example normalizing bash temp files) and tool-owned spill for subagent rollouts remain deferred, per the tool output spill decision.
 
 #### Future: non-local backends and cleanup
 

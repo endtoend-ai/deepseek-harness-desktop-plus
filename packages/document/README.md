@@ -36,7 +36,7 @@ Each package owns its configuration and lifetime rules; the subsystem reference 
 Consumers own source authorization and presentation.
 
 - [Document conversion](../../docs/subsystems/office-to-pdf.md) — shared operation and generated service reference.
-- [Independent kit ownership](../../.agents/notes/implemented/architecture/2026-09-14-independent-libreoffice-kit.md) — engine distribution and application integration.
+- Independent kit ownership — engine distribution and application integration.
 - [Workspace Files](../api/workspace-files/README.md) — authorized bounded source reads.
 
 <a id="dev-note"></a>

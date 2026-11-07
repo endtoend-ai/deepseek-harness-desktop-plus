@@ -103,7 +103,7 @@ Read these pages when the package-level contract is not enough.
 - [Spill package map](../README.md) — the three-package family and each role.
 - [dsh-spill-policy](../spill-policy/README.md) — the policy that calls this backend when a result is too large.
 - [Spill subsystem](../../../docs/subsystems/spill.md) — the exhaustive vocabulary and ownership.
-- [Tool output spill decision](../../../.agents/notes/implemented/architecture/2026-07-08-tool-output-spill-files.md) — the capability boundary and design rationale.
+- Tool output spill decision — the capability boundary and design rationale.
 
 -----
 

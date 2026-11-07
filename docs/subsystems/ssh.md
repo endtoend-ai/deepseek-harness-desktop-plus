@@ -26,7 +26,7 @@ Administrative deadlines bound individual RPC observations; they do not replace 
 
 Headless records and checks Session cwd through the mounted filesystem provider. Remote FS, Bash, terminal, LSP and PTC consumers can therefore share those coordinates. Web workspace views that assume host filesystem access need separate integration; replacing providers alone does not make those views remote-aware.
 
-See the [decision record](../../.agents/notes/implemented/architecture/2026-09-11-posix-ssh-runtime.md) for the alternatives and verification obligations.
+See the decision record for the alternatives and verification obligations.
 
 ## Connection API
 

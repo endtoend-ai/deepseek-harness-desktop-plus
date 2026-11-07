@@ -77,7 +77,7 @@ Invocation and result records must sit inside an open turn: `UserPromptSubmit`, 
 - **Never throw into the loop.** Every failure mode — malformed JSON, an invalid regex, an executor rejection — degrades to a contained outcome or a non-match, so a hook can never crash the calling turn.
 - **Log-only, turn-enclosed events.** The `hook/*` records are durable evidence of what ran and what it decided; they are not surface events.
 
-The [hook-protocol-lib Agent Note](../../../.agents/notes/archived/feature/2026-06-30-hook-protocol-lib.md) records the shared-versus-per-dialect split and the alternatives considered.
+The hook-protocol-lib Agent Note records the shared-versus-per-dialect split and the alternatives considered.
 
 ### Source map
 
@@ -102,8 +102,8 @@ The [hook-protocol-lib Agent Note](../../../.agents/notes/archived/feature/2026-
 Read these pages when the package-level contract is not enough. They move from the shared rules to the bridges that apply them and the extension points they program against.
 
 - [Hooks group map](../README.md) — the sibling group page and its package table.
-- [Hook protocol library Agent Note](../../../.agents/notes/archived/feature/2026-06-30-hook-protocol-lib.md) — why the protocol core is shared and what each bridge owns.
-- [Hook bridges Agent Note](../../../.agents/notes/archived/feature/2026-06-30-hook-bridges.md) — how the two bridges use these primitives.
+- Hook protocol library Agent Note — why the protocol core is shared and what each bridge owns.
+- Hook bridges Agent Note — how the two bridges use these primitives.
 - [Interception extension-points reference](../../../docs/tool-execution-pipeline.md) — the typed-Decision surface the bridges map onto.
 - [Generated persistence log event catalog](../../../docs/persistence-catalog.md) — the `hook/*` event payloads and per-event JSDoc.
 
@@ -125,7 +125,7 @@ No direct invalidation; the named consumers own any request-prefix changes.
 
 These limits describe what hooks cannot do through the shared engine yet. They are current package constraints, not a task backlog.
 
-- **`HookOutput.updatedInput` is parsed but not honored** — input rewrite is a deferred consistency-design problem ([the pre-tool-input-rewrite Agent Note](../../../.agents/notes/proposed/feature/2026-06-30-pre-tool-input-rewrite.md)); a bridge logs and warns when a hook sets it.
+- **`HookOutput.updatedInput` is parsed but not honored** — input rewrite is a deferred consistency-design problem (the pre-tool-input-rewrite Agent Note); a bridge logs and warns when a hook sets it.
 - **A folded halt has no run-level effect** — `mergeHookOutputs` folds `continue: false` into a sticky `stop`, but the interception points have no hard-halt primitive, so a bridge records the halt and keeps the hook's per-point effect.
 - **Only the command-hook shape runs** — the protocol executes `{ type: 'command', command, timeout? }`; a bridge parses-and-skips the other shapes its dialect defines (`http`, `mcp_tool`, `prompt`, `agent`).
 

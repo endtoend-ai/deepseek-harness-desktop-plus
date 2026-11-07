@@ -24,7 +24,7 @@
 
 ## 测量
 
-[corpus-shape.ts](corpus-shape.ts) 保存实测分位锚点。[synthetic-corpus.ts](synthetic-corpus.ts) 为每个锚点生成一份事件主体，并把每个 Session 存储为独立的 header 帧加上该主体。[Agent Note](../../.agents/notes/implemented/testing/2026-09-28-session-corpus-performance.zh.md) 负责说明工作负载推导、计时终点、校准和排除项。
+[corpus-shape.ts](corpus-shape.ts) 保存实测分位锚点。[synthetic-corpus.ts](synthetic-corpus.ts) 为每个锚点生成一份事件主体，并把每个 Session 存储为独立的 header 帧加上该主体。Agent Note 负责说明工作负载推导、计时终点、校准和排除项。
 
 | 用例 | 语料 | 计时终点 |
 |---|---|---|

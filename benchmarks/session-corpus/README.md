@@ -24,7 +24,7 @@ The test reports every fresh-process sample, the CPU model, available parallelis
 
 ## Measurements
 
-[corpus-shape.ts](corpus-shape.ts) holds the measured quantile anchors. [synthetic-corpus.ts](synthetic-corpus.ts) authors one event body per anchor and stores each Session as its own header frame followed by that body. [The Agent Note](../../.agents/notes/implemented/testing/2026-09-28-session-corpus-performance.md) owns the workload derivation, timing endpoints, calibration, and exclusions.
+[corpus-shape.ts](corpus-shape.ts) holds the measured quantile anchors. [synthetic-corpus.ts](synthetic-corpus.ts) authors one event body per anchor and stores each Session as its own header frame followed by that body. The Agent Note owns the workload derivation, timing endpoints, calibration, and exclusions.
 
 | Case | Corpus | Timed endpoints |
 |---|---|---|

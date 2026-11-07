@@ -39,11 +39,11 @@
   en: 6213e051f51437b8
   zh: 853580b3a4fec100
 /defensive-patterns/dispose-must-reach-quiescence-not-just-request-it:
-  en: d487ad57fdb16472
-  zh: eb5efe8b079b9521
+  en: 35e00519866e8556
+  zh: e77e56a93a5e1d84
 /defensive-patterns/contain-callback-exceptions-in-the-dispatcher:
-  en: ae2332afa54cb253
-  zh: db51fedb070d9a83
+  en: 7a51d72ca0effec6
+  zh: ec769e8bc9bfad45
 /defensive-patterns/never-hand-untrusted-output-the-ambient-environment-or-predictable-paths:
   en: 6fb7938f5197f520
   zh: 01eb670a852f24e6

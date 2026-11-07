@@ -21,14 +21,14 @@
   en: f80dab583fa3939d
   zh: 5a9a79ebcef86119
 /deepseek-ai-dsh-session/use-this-package/append-and-derive:
-  en: aa5f1951ecf3ac0c
-  zh: 62a599ace8f2bf15
+  en: f585f600421c4151
+  zh: d2c295615ee8d749
 /deepseek-ai-dsh-session/use-this-package/read-the-log:
-  en: c4bf3103b9762b6c
-  zh: 369c734bb20de2ea
+  en: 883a018e5ff0737e
+  zh: a9adb4a4b2e96c8f
 /deepseek-ai-dsh-session/use-this-package/write-experimental-plugin-records:
-  en: 6c758f98535b734c
-  zh: ac54342937477f37
+  en: 1ac711ef9d036c99
+  zh: d99b37da0aa9d09b
 /deepseek-ai-dsh-session/use-this-package/fork-a-session:
   en: 1c40d17a786059d3
   zh: 81320ce118977c65
@@ -42,8 +42,8 @@
   en: dabbe938e288c55a
   zh: 31c7ac2bee2a2846
 /deepseek-ai-dsh-session/understand-the-implementation/request-headers:
-  en: bbfb53c50100ab13
-  zh: 303a8ee47f4f656a
+  en: 05415821b0a2b440
+  zh: f62dce8deba43b19
 /deepseek-ai-dsh-session/understand-the-implementation/source-map:
   en: c596a8f74b4f1b79
   zh: a29f23c4c1d1ff75
@@ -93,8 +93,8 @@
   en: 5397f067293a55cd
   zh: 1dcc30d0c214f175
 /deepseek-ai-dsh-session/model-experience/logged-request-header/what-the-model-sees:
-  en: cfb4fd90e1982948
-  zh: fefc01118b2a5c07
+  en: 5cc8fbab9ca32f8c
+  zh: e5779289712207fb
 /deepseek-ai-dsh-session/model-experience/logged-request-header/token-effect:
   en: 310b8f36a86443e5
   zh: 906c4da8d03c5966
@@ -102,8 +102,8 @@
   en: 5eb30cfb410d52c0
   zh: da56365b8ab896da
 /deepseek-ai-dsh-session/known-limitations-and-deferred-work:
-  en: 45afe96a4e252db9
-  zh: 920bcc011823817b
+  en: b544d2d65825d81d
+  zh: 670dd283364c4f28
 /deepseek-ai-dsh-session/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

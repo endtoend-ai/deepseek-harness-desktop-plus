@@ -81,7 +81,7 @@ The engine's `workflow/phase` and `workflow/log` events have no per-line durable
 
 ### Render intent
 
-Decided up front per the [render-intent Agent Note](../../../.agents/notes/implemented/architecture/2026-07-02-tool-render-intent-union.md): a `generic` card titled `workflow: <meta.name>`, read directly from `args.meta.name` — presentation is a pure function of args — with the script text carried as `rawInput`. The result keeps the generic card.
+Decided up front per the render-intent Agent Note: a `generic` card titled `workflow: <meta.name>`, read directly from `args.meta.name` — presentation is a pure function of args — with the script text carried as `rawInput`. The result keeps the generic card.
 
 ### Source map
 
@@ -105,7 +105,7 @@ Read these pages when the tool-level contract is not enough. They move from the 
 - [PTC workflow engine](../workflow-ptc/README.md) — the engine that executes the scripts.
 - [subagent tool](../../subagent/tool-subagent/README.md) — the plain-delegation alternative for one or two children.
 - [Group map](../README.md) — the workflow capability family and its packages.
-- [historical Dynamic workflows Agent Note](../../../.agents/notes/archived/feature/2026-07-05-dynamic-workflows.md) — the seam design and its decisions.
+- historical Dynamic workflows Agent Note — the seam design and its decisions.
 
 -----
 

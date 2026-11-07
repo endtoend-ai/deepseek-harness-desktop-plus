@@ -110,7 +110,7 @@ The registry also answers the Workspace registry's archive admission ([seam](../
 
 ### Initiator scope
 
-Each driver runs its complete lifetime inside `ctx.agents.withInitiator(agent, ...)`, so inherited async chains observe that agent; `withoutInitiator()` hides it for unrelated process-local work such as shared timers. The boundary is process-local attribution only — ambient presence is neither liveness proof nor authorization, and explicit identity stays authoritative at worker, process, persistence, and wire boundaries. Teardown rejects new boundaries, lets returned-Promise boundaries drain, then disables the underlying storage. The [initiator-scope decision](../../../.agents/notes/implemented/architecture/2026-07-15-agent-initiator-scope.md) owns the detailed contract.
+Each driver runs its complete lifetime inside `ctx.agents.withInitiator(agent, ...)`, so inherited async chains observe that agent; `withoutInitiator()` hides it for unrelated process-local work such as shared timers. The boundary is process-local attribution only — ambient presence is neither liveness proof nor authorization, and explicit identity stays authoritative at worker, process, persistence, and wire boundaries. Teardown rejects new boundaries, lets returned-Promise boundaries drain, then disables the underlying storage. The initiator-scope decision owns the detailed contract.
 
 ### Ownership invariants
 
@@ -128,7 +128,7 @@ The package-level contract is enough for most consumers; read these when you nee
 - [Core subsystem](../../../docs/subsystems/core.md) — the loop map, `Agent` handle, interception decisions, and generated service API.
 - [agent-loop package](../agent-loop/README.md) — the default driver that creates, drives, and disposes agents.
 - [Session subsystem](../../../docs/subsystems/session.md) — the durable log and derived history behind the handle.
-- [Initiator-scope Agent Note](../../../.agents/notes/implemented/architecture/2026-07-15-agent-initiator-scope.md) — the boundary and teardown contract.
+- Initiator-scope Agent Note — the boundary and teardown contract.
 - [Core group map](../README.md) — how the core packages compose.
 
 -----

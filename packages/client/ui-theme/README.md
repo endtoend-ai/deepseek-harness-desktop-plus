@@ -108,7 +108,7 @@ These pages cover the layout presenter, the token consumers, and the styling rul
 - [ui-sidebar](../ui-sidebar/README.md) — a consumer of the scrollbar rebinding contract.
 - [ui-conversation](../ui-conversation/README.md) — a consumer of `--dsh-scrollbar-width` for the composer seat.
 - [Web styling](../../../docs/web-styling.md) — the authoritative styling rules for web client components.
-- [Authenticated-browser Host preferences](../../../.agents/notes/implemented/bug-fix/2026-09-15-authenticated-browser-host-preferences.md) — the persistence policy decision.
+- Authenticated-browser Host preferences — the persistence policy decision.
 
 -----
 

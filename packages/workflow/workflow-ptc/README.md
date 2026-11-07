@@ -110,7 +110,7 @@ Use these references for the shared execution guarantees and workflow contracts.
 - [Node PTC runtime](../../ptc-runtime/ptc-runtime-node/README.md) — file policy, process limits and deployment choices.
 - [workflow tool](../tool-workflow/README.md) — model-facing scripted orchestration.
 - [Ralph tool](../../experimental/tool-ralph/README.md) — opt-in fixed fresh-agent iteration.
-- [Workflow sandbox reuse](../../../.agents/notes/implemented/architecture/2026-09-13-workflow-ptc-sandbox-reuse.md) — execution ownership and tradeoffs.
+- Workflow sandbox reuse — execution ownership and tradeoffs.
 
 -----
 

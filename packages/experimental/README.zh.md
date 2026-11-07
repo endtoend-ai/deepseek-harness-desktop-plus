@@ -9,7 +9,7 @@ kind: "package-group"
 
 ## 概述
 
-实验性能力可按需安装和组合，但不提供产品支持承诺。包命名和发布遵循[实验包策略](../../scripts/experimental-package-policy.ts)。[可选组合规则](../../.agents/notes/implemented/architecture/2026-09-21-experimental-capabilities-as-optional-bundles.zh.md)决定哪些能力以默认关闭状态随安装提供，并在 GUI 插件管理器的官方分组显式启用。
+实验性能力可按需安装和组合，但不提供产品支持承诺。包命名和发布遵循[实验包策略](../../scripts/experimental-package-policy.ts)。可选组合规则决定哪些能力以默认关闭状态随安装提供，并在 GUI 插件管理器的官方分组显式启用。
 
 ## 目录
 

@@ -121,7 +121,7 @@ Read these pages when the package-level contract is not enough. They move from t
 - [Bash executor subsystem](../../../docs/subsystems/shell.md) — request/spec vocabulary, results, and background processes.
 - [shell-env](../shell-env/README.md) — the managed `DSH_*` environment every call receives.
 - [tool-jobs](../../jobs/tool-jobs/README.md) — `job_output`, `job_list`, and `job_kill` controls for background runs.
-- [historical sandbox Agent Note](../../../.agents/notes/archived/feature/2026-07-06-sandbox.md) — escalation and mode-switching rationale.
+- historical sandbox Agent Note — escalation and mode-switching rationale.
 - [Generated tool catalog](../../../docs/tool-catalog.md#deepseek-aidsh-tool-bash) — the exact `bash` argument schema.
 - [Generated configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-tool-bash) — every accepted config field and its source declaration.
 
@@ -214,7 +214,7 @@ Append-only; newly visible content follows the reusable request prefix and does 
 These limits define when the tool is a poor fit or needs special care. They are current package constraints, not a task backlog.
 
 - **Replay exit pills parse from result text** — output whose final line happens to be exactly `[exit code: N]` / `[killed by signal: …]` shows a wrong pill on session replay and loses that line from the card body, because the parse treats it as the marker it consumes; a display-only known residual.
-- **The `bash` tool opts out of `timeout-policy` budgets** — it keeps the executor-owned `BASH_TIMEOUT` path, per [the tool-call timeout-policy Agent Note](../../../.agents/notes/implemented/architecture/2026-07-07-tool-call-timeout-policy.md).
+- **The `bash` tool opts out of `timeout-policy` budgets** — it keeps the executor-owned `BASH_TIMEOUT` path, per the tool-call timeout-policy Agent Note.
 - **Background processes have no executor timeout** — callers must use `job_kill`, or rely on owner/service disposal, when work no longer matters; a foreground command registered as a job has none either, since its timeout bounds only the wait.
 - **The job list shows every foreground command while it runs** — a settled one leaves with its result, but the Web task list does not yet mark which running rows a tool call is still waiting on.
 

@@ -53,7 +53,7 @@ target package 通过 declaration merge 扩展 snapshot 与 Location data map，
 <a id="sent-user-text"></a>
 ## 已发送用户文本
 
-`UiConversation.userText` 注册同步 `match(text, from, context)` 规则。每次调用提供一个业务或 Text 候选；计算器选择起点最早的候选，仅在同起点时使用 `order` 和稳定 ID。每个调用者拥有自己的查询缓存。`Context.read(key)` 只使变化 Facts 的读取者失效，未来候选和无匹配结果在已记录的搜索范围内复用。输入和输出使用 readonly 类型，不在运行时冻结。详见 [UserText 类型](src/client/contract/user-text.ts)与[设计决策](../../../.agents/notes/implemented/architecture/2026-10-10-user-text-json-nodes.zh.md)。
+`UiConversation.userText` 注册同步 `match(text, from, context)` 规则。每次调用提供一个业务或 Text 候选；计算器选择起点最早的候选，仅在同起点时使用 `order` 和稳定 ID。每个调用者拥有自己的查询缓存。`Context.read(key)` 只使变化 Facts 的读取者失效，未来候选和无匹配结果在已记录的搜索范围内复用。输入和输出使用 readonly 类型，不在运行时冻结。详见 [UserText 类型](src/client/contract/user-text.ts)与设计决策。
 
 业务扩展本包 `/client` 入口的 `UserTextDataMap` 和 `UserTextFacts`，通过 `ctx.uiConversation.userText` 注册匹配器，并向 `conversation.user.text.node` 贡献 renderer。Session 作用域的 `conversation.user.text` Factory 拥有这个行内 keyed Slot。空白规则也通过同一调度器返回普通 Text 候选，trim 在同起点的边缘空白冲突中胜过 collapse。节点注册自行提供动作，`interactive` 和 CSS `ellipsis` 仍为 React Props。缺少 renderer 时显示原文片段，匹配失败时保留完整原文并报告规则错误。
 
@@ -76,9 +76,9 @@ root 作用域的 `conversation.session.header.views.actions` list 有注册项�
 
 输入框注册「文件」命令动作，负责其标题、可用性和原生文件选择器回调。菜单可用性与实际调用都读取已挂载输入框当前的附件接收策略。输入框卸载或锁定后该动作不可用，插件 dispose（资源释放）时移除注册。回调绑定留在输入模块内部。
 
-`SessionInputShell` 通过私有 [DraftEditorRuntime](src/client/input/editor/runtime.ts) 为每个 Session 持有一个 Lexical editor，同时保留提交、附件选择和恢复决策。[DraftEditor](src/client/input/editor/DraftEditor.tsx) 呈现借用的 editor；InputBar 保留钩子与 refs，并通过 [view-binding](src/client/input/editor/view-binding.ts) 安装 DOM 行为。编辑器类型位于 [draft-editor.ts](src/client/contract/draft-editor.ts)，共享输入和提交类型位于 [input.ts](src/client/contract/input.ts)。编辑器后台更新会保留草稿选区，不修改文档选区或从其他控件夺回焦点；显式聚焦 Composer 时恢复其选区。这一拆分不支持同一 Session 同时挂载多个可编辑 root；[两阶段隔离提案](../../../.agents/notes/proposed/architecture/2026-09-14-composer-model-and-draft-editor.zh.md) 定义剩余工作。
+`SessionInputShell` 通过私有 [DraftEditorRuntime](src/client/input/editor/runtime.ts) 为每个 Session 持有一个 Lexical editor，同时保留提交、附件选择和恢复决策。[DraftEditor](src/client/input/editor/DraftEditor.tsx) 呈现借用的 editor；InputBar 保留钩子与 refs，并通过 [view-binding](src/client/input/editor/view-binding.ts) 安装 DOM 行为。编辑器类型位于 [draft-editor.ts](src/client/contract/draft-editor.ts)，共享输入和提交类型位于 [input.ts](src/client/contract/input.ts)。编辑器后台更新会保留草稿选区，不修改文档选区或从其他控件夺回焦点；显式聚焦 Composer 时恢复其选区。这一拆分不支持同一 Session 同时挂载多个可编辑 root；两阶段隔离提案 定义剩余工作。
 
-草稿中的普通文字及文件、目录、Session 引用胶囊在切换 Session 和刷新后保留。公开输入方法接受文本；内部恢复和工作区携带保留结构化引用。输入模型在首次对外读取前导入保存内容；React 只挂载同一编辑器并绑定现有 Conversation store 写入回调。原存储 key 兼容旧字符串，新写入保存不含运行时节点 ID 的语义快照。等待 skill 目录不会阻塞编辑：斜杠名称保持普通文字，直到匹配的目录项到达。目录到达只重匹配当前文字，不改变胶囊、选区或 Undo 历史。浏览器持有的附件 File 对象不由这一机制持久化。[草稿初始化决策](../../../.agents/notes/implemented/architecture/2026-09-30-structured-draft-initialization.zh.md)规定所有权与恢复流程。
+草稿中的普通文字及文件、目录、Session 引用胶囊在切换 Session 和刷新后保留。公开输入方法接受文本；内部恢复和工作区携带保留结构化引用。输入模型在首次对外读取前导入保存内容；React 只挂载同一编辑器并绑定现有 Conversation store 写入回调。原存储 key 兼容旧字符串，新写入保存不含运行时节点 ID 的语义快照。等待 skill 目录不会阻塞编辑：斜杠名称保持普通文字，直到匹配的目录项到达。目录到达只重匹配当前文字，不改变胶囊、选区或 Undo 历史。浏览器持有的附件 File 对象不由这一机制持久化。草稿初始化决策规定所有权与恢复流程。
 
 已认领的命令是草稿开头的一个原子 chip，认领与该 chip 同生共灭。删除参数和分隔空格不影响认领。光标到达 chip 边缘时，第一次 Backspace 或 Delete 选中整个 chip，再按一次才删除它并释放认领，参数保留为普通文字；按其他键、点击或移动光标会取消选中。在 chip 前插入文字或换行会把它还原为字面 token 并释放认领，撤销会连同认领一起恢复被删除的 chip。持久化的草稿记录 chip 的 token，刷新后命令目录解析出认领即重建 chip；在此之前先编辑了草稿则保留字面 token，Enter 仍会把它作为命令提交。所有命令和语言使用相同规则，包括 `/goal`、`/目标`、`/plan` 和 `/计划`。输入法组合输入期间，命令提示和普通占位文字持续隐藏，直到编辑器提交最终文字且对应输入为空时才重新显示。
 
@@ -108,7 +108,7 @@ Session 首次绑定或缓存的 Session 成为 current 时，shell 会在渲染
 
 排队提交的本地回显在禁用的编辑、删除、插话按钮旁显示“发送中…”；折叠后的队列在标题栏保留发送状态。匹配的 Host 队列行替换回显后，各操作按原有的纯文本内容和运行状态要求启用。仅收到提示词确认不会启用队列操作。提交失败会移除回显并显示错误；输入框为空或仍保留上一次自动恢复的内容时，composer 恢复失败草稿，保留用户随后输入的文字。
 
-Send 和 Stop 按钮禁用时不显示提示气泡，轮次结束后由 Stop 切换成禁用 Send 的按钮也遵循此规则。普通 composer 运行时，如果草稿为空或输入不可用，主指针操作保持为 Stop。可提交的文字或附件会把同一位置切换为 Send；清空或成功提交草稿后恢复 Stop。繁忙态 Enter 设置为普通 Session 与可继续 child 选择 Queue 或 Steer 投递，运行中的 Send 按钮按 plain Enter 解析出的同一模式投递；当它在普通消息草稿上可用（没有待上传文件）时，其标签以该模式命名（排队发送或插话发送），因此该设置同时约束 Enter 与按钮，而 Cmd/Ctrl+Enter 仍使用另一模式；空闲会话、空草稿与 `/` 命令行保留普通的 Send 标签。它们的 QueueDock 行共享 Edit、Remove 与 Steer，空草稿也共享 steer-all 组合键。One-shot child 继续只读。Plan Mode 与 active goal 不改变附件入口。可继续 child 保留独立的 Send 与 Stop 操作，允许粘贴或拖入图片，但不提供「文件」菜单项；parent 离线时，Send 与 composer 手势锁定，但在线 inbox 的 QueueDock 控制仍可使用（[决策](../../../.agents/notes/archived/bug-fix/2026-08-20-running-draft-primary-send.md)、[inbox 控制](../../subagent/subagent/README.zh.md)）。
+Send 和 Stop 按钮禁用时不显示提示气泡，轮次结束后由 Stop 切换成禁用 Send 的按钮也遵循此规则。普通 composer 运行时，如果草稿为空或输入不可用，主指针操作保持为 Stop。可提交的文字或附件会把同一位置切换为 Send；清空或成功提交草稿后恢复 Stop。繁忙态 Enter 设置为普通 Session 与可继续 child 选择 Queue 或 Steer 投递，运行中的 Send 按钮按 plain Enter 解析出的同一模式投递；当它在普通消息草稿上可用（没有待上传文件）时，其标签以该模式命名（排队发送或插话发送），因此该设置同时约束 Enter 与按钮，而 Cmd/Ctrl+Enter 仍使用另一模式；空闲会话、空草稿与 `/` 命令行保留普通的 Send 标签。它们的 QueueDock 行共享 Edit、Remove 与 Steer，空草稿也共享 steer-all 组合键。One-shot child 继续只读。Plan Mode 与 active goal 不改变附件入口。可继续 child 保留独立的 Send 与 Stop 操作，允许粘贴或拖入图片，但不提供「文件」菜单项；parent 离线时，Send 与 composer 手势锁定，但在线 inbox 的 QueueDock 控制仍可使用（决策、[inbox 控制](../../subagent/subagent/README.zh.md)）。
 
 文件标签和可编辑的 skill 引用共用覆盖整个引用的悬停背景，并跟随输入框的行高与文字基线。首次点击立即由已注册的引用来源负责打开预览，包括双击序列的第一次点击。后续点击保留原生文本选择行为；已有非折叠选区时，指针点击不打开预览。预览不改变草稿、剪贴板文本或提交内容。
 
