@@ -47,7 +47,7 @@ What still needs separate configuration:
   full-conversation outline and full-text jump.
 - **Approval gates for tool calls.** When a tool call needs consent, the composer is taken over by
   the pending request: it shows the exact call and the caller's reason, Enter allows it once, Escape
-  rejects it, and every ask/answer pair is written to the session log. A session can also run under
+  rejects it, and every approval ask/answer pair is written to the session log. A session can also run under
   an `ask` (default) or `never` policy.
 - **Settings-first configuration.** Vision enhancement, local model providers, skins and general
   preferences are configured in the interface instead of editing configuration files.
