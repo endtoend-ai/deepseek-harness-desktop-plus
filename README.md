@@ -48,7 +48,7 @@ What still needs separate configuration:
 - **Approval gates for tool calls.** When a tool call needs consent, the composer is taken over by
   the pending request: it shows the exact call and the caller's reason, Enter allows it once, Escape
   rejects it, and every approval ask/answer pair is written to the session log. A session can also run under
-  an `ask` (default) or `never` policy.
+  an `ask` (default) or `never` policy, and a request with no available answerer fails closed.
 - **Settings-first configuration.** Vision enhancement, local model providers, skins and general
   preferences are configured in the interface instead of editing configuration files.
 
