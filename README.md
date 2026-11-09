@@ -4,6 +4,10 @@ A desktop application for the DeepSeek Harness agent runtime. It starts and supe
 `dsh web` Host and puts plugin, preset, application, vision and local-model management in a
 window, so using the runtime does not require a terminal.
 
+**Project page: [aiengstore.com/projects/deepseek-harness-desktop](https://aiengstore.com/projects/deepseek-harness-desktop).**
+This repository is the open-source version of the desktop shell and the code stays here. The project
+page carries the write-up next to the rest of the collection.
+
 ![Desktop workspace](docs/screenshots/desktop-workspace.png)
 
 ## Quick start
